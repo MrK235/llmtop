@@ -63,6 +63,17 @@ def _offload_color(colors, gpu_pct):
     return colors["offload_cpu"]
 
 
+def _rate_color(colors, rate):
+    """Hebt langsame und sehr schnelle Ausgaberaten eindeutig hervor."""
+    if rate is None:
+        return colors["secondary"]
+    if rate < 10:
+        return colors["error"]
+    if rate < 50:
+        return colors["status_yellow"]
+    return colors["status_green"]
+
+
 def _init_colors():
     """Zentrale Farbrollen: Struktur, Status, Offload und Sekundärtext."""
     c = {"structure": curses.A_BOLD, "secondary": curses.A_DIM,
@@ -283,10 +294,14 @@ def _draw(scr, st, host, interval):
         if gpu_pct is None:
             _add(scr, row, x, "VRAM/RAM n/a", colors["secondary"])
         else:
-            pct_text = f"{gpu_pct:.0f}%/{100 - gpu_pct:.0f}%"
+            vram_pct_text = f"{gpu_pct:.0f}%"
+            ram_pct_text = f"/{100 - gpu_pct:.0f}%"
+            padding = max(0, 7 - len(vram_pct_text) - len(ram_pct_text))
             sizes = (f"VRAM {vram / (1024 ** 3):.1f} GiB / "
                      f"RAM {cpu_mem / (1024 ** 3):.1f} GiB")
-            _add(scr, row, x, pct_text.rjust(7), gpu_attr)
+            _add(scr, row, x, " " * padding, colors["secondary"])
+            _add(scr, row, x + padding, vram_pct_text, gpu_attr)
+            _add(scr, row, x + padding + len(vram_pct_text), ram_pct_text, colors["secondary"])
             _add(scr, row, x + 8, sizes, colors["secondary"])
         return row + 1
 
@@ -346,11 +361,15 @@ def _draw(scr, st, host, interval):
     if active_runs:
         for run in active_runs[:3]:
             age = (f"vor {run['age_seconds']:.1f}s" if run.get("age_seconds") is not None else "")
-            details = run_metric_detail(run)
+            details, _separator, rate_text = run_metric_detail(run).rpartition(" · ")
             columns = (source_label(run.get("source")), str(run.get("model", "?")),
                        str(run.get("status", "unknown")), details)
-            text = "\t".join(columns) + (f"\t{age}" if age else "")
+            text = "\t".join(columns) + "\t"
             _add(scr, row, 0, text, colors["secondary"])
+            rate_x = len(text.expandtabs(8))
+            _add(scr, row, rate_x, rate_text, _rate_color(colors, token_rate(run)))
+            if age:
+                _add(scr, row, rate_x + len(rate_text) + 3, age, colors["secondary"])
             row += 1
             used, limit, pct = context_values(run, model_for_run(run, oll["models"]))
             value = (f"{compact_tokens(used)} / {compact_tokens(limit)}"

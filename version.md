@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 1.10.7 — 01.11.2026
+
+- Nur VRAM-Prozent farbig, `/RAM%` und Größen gedimmt grau dargestellt.
+- Tok/s aktueller Runs farbig bewertet: rot unter 10, gelb unter 50, grün ab 50.
+
 ### 1.10.6 — 01.11.2026
 
 - Modell-VRAM/RAM nach Sensorraster formatiert: Prozentwerte `%/%` nach dem

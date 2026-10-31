@@ -187,12 +187,18 @@ def test_tui_draws_loaded_model():
                                     "error", "offload_good", "offload_mixed", "offload_cpu")}
     colors["model_name"] = 12
     colors["context_label"] = 11
+    colors["status_green"] = 13
+    colors["status_yellow"] = 14
+    colors["error"] = 15
+    colors["offload_mixed"] = 16
+    colors["secondary"] = 17
     state = {"colors": colors, "help": False, "cpu": 10.0,
              "cpu_temp": None, "cpu_temp_source": None,
              "ram": (20.0, 16.0, 12.0), "gpus": [], "gpu_err": None,
              "collector_status": "nicht aktiv", "runs": [{
                  "schema": 2, "run_id": "current", "source": "pi", "model": "model",
                  "status": "running", "context_tokens": 20, "context_limit": 100,
+                 "prompt_tokens": 20, "output_tokens": 100, "eval_duration_s": 1,
              }], "run_history": [{
                  "schema": 2, "run_id": "history", "source": "pi", "model": "model",
                  "status": "completed", "finished_at": "2030-01-01T00:00:00Z",
@@ -207,14 +213,19 @@ def test_tui_draws_loaded_model():
     otop_tui._draw(screen, state, "http://localhost:11434", 2.0)
     assert any(text.startswith("── System ") for text in screen.text)
     assert any("VRAM/RAM" in text for text in screen.text)
-    assert ("50%/50%".rjust(7), 0) in screen.calls
+    assert ("50%", 16) in screen.calls
+    assert ("/50%", 17) in screen.calls
     assert any("VRAM 0.0 GiB / RAM 0.0 GiB" in text for text in screen.text)
     assert any("\t" in text for text in screen.text)
     assert any(text.startswith("Pi\tmodel\trunning\t") for text in screen.text)
+    assert ("100.0 Tok/s", 13) in screen.calls
+    assert otop_tui._rate_color(colors, 9) == 15
+    assert otop_tui._rate_color(colors, 10) == 14
+    assert otop_tui._rate_color(colors, 50) == 13
     assert ("model", 12) in screen.calls
     context_index = screen.calls.index(("Kontext".ljust(9), 11))
     assert screen.calls[context_index + 2][0] == "20.0 %".rjust(7)
-    assert screen.calls[context_index + 3][0] == "20 / 100"
+    assert screen.calls[context_index + 3] == ("20 / 100", 17)
 
 
 if __name__ == '__main__':

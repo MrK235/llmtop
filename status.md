@@ -1,6 +1,6 @@
 # status.md — otop
 
-**Version 1.10.6** · Stand 01.11.2026 · Status: Modell-VRAM/RAM folgt dem Sensorraster.
+**Version 1.10.7** · Stand 01.11.2026 · Status: Teilfarbige VRAM/RAM-Prozente und farbige Tok/s.
 
 ## Aktueller Stand
 
@@ -26,6 +26,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Korrekturen in 1.10.7
+
+- Nur der VRAM-Prozentwert bleibt farbig; `/RAM%` und Größen bleiben grau.
+- Tok/s aktueller Runs ist rot unter 10, gelb unter 50 und grün ab 50 Tok/s.
 
 ## Korrekturen in 1.10.6
 
@@ -191,7 +196,7 @@ Ollama-Endpunkte beziehungsweise vorhandene Dateien.
 
 
 - `python3 -m py_compile otop.py`: OK.
-- `python3 otop.py --version`: `otop 1.10.6`.
+- `python3 otop.py --version`: `otop 1.10.7`.
 - `python3 otop.py --once` und `--once --no-nvidia`: OK.
 - Mock-Rendering: 0/100-, 44/56-, 50/50-, 56/44-, 100/0- und fehlende
   Speichergrößen nutzen erwartete Segmentbreiten, Offload-Farben,
