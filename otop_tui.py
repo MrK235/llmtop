@@ -66,7 +66,7 @@ def _offload_color(colors, gpu_pct):
 def _init_colors():
     """Zentrale Farbrollen: Struktur, Status, Offload und Sekundärtext."""
     c = {"structure": curses.A_BOLD, "secondary": curses.A_DIM,
-         "model_name": curses.A_BOLD, "context_label": curses.A_BOLD,
+         "model_name": curses.A_BOLD | curses.A_UNDERLINE, "context_label": curses.A_BOLD,
          "status_green": curses.A_BOLD, "status_yellow": curses.A_BOLD,
          "error": curses.A_BOLD, "offload_good": curses.A_BOLD,
          "offload_mixed": curses.A_BOLD, "offload_cpu": curses.A_BOLD}
@@ -77,7 +77,7 @@ def _init_colors():
         curses.init_pair(4, curses.COLOR_CYAN, curses.COLOR_BLACK)
         curses.init_pair(5, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
         c["status_green"] = curses.color_pair(1) | curses.A_BOLD
-        c["model_name"] = curses.color_pair(1) | curses.A_BOLD
+        c["model_name"] = curses.color_pair(4) | curses.A_BOLD | curses.A_UNDERLINE
         c["context_label"] = curses.color_pair(4) | curses.A_BOLD
         c["status_yellow"] = curses.color_pair(2) | curses.A_BOLD
         c["error"] = curses.color_pair(3) | curses.A_BOLD
@@ -246,10 +246,13 @@ def _draw(scr, st, host, interval):
         cpu_mem = max(0, size - vram)
         gpu_pct = 100.0 * vram / size if size else None
         name = model.get("name", "?")
-        meta = (f"{details.get('parameter_size', '-')} {details.get('quantization_level', '-')}  "
-                f"ctx {model.get('context_length', '-')}  {model.get('runner', '-')}")
+        meta = "\t".join((str(details.get("parameter_size", "-")),
+                          str(details.get("quantization_level", "-")),
+                          f"ctx {model.get('context_length', '-')}",
+                          str(model.get("runner", "-"))))
+        meta_x = max(24, ((len(name) + 9) // 8) * 8)
         _add(scr, row, 0, name, colors["model_name"])
-        _add(scr, row, len(name) + 2, meta, colors["secondary"])
+        _add(scr, row, meta_x, meta, colors["secondary"])
         exp = model.get("expires_at")
         if exp:
             try:

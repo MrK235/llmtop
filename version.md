@@ -12,6 +12,12 @@ gebracht.
 
 ## Changelog
 
+### 1.10.2 — 01.11.2026
+
+- Modellnamen wieder Cyan und unterstrichen dargestellt.
+- Modellinformationen folgen ab fester Tabulatorposition mit gleichmäßigen
+  Abständen.
+
 ### 1.10.1 — 01.11.2026
 
 - Kontextlabel vor dem Balken in Cyan statt Dunkelgrün dargestellt.
