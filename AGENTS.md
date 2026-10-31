@@ -84,14 +84,15 @@ Tests laufen ausschließlich im temp-Verzeichnis: `python` aus `/tmp/pi/...`. Mo
 - Vor Änderungen den Ausgangsstand mit `git status --short`, `git branch --show-current` und passenden Tags prüfen.
 - Nach Änderungen `git diff --check`, einen gezielten `git diff` und die vorgeschriebenen Tests ausführen.
 - Semantische Versionierung (`MAJOR.MINOR.PATCH`) in `otop.py`, `version.md` und `README.md` synchronisieren.
+- Standardmäßig nur den Patchstand erhöhen, auch bei kleinen Anzeige- oder Bedienverbesserungen. Einen Minor- oder Major-Sprung nur auf ausdrücklichen Benutzerwunsch verwenden.
 - Jeder vollständig implementierte und erfolgreich geprüfte Versionsstand mit erhöhter `VERSION` wird zum Abschluss der Aufgabe als Git-Commit gesichert; dafür ist keine zusätzliche Freigabe erforderlich.
 - Tags und Releases (`vX.Y.Z`) weiterhin nur nach ausdrücklicher Freigabe erstellen.
 - Unfertige Arbeitsstände oder Änderungen ohne Versionsanhebung nicht eigenmächtig committen; ohne Freigabe nur Änderungen und Prüfresultate zusammenfassen.
-- `PATCH`: Fehlerkorrekturen ohne neue Bedienfunktion.
-- `MINOR`: Neue abwärtskompatible Anzeige- oder CLI-Funktion.
-- `MAJOR`: Inkompatible Änderungen an Schnittstelle oder Layout (selten).
+- `PATCH`: Standard für normale Fehlerkorrekturen und kleine Erweiterungen.
+- `MINOR`: nur auf ausdrücklichen Wunsch für einen größeren, abwärtskompatiblen Funktionsstand.
+- `MAJOR`: nur auf ausdrücklichen Wunsch für inkompatible Änderungen.
 
 ---
 
 **Zusammenfassung in drei Zeilen:**
-Single File, nur Standardbibliothek, läuft ohne Setup auf jedem aktuellen Linux. Keine Pip-, keine Systempaketinstallationen, keine Konfiguration außer optionaler `.env`. Alle Sensoren mit sysfs-Fallback.
+Vier kleine Kernmodule, nur Standardbibliothek, läuft ohne Setup auf jedem aktuellen Linux. Keine Pip-, keine Systempaketinstallationen, keine Konfiguration außer optionaler `.env`. Alle Sensoren mit sysfs-Fallback.

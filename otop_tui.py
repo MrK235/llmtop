@@ -66,7 +66,7 @@ def _offload_color(colors, gpu_pct):
 def _init_colors():
     """Zentrale Farbrollen: Struktur, Status, Offload und Sekundärtext."""
     c = {"structure": curses.A_BOLD, "secondary": curses.A_DIM,
-         "model_name": curses.A_BOLD, "context_label": 0,
+         "model_name": curses.A_BOLD, "context_label": curses.A_BOLD,
          "status_green": curses.A_BOLD, "status_yellow": curses.A_BOLD,
          "error": curses.A_BOLD, "offload_good": curses.A_BOLD,
          "offload_mixed": curses.A_BOLD, "offload_cpu": curses.A_BOLD}
@@ -78,7 +78,7 @@ def _init_colors():
         curses.init_pair(5, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
         c["status_green"] = curses.color_pair(1) | curses.A_BOLD
         c["model_name"] = curses.color_pair(1) | curses.A_BOLD
-        c["context_label"] = curses.color_pair(1)
+        c["context_label"] = curses.color_pair(4) | curses.A_BOLD
         c["status_yellow"] = curses.color_pair(2) | curses.A_BOLD
         c["error"] = curses.color_pair(3) | curses.A_BOLD
         c["structure"] = curses.color_pair(4) | curses.A_BOLD

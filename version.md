@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 1.10.1 — 01.11.2026
+
+- Kontextlabel vor dem Balken in Cyan statt Dunkelgrün dargestellt.
+- Projektregel auf Patch-Sprünge für normale Änderungen umgestellt.
+
 ### 1.10.0 — 01.11.2026
 
 - Modell-Speicheranzeige in „VRAM/RAM“ umbenannt und Werte entsprechend

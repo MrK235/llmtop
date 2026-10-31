@@ -1,6 +1,6 @@
 # status.md — otop
 
-**Version 1.10.0** · Stand 01.11.2026 · Status: VRAM/RAM-Modellanzeige und grüne Modell-/Kontextlabels.
+**Version 1.10.1** · Stand 01.11.2026 · Status: VRAM/RAM-Modellanzeige, hellgrüne Modellnamen und Cyan-Kontextlabel.
 
 ## Aktueller Stand
 
@@ -27,10 +27,15 @@ gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
 
+## Korrekturen in 1.10.1
+
+- Kontextlabel vor dem Balken auf Cyan statt Dunkelgrün gesetzt.
+- Kleinere Änderungen erhöhen künftig standardmäßig nur die Patchversion.
+
 ## Neu in 1.10.0
 
 - Modell-Speicheranzeige unter „Geladene Modelle“ als VRAM/RAM beschriftet.
-- Modellnamen sind hellgrün; das Kontextlabel vor seinem Balken dunkelgrün.
+- Modellnamen sind hellgrün; das Kontextlabel vor seinem Balken ist Cyan.
 
 ## Neu in 1.9.0
 
@@ -161,7 +166,7 @@ Ollama-Endpunkte beziehungsweise vorhandene Dateien.
 
 
 - `python3 -m py_compile otop.py`: OK.
-- `python3 otop.py --version`: `otop 1.10.0`.
+- `python3 otop.py --version`: `otop 1.10.1`.
 - `python3 otop.py --once` und `--once --no-nvidia`: OK.
 - Mock-Rendering: 0/100-, 44/56-, 50/50-, 56/44-, 100/0- und fehlende
   Speichergrößen nutzen erwartete Segmentbreiten, Offload-Farben,

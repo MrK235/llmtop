@@ -5,7 +5,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "1.10.0"  # Single Source of Truth; History in version.md
+VERSION = "1.10.1"  # Single Source of Truth; History in version.md
 DEFAULT_HOST = "http://localhost:11434"
 
 

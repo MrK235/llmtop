@@ -167,6 +167,7 @@ def test_tui_draws_loaded_model():
     class Screen:
         def __init__(self):
             self.text = []
+            self.calls = []
 
         def getmaxyx(self):
             return 40, 120
@@ -176,6 +177,7 @@ def test_tui_draws_loaded_model():
 
         def addstr(self, _y, _x, text, _attr=0):
             self.text.append(text)
+            self.calls.append((text, _attr))
 
         def refresh(self):
             pass
@@ -183,6 +185,8 @@ def test_tui_draws_loaded_model():
     colors = {name: 0 for name in ("structure", "secondary", "model_name",
                                     "context_label", "status_green", "status_yellow",
                                     "error", "offload_good", "offload_mixed", "offload_cpu")}
+    colors["model_name"] = 12
+    colors["context_label"] = 11
     state = {"colors": colors, "help": False, "cpu": 10.0,
              "cpu_temp": None, "cpu_temp_source": None,
              "ram": (20.0, 16.0, 12.0), "gpus": [], "gpu_err": None,
@@ -202,7 +206,8 @@ def test_tui_draws_loaded_model():
     screen = Screen()
     otop_tui._draw(screen, state, "http://localhost:11434", 2.0)
     assert any("VRAM/RAM" in text for text in screen.text)
-    assert any("Kontext" in text for text in screen.text)
+    assert ("model", 12) in screen.calls
+    assert ("Kontext".ljust(9), 11) in screen.calls
 
 
 if __name__ == '__main__':
