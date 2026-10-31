@@ -207,6 +207,7 @@ def test_tui_draws_loaded_model():
     otop_tui._draw(screen, state, "http://localhost:11434", 2.0)
     assert any("VRAM/RAM" in text for text in screen.text)
     assert any("\t" in text for text in screen.text)
+    assert any(text.startswith("Pi\tmodel\trunning\t") for text in screen.text)
     assert ("model", 12) in screen.calls
     assert ("Kontext".ljust(9), 11) in screen.calls
 

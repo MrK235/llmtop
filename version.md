@@ -12,6 +12,12 @@ gebracht.
 
 ## Changelog
 
+### 1.10.3 — 01.11.2026
+
+- Modellnamen grau und unterstrichen dargestellt.
+- Aktuelle Run-Zeilen per Tabulator für Quelle, Modell, Status und Metriken
+  ausgerichtet.
+
 ### 1.10.2 — 01.11.2026
 
 - Modellnamen wieder Cyan und unterstrichen dargestellt.

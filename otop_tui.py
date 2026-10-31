@@ -66,7 +66,7 @@ def _offload_color(colors, gpu_pct):
 def _init_colors():
     """Zentrale Farbrollen: Struktur, Status, Offload und Sekundärtext."""
     c = {"structure": curses.A_BOLD, "secondary": curses.A_DIM,
-         "model_name": curses.A_BOLD | curses.A_UNDERLINE, "context_label": curses.A_BOLD,
+         "model_name": curses.A_DIM | curses.A_UNDERLINE, "context_label": curses.A_BOLD,
          "status_green": curses.A_BOLD, "status_yellow": curses.A_BOLD,
          "error": curses.A_BOLD, "offload_good": curses.A_BOLD,
          "offload_mixed": curses.A_BOLD, "offload_cpu": curses.A_BOLD}
@@ -77,7 +77,6 @@ def _init_colors():
         curses.init_pair(4, curses.COLOR_CYAN, curses.COLOR_BLACK)
         curses.init_pair(5, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
         c["status_green"] = curses.color_pair(1) | curses.A_BOLD
-        c["model_name"] = curses.color_pair(4) | curses.A_BOLD | curses.A_UNDERLINE
         c["context_label"] = curses.color_pair(4) | curses.A_BOLD
         c["status_yellow"] = curses.color_pair(2) | curses.A_BOLD
         c["error"] = curses.color_pair(3) | curses.A_BOLD
@@ -344,11 +343,12 @@ def _draw(scr, st, host, interval):
     row = section(row, f"Aktuelle Runs ({len(active_runs)})")
     if active_runs:
         for run in active_runs[:3]:
-            source = source_label(run.get("source")).ljust(11)
             age = (f"vor {run['age_seconds']:.1f}s" if run.get("age_seconds") is not None else "")
             details = run_metric_detail(run)
-            _add(scr, row, 0, f"{source} {run.get('model', '?')}  {run.get('status', 'unknown')}  "
-                 f"{details} · {age}", colors["secondary"])
+            columns = (source_label(run.get("source")), str(run.get("model", "?")),
+                       str(run.get("status", "unknown")), details)
+            text = "\t".join(columns) + (f"\t{age}" if age else "")
+            _add(scr, row, 0, text, colors["secondary"])
             row += 1
             used, limit, pct = context_values(run, model_for_run(run, oll["models"]))
             value = (f"{compact_tokens(used)} / {compact_tokens(limit)}"
