@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 1.10.6 — 01.11.2026
+
+- Modell-VRAM/RAM nach Sensorraster formatiert: Prozentwerte `%/%` nach dem
+  Balken, danach gedimmte VRAM-/RAM-Größen in GiB.
+
 ### 1.10.5 — 01.11.2026
 
 - Kontextanzeige an CPU-/GPU-Raster angepasst: Prozentwert rechtsbündig nach

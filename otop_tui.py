@@ -16,7 +16,7 @@ from otop_metrics import (
     write_history,
 )
 from otop_sources import (
-    GPU_POWER_BOOST_W, bar, collect_gpus, collect_ollama, cpu_percent, fmt_bytes,
+    GPU_POWER_BOOST_W, bar, collect_gpus, collect_ollama, cpu_percent,
     cpu_temperature, get_ram_pct, loadavg, read_cpu_totals,
 )
 def _add(scr, y, x, text, attr=0):
@@ -283,10 +283,11 @@ def _draw(scr, st, host, interval):
         if gpu_pct is None:
             _add(scr, row, x, "VRAM/RAM n/a", colors["secondary"])
         else:
-            gpu_text = f"VRAM {gpu_pct:.0f} % {fmt_bytes(vram)}"
-            _add(scr, row, x, gpu_text, gpu_attr)
-            _add(scr, row, x + len(gpu_text) + 3,
-                 f"RAM {100 - gpu_pct:.0f} % {fmt_bytes(cpu_mem)}", colors["secondary"])
+            pct_text = f"{gpu_pct:.0f}%/{100 - gpu_pct:.0f}%"
+            sizes = (f"VRAM {vram / (1024 ** 3):.1f} GiB / "
+                     f"RAM {cpu_mem / (1024 ** 3):.1f} GiB")
+            _add(scr, row, x, pct_text.rjust(7), gpu_attr)
+            _add(scr, row, x + 8, sizes, colors["secondary"])
         return row + 1
 
     oll = st["ollama"]
