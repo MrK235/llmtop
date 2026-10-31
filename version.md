@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 1.8.6 — 01.11.2026
+
+- TUI-Abbruch beim Formatieren vorhandener Run-History behoben; das ausgelagerte
+  curses-Modul importiert `_parse_time` wieder korrekt.
+
 ### 1.8.5 — 01.11.2026
 
 - `otop.py` auf Programmeinstieg, CLI und Snapshot-Orchestrierung reduziert.

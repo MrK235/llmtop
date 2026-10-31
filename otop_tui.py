@@ -8,7 +8,7 @@ import time
 VERSION = "?"
 
 from otop_metrics import (
-    DEFAULT_RUN_HISTORY_LIMIT, HISTORY_COLUMNS, CollectorService, _token_value,
+    DEFAULT_RUN_HISTORY_LIMIT, HISTORY_COLUMNS, CollectorService, _parse_time, _token_value,
     backfill_context_limits, compact_tokens, context_values, history_context_cell,
     history_header_label, load_run_events, load_run_history, model_for_run,
     run_metric_detail, snapshot_record, sort_run_history, source_label, token_rate,
