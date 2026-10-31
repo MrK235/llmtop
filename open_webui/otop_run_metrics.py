@@ -1,7 +1,7 @@
 """
 title: otop Run Metrics
 author: otop
-version: 1.3.1
+version: 1.3.2
 required_open_webui_version: 0.12.3
 description: Meldet datensparsame Ollama-Runmetriken an den lokalen otop-Collector.
 """
@@ -154,22 +154,39 @@ class Filter:
             return body
         model = str(body.get("model") or (__model__ or {}).get("id") or "unknown")
         now = utc_now()
-        run = {
-            "run_id": str(uuid.uuid4()),
-            "model": model,
-            "started_at": now,
-            "created": time.monotonic(),
-            "last_heartbeat": 0.0,
-        }
+        now_mono = time.monotonic()
         options = body.get("options") if isinstance(body.get("options"), dict) else {}
         num_ctx = options.get("num_ctx")
-        if isinstance(num_ctx, (int, float)) and not isinstance(num_ctx, bool) and num_ctx > 0:
-            run["context_limit"] = num_ctx
-            run["context_limit_source"] = "request"
         key = self._key(model, __metadata__)
+        metadata = __metadata__ or {}
+        has_identity = any(metadata.get(name) for name in ("message_id", "chat_id", "session_id"))
         async with self._lock:
             self._cleanup()
-            self._runs[key].append(run)
+            queue = self._runs.get(key)
+            if has_identity and queue:
+                # Open WebUI ruft den Request-Filter bei Tool- und anderen
+                # Fortsetzungsrunden erneut auf. Diese Aufrufe gehören zum
+                # selben sichtbaren Chat-Request und dürfen keinen zweiten
+                # Live-Run erzeugen.
+                run = queue[0]
+                run["created"] = now_mono
+                is_new = False
+            else:
+                run = {
+                    "run_id": str(uuid.uuid4()),
+                    "model": model,
+                    "started_at": now,
+                    "created": now_mono,
+                    "last_heartbeat": now_mono,
+                }
+                self._runs[key].append(run)
+                is_new = True
+            if isinstance(num_ctx, (int, float)) and not isinstance(num_ctx, bool) and num_ctx > 0:
+                run["context_limit"] = num_ctx
+                run["context_limit_source"] = "request"
+        if not is_new:
+            await self._heartbeat(model, __metadata__)
+            return body
         await self._send({
             "schema": 2,
             "event": "started",

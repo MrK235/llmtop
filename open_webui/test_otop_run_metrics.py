@@ -38,12 +38,17 @@ async def exercise():
     metadata = {"message_id": "message-1"}
     body = {"model": "qwen:test", "messages": [{"role": "user", "content": "secret"}]}
     await adapter.request(body, metadata, model)
+    await adapter.request(body, metadata, model)
     assert sent[0]["event"] == "started"
+    assert len([event for event in sent if event["event"] == "started"]) == 1
+    assert len(adapter._runs[adapter._key("qwen:test", metadata)]) == 1
     assert "messages" not in sent[0]
     await adapter.stream({"model": "qwen:test", "usage": {
         "prompt_tokens": 2, "completion_tokens": 3, "eval_duration": 1_000_000_000}}, metadata, model)
     assert sent[1]["event"] == "updated"
     assert sent[1]["output_tokens"] == 3
+    await adapter.request(body, metadata, model)
+    assert len([event for event in sent if event["event"] == "started"]) == 1
     await adapter.stream({"model": "qwen:test", "done": True, "eval_count": 5}, metadata, model)
     assert sent[2]["event"] == "completed"
     assert sent[2]["eval_count"] == 5
@@ -55,6 +60,11 @@ async def exercise():
     await adapter.outlet({"model": "qwen:test"}, {"message_id": "a"}, model)
     await adapter.outlet({"model": "qwen:test"}, {"message_id": "b"}, model)
     assert len({event["run_id"] for event in sent if event["event"] == "completed"}) == 3
+
+    starts_before = len([event for event in sent if event["event"] == "started"])
+    await adapter.request(body, None, model)
+    await adapter.request(body, None, model)
+    assert len([event for event in sent if event["event"] == "started"]) == starts_before + 2
 
 
 if __name__ == "__main__":

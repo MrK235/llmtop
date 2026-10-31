@@ -23,7 +23,7 @@ from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
-VERSION = "1.7.3"  # Single Source of Truth; History in version.md
+VERSION = "1.8.4"  # Single Source of Truth; History in version.md
 DEFAULT_HOST = "http://localhost:11434"
 DEFAULT_COLLECTOR_URL = "http://127.0.0.1:11435"
 DEFAULT_HISTORY_LIMIT = 500
@@ -271,7 +271,7 @@ def load_run_events(path=None, max_age=DEFAULT_RUN_MAX_AGE, limit=3):
         return ordered[:limit]
 
 
-def load_run_history(path=None, limit=10):
+def load_run_history(path=None, limit=DEFAULT_RUN_HISTORY_LIMIT):
     """Liest finale Runs, dedupliziert per Quelle und Run-ID."""
     runs = {}
     for item in read_jsonl(os.path.expanduser(path or run_history_path())):
@@ -366,6 +366,71 @@ def context_text(run, model=None):
         return f"Kontext {compact_tokens(used)}/n/a"
     suffix = " · über Limit" if used > limit else f" ({pct:.0f} %)"
     return f"Kontext {compact_tokens(used)}/{compact_tokens(limit)}{suffix}"
+
+
+HISTORY_COLUMNS = ("zeit", "quelle", "modell", "status", "tokens", "kontext", "rate", "dauer")
+HISTORY_COLUMN_LABELS = {
+    "zeit": "Zeit", "quelle": "Quelle", "modell": "Modell", "status": "Status",
+    "tokens": "Tokens", "kontext": "Kontext", "rate": "Tok/s", "dauer": "Dauer",
+}
+
+
+def history_sort_value(run, column):
+    """Liefert einen stabil vergleichbaren Sortierwert; fehlende Werte folgen zuletzt."""
+    if column == "zeit":
+        value = _parse_time(run.get("finished_at"))
+        return (value is None, value or datetime.min.replace(tzinfo=timezone.utc))
+    if column == "quelle":
+        return (False, source_label(run.get("source")).casefold())
+    if column == "modell":
+        return (False, str(run.get("model", "")).casefold())
+    if column == "status":
+        return (False, str(run.get("status", "")).casefold())
+    if column == "tokens":
+        value = total_tokens(run)
+        return (value is None, value if value is not None else 0)
+    if column == "kontext":
+        used, limit, _pct = context_values(run)
+        value = 100.0 * used / limit if used is not None and limit else None
+        return (value is None, value if value is not None else 0)
+    if column == "rate":
+        value = token_rate(run)
+        return (value is None, value if value is not None else 0)
+    if column == "dauer":
+        value = _token_value(run, "total_duration_s")
+        return (value is None, value if value is not None else 0)
+    raise ValueError(f"unbekannte History-Spalte: {column}")
+
+
+def sort_run_history(runs, column="zeit", descending=True):
+    """Sortiert Runs stabil; gleiche Werte bleiben nach Zeit und ID eindeutig."""
+    if column not in HISTORY_COLUMNS:
+        column = "zeit"
+    present = [run for run in runs if not history_sort_value(run, column)[0]]
+    missing = [run for run in runs if history_sort_value(run, column)[0]]
+    present.sort(key=lambda run: (history_sort_value(run, column)[1],
+                                  _parse_time(run.get("finished_at")) or datetime.min.replace(tzinfo=timezone.utc),
+                                  str(run.get("run_id", ""))), reverse=descending)
+    missing.sort(key=lambda run: (_parse_time(run.get("finished_at")) or datetime.min.replace(tzinfo=timezone.utc),
+                                  str(run.get("run_id", ""))), reverse=True)
+    return present + missing
+
+
+def history_header_label(column, active_column, descending):
+    """Markiert die aktive Sortierspalte direkt mit einem kleinen Pfeil."""
+    label = HISTORY_COLUMN_LABELS[column]
+    return label + ("▾" if descending else "▴") if column == active_column else label
+
+
+def history_context_cell(run, model=None):
+    """Kompakte Kontextzelle mit Prozentwert vor Verbrauch und Limit."""
+    used, limit, _pct = context_values(run, model)
+    if used is None:
+        return "n/a"
+    if limit is None:
+        return f"n/a {compact_tokens(used)}/n/a"
+    pct = 100.0 * used / limit
+    return f"{pct:.0f}% {compact_tokens(used)}/{compact_tokens(limit)}"
 
 
 def model_for_run(run, models):
@@ -1086,7 +1151,7 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
     st = collect_ollama(host)
     active_runs = load_run_events()
     run = active_runs[0] if active_runs else None
-    runs = load_run_history()
+    runs = load_run_history(limit=10)
     backfill_context_limits(runs, st.get("models", []))
     lines.append(f"otop {VERSION}  Ollama {st['version'] if st['ok'] else 'nicht erreichbar'}  {host}")
     token, _collector_url = collector_config()
@@ -1266,6 +1331,72 @@ def _draw(scr, st, host, interval):
         else:
             _add(scr, 0, 0, f"otop {VERSION}  •  Ollama {conn}", colors["structure"])
 
+    def history_columns():
+        if w >= 118:
+            return (("zeit", 17), ("quelle", 12), ("modell", 21), ("status", 11),
+                    ("tokens", 8), ("kontext", 15), ("rate", 8), ("dauer", 8))
+        if w >= 88:
+            return (("zeit", 14), ("modell", 19), ("status", 10), ("tokens", 8),
+                    ("kontext", 15), ("rate", 8), ("dauer", 8))
+        return (("zeit", 11), ("modell", 14), ("status", 10), ("kontext", 14))
+
+    def history_cell(run, column):
+        model = model_for_run(run, oll.get("models", [])) if oll else None
+        if column == "zeit":
+            finished = _parse_time(run.get("finished_at"))
+            return finished.strftime("%d.%m %H:%M") if finished else "n/a"
+        if column == "quelle":
+            return source_label(run.get("source"))
+        if column == "modell":
+            return str(run.get("model", "?"))
+        if column == "status":
+            return str(run.get("status", "?"))
+        if column == "tokens":
+            return compact_tokens(total_tokens(run))
+        if column == "kontext":
+            return history_context_cell(run, model)
+        if column == "rate":
+            rate = token_rate(run)
+            return f"{rate:.1f}" if rate is not None else "n/a"
+        if column == "dauer":
+            duration = _token_value(run, "total_duration_s")
+            return f"{duration:.1f}s" if duration is not None else "n/a"
+        return ""
+
+    def draw_history_table(row, max_rows):
+        columns = history_columns()
+        sorted_runs = sort_run_history(st.get("run_history", []), st["history_sort"],
+                                       st["history_desc"])
+        total = len(sorted_runs)
+        data_rows = max(1, max_rows - 2)
+        show_position = total > data_rows and data_rows >= 2
+        visible = data_rows - 1 if show_position else data_rows
+        max_offset = max(0, total - visible)
+        st["history_offset"] = min(max(0, st["history_offset"]), max_offset)
+        row = section(row, f"History ({total}/{DEFAULT_RUN_HISTORY_LIMIT})")
+        x = 0
+        for name, width in columns:
+            label = history_header_label(name, st["history_sort"], st["history_desc"])
+            attr = colors["structure"] | curses.A_UNDERLINE if name == st["history_sort"] else colors["structure"]
+            _add(scr, row, x, label[:width], attr)
+            x += width + 1
+        row += 1
+        for item in sorted_runs[st["history_offset"]:st["history_offset"] + visible]:
+            cells = []
+            for name, width in columns:
+                text = history_cell(item, name)
+                cells.append(text[:width].ljust(width))
+            _add(scr, row, 0, " ".join(cells), colors["secondary"])
+            row += 1
+        if not sorted_runs:
+            _add(scr, row, 0, "Keine abgeschlossenen instrumentierten Runs", colors["secondary"])
+            row += 1
+        elif show_position:
+            _add(scr, row, 0, f"Zeilen {st['history_offset'] + 1}-{min(total, st['history_offset'] + visible)} von {total}",
+                 colors["secondary"])
+            row += 1
+        return row
+
     if h < 26:
         oll = st["ollama"]
         draw_header(oll)
@@ -1300,25 +1431,12 @@ def _draw(scr, st, host, interval):
              colors["secondary"])
         row += 1
         model_count = len(oll.get("models", []))
-        _add(scr, row, 0, f"Geladene Modelle: {model_count}", colors["secondary"])
-        row += 1
         active_runs = st.get("runs", [])
-        _add(scr, row, 0, f"Aktuelle Runs: {len(active_runs)}", colors["secondary"])
+        _add(scr, row, 0, f"Geladene Modelle: {model_count}  ·  Aktuelle Runs: {len(active_runs)}",
+             colors["secondary"])
         row += 1
-        row = section(row, "History")
-        history_text = "aktiv" if st.get("history_ok") else "nicht verfügbar"
-        history_runs = st.get("run_history", [])
-        if history_runs:
-            item = history_runs[0]
-            finished = _parse_time(item.get("finished_at"))
-            when = finished.strftime("%H:%M") if finished else "?"
-            _add(scr, row, 2, format_run_line(
-                item, f"{when}  {source_label(item.get('source')).ljust(11)} "
-                      f"{item['model']}  {item['status']}  "), colors["secondary"])
-        else:
-            _add(scr, row, 2, f"System-Snapshots: {history_text}",
-                 colors["status_green"] if st.get("history_ok") else colors["secondary"])
-        _add(scr, h - 1, 0, "q quit  r neu laden  h Hilfe  -/+ Intervall", colors["structure"])
+        draw_history_table(row, h - row - 2)
+        _add(scr, h - 1, 0, "q quit  Tab/s sortieren  ↑↓ scrollen  h Hilfe", colors["structure"])
         scr.refresh()
         return
 
@@ -1442,10 +1560,9 @@ def _draw(scr, st, host, interval):
         row += 1
     row += 1
     row = section(row, "Geladene Modelle")
-    # History erhält Platz für bis zu zehn Einträge. Der Modellbereich wird
-    # bei vielen Runs zuerst gekürzt, damit die History nicht überzeichnet.
-    history_count = min(10, len(runs))
-    history_rows = 2 + history_count if history_count else 2
+    # Die History ist scrollbar; der Modellbereich erhält den verbleibenden
+    # Platz oberhalb einer kompakten Tabellenansicht.
+    history_rows = 5
     model_end = h - 1 - history_rows - 2
     if not oll["ok"] or oll["error"]:
         _add(scr, row, 0, oll["error"] or "Ollama nicht erreichbar", colors["error"])
@@ -1464,29 +1581,16 @@ def _draw(scr, st, host, interval):
             row += 1
 
     row += 1
-    row = section(row, "History")
-    history_text = "aktiv" if st.get("history_ok") else "nicht verfügbar"
-    _add(scr, row, 2, f"System-Snapshots: {history_text}",
-         colors["status_green"] if st.get("history_ok") else colors["secondary"])
-    row += 1
-    if runs:
-        for item in runs[:10]:
-            finished = _parse_time(item.get("finished_at"))
-            when = finished.strftime("%H:%M") if finished else "?"
-            _add(scr, row, 2, format_run_line(
-                item, f"{when}  {source_label(item.get('source')).ljust(11)} "
-                      f"{item['model']}  {item['status']}  ",
-                model_for_run(item, oll.get("models", []))), colors["secondary"])
-            row += 1
-    else:
-        _add(scr, row, 2, "Keine abgeschlossenen instrumentierten Runs", colors["secondary"])
+    draw_history_table(row, h - row - 2)
 
-    _add(scr, h - 1, 0, "q quit  r Programm neu laden  h Hilfe  -/+ Intervall", colors["structure"]) 
+    _add(scr, h - 1, 0, "q quit  r neu laden  Tab/Shift-Tab Spalte  s Richtung  ↑↓ scrollen", colors["structure"])
     if st["help"]:
         sources = ", ".join(sorted(set(g.get("source", "?") for g in st["gpus"]))) or "keine"
         box = ["Hilfe", "", "q  Q  beenden", "r  Programm neu laden",
                "h  Hilfe ein/aus", "-  Intervall halbieren (min 0.5s)",
-               "+  Intervall verdoppeln (max 60s)", "",
+               "+  Intervall verdoppeln (max 60s)",
+               "Tab / Shift-Tab  History-Spalte wechseln", "s  History-Sortierrichtung",
+               "↑/↓ Bild↑/Bild↓ Pos1/Ende  History scrollen", "",
                "System / GPU / Ollama / History", "GPU-Quelle: " + sources]
         bh = len(box) + 2
         bw = max(len(b) for b in box) + 4
@@ -1509,7 +1613,8 @@ def _run_tui(host, interval, use_nvidia):
              "ollama": None, "cpu": None, "cpu_temp": None,
              "cpu_temp_source": None, "gpus": [], "gpu_err": None,
              "ram": None, "gpu_mode_vram": False, "gpu_mode_power": False,
-             "history_ok": None, "runs": [], "run_history": [], "collector_status": "nicht konfiguriert"}
+             "history_ok": None, "runs": [], "run_history": [], "collector_status": "nicht konfiguriert",
+             "history_sort": "zeit", "history_desc": True, "history_offset": 0}
 
     def session(scr):
         nonlocal interval
@@ -1548,6 +1653,29 @@ def _run_tui(host, interval, use_nvidia):
                 interval = min(60.0, interval * 2)
             elif key == ord("-"):
                 interval = max(0.5, interval / 2)
+            elif key == 9:
+                index = HISTORY_COLUMNS.index(state["history_sort"])
+                state["history_sort"] = HISTORY_COLUMNS[(index + 1) % len(HISTORY_COLUMNS)]
+                state["history_offset"] = 0
+            elif key == curses.KEY_BTAB:
+                index = HISTORY_COLUMNS.index(state["history_sort"])
+                state["history_sort"] = HISTORY_COLUMNS[(index - 1) % len(HISTORY_COLUMNS)]
+                state["history_offset"] = 0
+            elif key in (ord("s"), ord("S")):
+                state["history_desc"] = not state["history_desc"]
+                state["history_offset"] = 0
+            elif key == curses.KEY_UP:
+                state["history_offset"] = max(0, state["history_offset"] - 1)
+            elif key == curses.KEY_DOWN:
+                state["history_offset"] += 1
+            elif key == curses.KEY_PPAGE:
+                state["history_offset"] = max(0, state["history_offset"] - 5)
+            elif key == curses.KEY_NPAGE:
+                state["history_offset"] += 5
+            elif key == curses.KEY_HOME:
+                state["history_offset"] = 0
+            elif key == curses.KEY_END:
+                state["history_offset"] = max(0, len(state["run_history"]) - 1)
             elif key == curses.KEY_RESIZE:
                 pass
         return 0

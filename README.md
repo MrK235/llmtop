@@ -1,10 +1,10 @@
 # otop — Ollama Terminal Monitor mit GPU-, RAM- und VRAM-Sensoren
 
-**Version 1.7.3 · Single-File-Terminal-Anwendung (nur Python-Standardbibliothek),
+**Version 1.8.4 · Single-File-Terminal-Anwendung (nur Python-Standardbibliothek),
 die über die Ollama-API das **geladene Modell** sowie **CPU-/RAM/GPU-Auslastung**
 anzeigt. Versionsgeschichte und Versionsschema: `version.md`.
 
-Die Version wird angezeigt: in der TUI-Kopfzeile (`otop 1.7.3 • Ollama …`), in der
+Die Version wird angezeigt: in der TUI-Kopfzeile (`otop 1.8.4 • Ollama …`), in der
 ersten Zeile von `--once`, und über `--version`. Maßgebliche Zahl ist `VERSION`
 in `otop.py`.
 
@@ -77,6 +77,9 @@ Datenbank-Fallback kann `OTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 | `h` / `H` | Hilfe ein/aus (wird ignoriert, wenn das Overlay nicht ins Terminal passt) |
 | `-` | Intervall halbieren (min. 0.5 s) |
 | `+` / `=` | Intervall verdoppeln (max. 60 s) |
+| `Tab` / `Shift-Tab` | nächste / vorherige Sortierspalte der Run-History |
+| `s` / `S` | Sortierrichtung der Run-History umschalten |
+| `↑` / `↓`, `Bild↑` / `Bild↓`, `Pos1` / `Ende` | Run-History scrollen |
 
 ## TUI-Layout
 
@@ -92,17 +95,26 @@ den Offload-Grad der GPU/VRAM-Anzeige: Grün oberhalb 55 %, Gelb bei 45–55 %
 und Rot unterhalb 45 % GPU-Anteil. CPU/RAM bleibt gedimmt grau. Beide Anteile
 nutzen `#` und zeigen zusätzlich Textwerte. Eine
 Leerzeile trennt jeweils System, GPU, Ollama und History. **History** zeigt
-die letzten zehn abgeschlossenen instrumentierten Runs und speichert zusätzlich lokale, begrenzte
-System-Snapshots. Der Snapshot-Pfad kann über `OTOP_HISTORY_FILE`, die
-Run-Historie über `OTOP_RUN_HISTORY_FILE` oder `XDG_STATE_HOME` angepasst
-werden.
+eine scrollbare Tabelle mit bis zu 100 abgeschlossenen instrumentierten Runs.
+Sie kann nach Abschlusszeit, Quelle, Modell, Status, Tokens, Kontextverbrauch,
+Ausgaberate und Dauer sortiert werden. Die aktive Sortierspalte ist im
+Tabellenkopf exakt über die Länge ihres Textes unterstrichen und mit `▾`
+beziehungsweise `▴` markiert; die History-Überschrift bleibt frei von
+Sortierdetails. Eine Leerzeile trennt die History von der Statusleiste.
+Kontext wird nach dem prozentualen Verbrauch sortiert, nicht nach der absoluten
+Tokengröße. Die Kontextspalte zeigt zuerst den Prozentwert und danach genutzte
+Token sowie das Limit; fehlende Providerwerte bleiben `n/a`. Die Daten bleiben
+als begrenzte JSONL-Datei gespeichert; eine Datenbank ist bei 100 Einträgen
+nicht nötig. Zusätzlich speichert otop lokale, begrenzte System-Snapshots. Der
+Snapshot-Pfad kann über `OTOP_HISTORY_FILE`, die Run-Historie über
+`OTOP_RUN_HISTORY_FILE` oder `XDG_STATE_HOME` angepasst werden.
 
 ## Angezeigte Werte
 
 * **Kopfzeile**: `otop <VERSION>`, Ollama-Version und Erreichbarkeit
   (`/api/version`), `verbunden` / `OFFLINE` sowie bei ausreichender Breite das
   Refresh-Intervall; bei 40 Spalten wird sie gezielt verdichtet.
-* **Aktuelle Runs**: bis zu drei aktive Schema-2-Runs aus `OTOP_RUN_FILE`, jeweils mit Quelle (`Pi`, `Open WebUI`, `Ollama CLI`), Status, Modell und verfügbaren Token-/Dauerwerten. Verwaiste Live-Einträge werden nach 90 Sekunden ohne Lebenszeichen entfernt und nicht als aktuelle Runs angezeigt. Lange Streams senden regelmäßig Lebenszeichen. Schema-1-Daten bleiben als `Legacy` lesbar. Status, Modell, Kontextlimit und grafischer Kontextverbrauch (Prompt- plus Ausgabetoken),
+* **Aktuelle Runs**: bis zu drei aktive Schema-2-Runs aus `OTOP_RUN_FILE`, jeweils mit Quelle (`Pi`, `Open WebUI`, `Ollama CLI`), Status, Modell und verfügbaren Token-/Dauerwerten. Eine Open-WebUI-Chat-Anfrage bleibt auch bei internen Tool- oder Fortsetzungsrunden genau ein aktueller Run. Verwaiste Live-Einträge werden nach 90 Sekunden ohne Lebenszeichen entfernt und nicht als aktuelle Runs angezeigt. Lange Streams senden regelmäßig Lebenszeichen. Schema-1-Daten bleiben als `Legacy` lesbar. Status, Modell, Kontextlimit und grafischer Kontextverbrauch (Prompt- plus Ausgabetoken),
   Prompt-/Ausgabe-/Gesamttoken und Ausgabe-Rate. `--chat` und `--generate`
   instrumentieren eigene direkte Ollama-Aufrufe ohne Reverse Proxy. Während
   des Streamings liefert Ollama keine Tokenwerte; bis zum Abschluss stehen sie

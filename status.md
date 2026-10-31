@@ -1,6 +1,6 @@
 # status.md — otop
 
-**Version 1.7.3** · Stand 31.10.2026 · Status: Live-Run-Bereinigung und parallele Collector-Schreibzugriffe korrigiert.
+**Version 1.8.4** · Stand 31.10.2026 · Status: Präzise Spaltenmarkierung und Abstand zur Statusleiste.
 
 ## Aktueller Stand
 
@@ -13,7 +13,7 @@ gedimmt. Ollama-Modelle zeigen einen geteilten Speicherbalken im gleichen
 Raster wie die Sensoren: GPU/VRAM ist Grün oberhalb 55 %, Gelb bei 45–55 %
 und Rot darunter; CPU/RAM bleibt gedimmt grau. Beide Anteile verwenden `#`.
 CPU-Power wird nicht angezeigt, weil auf diesem Host keine zugängliche,
-verlässliche Quelle existiert. History speichert begrenzte, datensparsame JSONL-Snapshots mit UTC-Zeitstempeln. Die Run-History zeigt bis zu zehn abgeschlossene Runs; instrumentierte Runs enthalten optional Kontexttoken und Kontextlimit; die TUI visualisiert den Verbrauch als Balken.
+verlässliche Quelle existiert. History speichert begrenzte, datensparsame JSONL-Snapshots mit UTC-Zeitstempeln. Die Run-History hält bis zu 100 abgeschlossene Runs als scrollbare und sortierbare Tabelle vor; instrumentierte Runs enthalten optional Kontexttoken und Kontextlimit.
 Aktive Run-Metriken können über einen token-geschützten lokalen HTTP-Collector
 (`POST /v1/runs`) geliefert werden. Er verwaltet mehrere parallele Runs,
 dedupliziert finale Einträge nach Quelle und Run-ID und zeigt die Quelle in TUI
@@ -24,6 +24,36 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Korrekturen in 1.8.4
+
+- Die Unterstreichung der aktiven Sortierspalte endet direkt mit dem Spaltentext und umfasst keine Auffüllung mehr.
+- Zwischen History-Tabelle und Statusleiste bleibt eine vollständig leere Zeile; die 40×18-Ansicht fasst dafür Modell- und Run-Anzahl in einer Zeile zusammen.
+
+## Korrekturen in 1.8.3
+
+- Die Kontextzelle zeigt den Prozentwert vor Verbrauch und Limit, zum Beispiel `33% 10.9k/32.8k`.
+- Die History-Überschrift enthält keine redundante Sortieranzeige mehr; stattdessen ist der aktive Spaltenkopf unterstrichen und trägt den Richtungspfeil.
+
+## Korrekturen in 1.8.2
+
+- Die History-Spalte Kontext wird nach dem tatsächlichen prozentualen Verbrauch sortiert, nicht nach der absoluten Zahl genutzter Token; Einträge ohne Limit folgen zuletzt.
+- Die aktive Sortierspalte ist direkt im Tabellenkopf mit `▾` oder `▴` markiert.
+
+## Korrekturen in 1.8.1
+
+- TUI-Abbruch nach Start oder bei History-Navigation behoben: `curses.KEY_TAB` ist nicht auf allen Python-curses-Versionen vorhanden; die Tab-Taste verwendet nun den portablen Code `9`.
+
+## Neu in 1.8.0
+
+- Die Run-History ist eine scrollbare TUI-Tabelle für bis zu 100 finale Einträge und kann nach allen angezeigten Spalten sortiert werden.
+- Die Kontextspalte zeigt Verbrauch, Limit und Prozentwert beziehungsweise transparent `n/a`; fehlende Werte werden beim Sortieren zuletzt geführt.
+- Die bestehende begrenzte JSONL-Datei bleibt die Datenquelle. Eine Datenbank ist für höchstens 100 kleine, atomar geschriebene Einträge nicht erforderlich.
+
+## Korrekturen in 1.7.4
+
+- Wiederholte `request`-Filteraufrufe derselben Open-WebUI-Nachricht erzeugen bei Tool- und Fortsetzungsrunden keinen zusätzlichen aktuellen Run mehr.
+- Parallele Open-WebUI-Anfragen mit unterschiedlichen Nachrichten-Identitäten bleiben weiterhin getrennte Runs; API-Aufrufe ohne stabile Identität werden nicht pauschal zusammengeführt.
 
 ## Korrekturen in 1.7.3
 
@@ -62,15 +92,15 @@ Ollama-Endpunkte beziehungsweise vorhandene Dateien.
 
 - GPU-Auslastung ist geräteweit und nicht exklusiv Ollama zurechenbar.
 - `nvidia-smi` und sysfs werden als Fallback, nicht parallel, abgefragt.
-- Es gibt keinen Scroll-Modus. Passen Modellkarten nicht vollständig in den
-verfügbaren Bereich, zeigt die TUI ihre Anzahl als ausgeblendet an.
+- Für Modellkarten gibt es keinen Scroll-Modus. Passen sie nicht vollständig
+  in den verfügbaren Bereich, zeigt die TUI ihre Anzahl als ausgeblendet an;
+  die Run-History ist unabhängig davon scrollbar.
 - Power-Limits sind nur verfügbar, wenn die jeweilige Quelle sie meldet.
 - Langsame HTTP- oder `nvidia-smi`-Abfragen blockieren derzeit kurzzeitig die
   TUI-Eingabe; eine Entkopplung ist eine spätere technische Verbesserung.
 - Die TUI arbeitet weiterhin synchron; langsame API- oder Sensorabfragen können
   kurzzeitig die Eingabe blockieren.
-- Git ist im Projektverzeichnis initialisiert; Branch `master`, erster Commit
-  steht noch aus.
+- Git ist im Projektverzeichnis initialisiert; Entwicklungsbranch ist `master`.
 - Der direkte Client-Modus instrumentiert nur Aufrufe, die über `otop` selbst
   erfolgen; fremde Ollama-Clients bleiben ohne Adapter unsichtbar.
 - Der Open-WebUI-Adapter wird mit `--install-open-webui-adapter` per Admin-API
@@ -80,6 +110,10 @@ verfügbaren Bereich, zeigt die TUI ihre Anzahl als ausgeblendet an.
 
 ## Prüfung am 31.10.2026
 
+- Pseudo-TTY-Prüfung: Bei 120×40 erscheinen Tabellenkopf, Sortierstatus und Kontextspalte; bei 40×18 bleibt die kompakte Tabellenansicht sichtbar. Normaler `q`-Exit ist auf beiden Größen Code 0.
+- Sortier- und Kontexttests: alle acht Spalten, fehlende Werte und 100 geladene Historieneinträge erfolgreich.
+- Visuelles Live-Debugging mit drei `request`-Aufrufen derselben Open-WebUI-Identität: Die Anzeige blieb durchgehend bei genau einem aktuellen Run; das finale Outlet entfernte ihn und erzeugte genau einen History-Eintrag.
+- Installierter Open-WebUI-Filter und lokale Version sind identisch (`1.3.2`), aktiv und global. Ein echter Streaming-Aufruf über `/api/chat/completions` zeigte maximal einen Live-Eintrag.
 - Run-History zeigt in `--once` zehn Einträge; bestehende ältere `cancelled`-Einträge bleiben als historische Altdaten unverändert.
 - Lokaler und global installierter Open-WebUI-Adapter sind identisch, aktiv und global aktiviert; der Disconnect-Watcher ist entfernt.
 - `python3 otop.py --install-open-webui-adapter`: erfolgreich.
@@ -88,7 +122,7 @@ verfügbaren Bereich, zeigt die TUI ihre Anzahl als ausgeblendet an.
 
 
 - `python3 -m py_compile otop.py`: OK.
-- `python3 otop.py --version`: `otop 1.7.3`.
+- `python3 otop.py --version`: `otop 1.8.4`.
 - `python3 otop.py --once` und `--once --no-nvidia`: OK.
 - Mock-Rendering: 0/100-, 44/56-, 50/50-, 56/44-, 100/0- und fehlende
   Speichergrößen nutzen erwartete Segmentbreiten, Offload-Farben,

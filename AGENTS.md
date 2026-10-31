@@ -84,8 +84,9 @@ Tests laufen ausschließlich im temp-Verzeichnis: `python` aus `/tmp/pi/...`. Mo
 - Vor Änderungen den Ausgangsstand mit `git status --short`, `git branch --show-current` und passenden Tags prüfen.
 - Nach Änderungen `git diff --check`, einen gezielten `git diff` und die vorgeschriebenen Tests ausführen.
 - Semantische Versionierung (`MAJOR.MINOR.PATCH`) in `otop.py`, `version.md` und `README.md` synchronisieren.
-- Veröffentlichte Versionen sollen nach ausdrücklicher Freigabe als Commit gesichert und mit `vX.Y.Z` getaggt werden.
-- Arbeitsstände nicht eigenmächtig committen oder taggen. Ohne Freigabe nur Änderungen und Prüfresultate zusammenfassen.
+- Jeder vollständig implementierte und erfolgreich geprüfte Versionsstand mit erhöhter `VERSION` wird zum Abschluss der Aufgabe als Git-Commit gesichert; dafür ist keine zusätzliche Freigabe erforderlich.
+- Tags und Releases (`vX.Y.Z`) weiterhin nur nach ausdrücklicher Freigabe erstellen.
+- Unfertige Arbeitsstände oder Änderungen ohne Versionsanhebung nicht eigenmächtig committen; ohne Freigabe nur Änderungen und Prüfresultate zusammenfassen.
 - `PATCH`: Fehlerkorrekturen ohne neue Bedienfunktion.
 - `MINOR`: Neue abwärtskompatible Anzeige- oder CLI-Funktion.
 - `MAJOR`: Inkompatible Änderungen an Schnittstelle oder Layout (selten).

@@ -20,12 +20,12 @@ def test_run_metric_detail():
     assert 'Prompt n/a' in otop.run_metric_detail({'output_tokens': 3})
 
 
-def test_run_history_defaults_to_ten():
+def test_run_history_defaults_to_hundred():
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / 'runs.jsonl'
         records = []
-        for index in range(12):
-            stamp = f'2026-10-31T18:{index:02d}:00Z'
+        for index in range(102):
+            stamp = f'2026-10-31T18:{index % 60:02d}:00Z'
             records.append({
                 'schema': 2, 'run_id': str(index), 'source': 'open-webui',
                 'model': 'model', 'status': 'completed',
@@ -34,9 +34,38 @@ def test_run_history_defaults_to_ten():
             })
         path.write_text(''.join(json.dumps(record) + '\n' for record in records))
         result = otop.load_run_history(path)
-        assert len(result) == 10
-        assert result[0]['run_id'] == '11'
-        assert result[-1]['run_id'] == '2'
+        assert len(result) == 100
+
+
+def test_history_sorting_and_context_cells():
+    runs = [
+        {'run_id': 'a', 'source': 'open-webui', 'model': 'Beta', 'status': 'completed',
+         'finished_at': '2026-10-31T18:01:00Z', 'prompt_tokens': 100, 'output_tokens': 50,
+         'context_tokens': 150, 'context_limit': 1000, 'total_duration_s': 5, 'eval_duration_s': 1},
+        {'run_id': 'b', 'source': 'pi', 'model': 'alpha', 'status': 'error',
+         'finished_at': '2026-10-31T18:02:00Z', 'prompt_tokens': 600, 'output_tokens': 600,
+         'context_tokens': 1200, 'context_limit': 1000, 'total_duration_s': 3, 'eval_duration_s': 2},
+        {'run_id': 'c', 'source': 'ollama-cli', 'model': 'gamma', 'status': 'completed',
+         'finished_at': '2026-10-31T18:03:00Z'},
+    ]
+    for column in otop.HISTORY_COLUMNS:
+        ordered = otop.sort_run_history(runs, column)
+        assert len(ordered) == 3
+    assert otop.sort_run_history(runs, 'tokens')[-1]['run_id'] == 'c'
+    assert otop.sort_run_history(runs, 'kontext')[-1]['run_id'] == 'c'
+    percentage_runs = [
+        dict(runs[0], run_id='large', context_tokens=1000, context_limit=10000),
+        dict(runs[0], run_id='small', context_tokens=500, context_limit=1000),
+    ]
+    assert [item['run_id'] for item in otop.sort_run_history(
+        percentage_runs, 'kontext')] == ['small', 'large']
+    assert [item['run_id'] for item in otop.sort_run_history(runs, 'modell', False)] == ['b', 'a', 'c']
+    assert otop.history_header_label('kontext', 'kontext', True) == 'Kontext▾'
+    assert otop.history_header_label('kontext', 'kontext', False) == 'Kontext▴'
+    assert otop.history_header_label('modell', 'kontext', True) == 'Modell'
+    assert otop.history_context_cell(runs[0]) == '15% 150/1.0k'
+    assert otop.history_context_cell(dict(runs[0], context_limit=None)) == 'n/a 150/n/a'
+    assert otop.history_context_cell(runs[2]) == 'n/a'
 
 
 def test_live_run_keeps_active_run_until_final():
@@ -95,7 +124,8 @@ def test_parallel_live_updates_do_not_resurrect_runs():
 
 if __name__ == '__main__':
     test_run_metric_detail()
-    test_run_history_defaults_to_ten()
+    test_run_history_defaults_to_hundred()
+    test_history_sorting_and_context_cells()
     test_live_run_keeps_active_run_until_final()
     test_stale_live_runs_are_pruned()
     test_parallel_live_updates_do_not_resurrect_runs()

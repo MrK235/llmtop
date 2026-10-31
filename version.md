@@ -12,6 +12,45 @@ gebracht.
 
 ## Changelog
 
+### 1.8.4 — 31.10.2026
+
+- Unterstreichung der aktiven Sortierspalte auf die Textlänge begrenzt.
+- Leere Zeile zwischen History-Tabelle und Statusleiste ergänzt; kompakte
+  40×18-Ansicht dafür ohne Informationsverlust verdichtet.
+
+### 1.8.3 — 31.10.2026
+
+- Kontextzelle auf Prozentwert vor Verbrauch/Limit umgestellt.
+- Redundante Sortieranzeige aus der History-Überschrift entfernt; aktiver
+  Spaltenkopf wird unterstrichen und behält den Richtungspfeil.
+
+### 1.8.2 — 31.10.2026
+
+- Kontextsortierung verwendet den tatsächlichen prozentualen Verbrauch statt
+  der absoluten Tokengröße; fehlende Limits folgen zuletzt.
+- Aktive Sortierspalte im Tabellenkopf mit `▾` beziehungsweise `▴` markiert.
+
+### 1.8.1 — 31.10.2026
+
+- TUI-Abbruch auf Python-curses-Varianten ohne `KEY_TAB` behoben. Die
+  portable Tab-Taste (Code `9`) steuert die History-Sortierspalte.
+
+### 1.8.0 — 31.10.2026
+
+- Run-History als scrollbare, sortierbare TUI-Tabelle für bis zu 100 finale
+  Einträge ergänzt.
+- Sortierung nach Abschlusszeit, Quelle, Modell, Status, Tokens,
+  Kontextverbrauch, Ausgabe-Rate und Dauer; fehlende Werte folgen zuletzt.
+- Kontextspalte zeigt Verbrauch, Limit und Prozentwert. JSONL bleibt für diese
+  begrenzte Datenmenge die Datenquelle; keine Datenbank erforderlich.
+
+### 1.7.4 — 31.10.2026
+
+- Wiederholte Open-WebUI-`request`-Filteraufrufe mit derselben Nachrichten-
+  Identität werden als ein aktiver Run behandelt.
+- Tool- und Fortsetzungsrunden erzeugen dadurch keine zusätzlichen Einträge
+  unter „Aktuelle Runs“; echte parallele Nachrichten bleiben getrennt.
+
 ### 1.7.3 — 31.10.2026
 
 - Verwaiste Live-Runs werden nach 90 Sekunden ohne Lebenszeichen aus
