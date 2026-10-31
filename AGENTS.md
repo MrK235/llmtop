@@ -2,28 +2,28 @@
 
 ## Das Projekt
 
-`otop` ist eine **Single-File-Python-Terminalanwendung** (nur `otop.py`) die über die Ollama-API den Status des geladenen Modells anzeigt sowie CPU-, RAM-, GPU- und VRAM-Sensoren in einer curses-basierten TUI darstellt. Sie ist als `--once`-Snapshotmodi, lokaler Collector-Modus und Open-WebUI-Adapter-Erweiterung ergänzt.
+`otop` ist eine kleine Python-Terminalanwendung mit `otop.py` als Einstieg sowie drei Kernmodulen für Quellen, Metriken und curses-TUI. Sie zeigt über die Ollama-API den Status des geladenen Modells sowie CPU-, RAM-, GPU- und VRAM-Sensoren und bietet `--once`, lokalen Collector und Open-WebUI-Adapter.
 
 **Leitprinzip:** Einfachheit durch Standardbibliothek allein — kein pip, keine System-Packages, keine Konfigurationsdateien neben `.env`. Ausgeführt auf jedem Linux out of the box.
 
 ## 1. Grundsätze
 
 ### Ausrichtung und Ziele
-- **Einzelne Datei:** `otop.py` ist die alleinige Quellcodedatei im Projektstamm (außer `README.md`, `status.md`, `version.md`, `.env.example`, `open_webui/`).
+- **Kleine Kernmodule:** `otop.py`, `otop_sources.py`, `otop_metrics.py` und `otop_tui.py` sind die Quellcodedateien im Projektstamm. Keine weitere Aufspaltung ohne konkreten Bedarf.
 - **Nur Standardbibliothek:** Keine Pip-Abhängigkeiten, keine System-Packages. Alle Sensoren kommen von `/proc`, sysfs oder den lokalen Binaries `nvidia-smi`.
 - **Out-of-the-box auf Linux:** Das Projekt läuft ohne Vorinstallation oder Konfiguration außer optionaler `.env` für Collector und Open-WebUI-Adapter. Es muss keine Installation oder Initialisierung stattfinden.
 - **Fehler-tolerant:** Sensoren greifen kettenbasierte Fallbacks (nvidia-smi → sysfs) zurück; fehlende Hardware wird als `n/a` angezeigt statt zu crashen.
 
 ### Architektur-Entscheidungen
-- Alle Sensorabfragen, Ollama-API-Kommunikation und Terminal-Rendering erfolgen in `otop.py`.
-- Das `open_webui/`-Verzeichnis enthält nur den Open-WebUI-Filteradapter (`otop_run_metrics.py`) als zusätzliche Verteilungsschicht.
+- `otop_sources.py` enthält Sensoren und Ollama-Zugriffe, `otop_metrics.py` Run-Schema, History und Collector, `otop_tui.py` ausschließlich curses-Rendering und Sampler; `otop.py` bleibt CLI-Einstieg.
+- Das `open_webui/`-Verzeichnis enthält nur den Open-WebUI-Filteradapter (`otop_run_metrics.py`) als zusätzliche Verteilungsschicht; ein späterer Pi-Adapter nutzt dasselbe Schema 2 über den Collector.
 - Sensoren greifen auf Systemressourcen zurück: `/proc/stat` (CPU), `/proc/meminfo` (RAM), sysfs oder `nvidia-smi` (GPU/VRAM), `/proc/loadavg` (Load).
 - Collector und History nutzen getrennte, begrenzte JSONL-Dateien unter `$XDG_STATE_HOME/otop/`.
 
 ## 2. Arbeitsweise mit diesem Projekt
 
-### Änderungen an `otop.py`
-- Immer die **einige** Code-Datenquelle; keine Datei-Zersplitterung ohne ausdrücklichen Auftrag.
+### Änderungen an den Kernmodulen
+- Fachgrenzen beibehalten: Quellen in `otop_sources.py`, Runmetriken und Collector in `otop_metrics.py`, curses in `otop_tui.py`, CLI in `otop.py`.
 - Alle neuen Sensoren und Funktionen müssen die Standardbibliothek einhalten. Kein `subprocess` für neue externe Tools außer wo bereits etabliert (`nvidia-smi`).
 - Bestehende CLI-Optionen, Tastatürkürzel und Exit-Codes nur erweitern, nicht umbenennen oder löschen.
 - Farbschema (Cyan Struktur, Grün/Gelb/Rot Status) und Balkengeometrie konsistent halten.

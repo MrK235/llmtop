@@ -12,6 +12,15 @@ gebracht.
 
 ## Changelog
 
+### 1.8.5 — 01.11.2026
+
+- `otop.py` auf Programmeinstieg, CLI und Snapshot-Orchestrierung reduziert.
+- Datenerfassung in `otop_sources.py`, Run-Metriken, History und Collector in
+  `otop_metrics.py` sowie curses-Rendering und Hintergrundsampler in
+  `otop_tui.py` getrennt.
+- Langsame Erfassung läuft außerhalb des curses-Hauptthreads; die bestehende
+  Schema-2-Quelle `pi` ist für einen späteren optionalen Pi-Adapter getestet.
+
 ### 1.8.4 — 31.10.2026
 
 - Unterstreichung der aktiven Sortierspalte auf die Textlänge begrenzt.

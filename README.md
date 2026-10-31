@@ -1,10 +1,10 @@
 # otop — Ollama Terminal Monitor mit GPU-, RAM- und VRAM-Sensoren
 
-**Version 1.8.4 · Single-File-Terminal-Anwendung (nur Python-Standardbibliothek),
+**Version 1.8.5 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
 die über die Ollama-API das **geladene Modell** sowie **CPU-/RAM/GPU-Auslastung**
 anzeigt. Versionsgeschichte und Versionsschema: `version.md`.
 
-Die Version wird angezeigt: in der TUI-Kopfzeile (`otop 1.8.4 • Ollama …`), in der
+Die Version wird angezeigt: in der TUI-Kopfzeile (`otop 1.8.5 • Ollama …`), in der
 ersten Zeile von `--once`, und über `--version`. Maßgebliche Zahl ist `VERSION`
 in `otop.py`.
 
@@ -12,7 +12,10 @@ in `otop.py`.
 
 | Datei | Inhalt |
 |-------|--------|
-| `otop.py` | die Anwendung (einzige Code-Datei) |
+| `otop.py` | Programmeinstieg, CLI und Snapshot-Modus |
+| `otop_sources.py` | Ollama-, CPU-, RAM- und GPU-Datenerfassung |
+| `otop_metrics.py` | Run-Schema, JSONL-Historie, Collector und Open-WebUI-Integration |
+| `otop_tui.py` | curses-Rendering und TUI-Hintergrundsampler |
 | `README.md` | diese Anleitung |
 | `status.md` | Projektstand, bekannte Grenzen und Prüfhinweise |
 | `version.md` | Versionsschema, Versionsanzeige, Changelog |
@@ -22,7 +25,7 @@ in `otop.py`.
 ## Versionierung
 
 Das Projekt ist als Git-Repository eingerichtet. Der aktuelle Branch ist
-`master`; ein erster Commit steht noch aus. Code, Dokumentation und akzeptierte
+`master`. Code, Dokumentation und akzeptierte
 Pläne werden gemeinsam versioniert. Vor einem Commit: Tests aus `status.md`
 ausführen, `VERSION` sowie `README.md`, `status.md` und `version.md` abgleichen.
 Tags verwenden das Format `vX.Y.Z`.
@@ -161,7 +164,7 @@ python3 otop.py --install-open-webui-adapter
 `--collector` bleibt für einen separat laufenden, blockierenden Dienstmodus
 verfügbar.
 
-Der Installationsbefehl erkennt die private Docker-Gateway-Adresse, setzt die Filter-Valves, aktiviert den Filter und schaltet ihn global. Der Filter überträgt ausschließlich Quelle, UUID, Modell, Zeit- und Nutzungswerte. Collector-Fehler werden abgefangen und beeinflussen die Chatantwort nicht.
+Der Installationsbefehl erkennt die private Docker-Gateway-Adresse, setzt die Filter-Valves, aktiviert den Filter und schaltet ihn global. Der Filter überträgt ausschließlich Quelle, UUID, Modell, Zeit- und Nutzungswerte. Collector-Fehler werden abgefangen und beeinflussen die Chatantwort nicht. Die gleiche Schema-2-Schnittstelle (`POST /v1/runs`, `source: "pi"`) ist für einen optionalen Pi-Adapter vorgesehen; der Kern benötigt dafür keine Pi-Abhängigkeit.
 
 ## Bekannte Grenzen
 

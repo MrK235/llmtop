@@ -1,13 +1,10 @@
-import importlib.util
 import json
 import tempfile
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
-spec = importlib.util.spec_from_file_location('otop', 'otop.py')
-otop = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(otop)
+import otop_metrics as otop
 
 
 def test_run_metric_detail():
@@ -122,6 +119,35 @@ def test_parallel_live_updates_do_not_resurrect_runs():
         assert otop.load_run_events(live, max_age=10 ** 9) == []
 
 
+def test_pi_events_use_existing_collector_schema():
+    import os
+    with tempfile.TemporaryDirectory() as directory:
+        old_live = os.environ.get('OTOP_RUN_FILE')
+        old_history = os.environ.get('OTOP_RUN_HISTORY_FILE')
+        os.environ['OTOP_RUN_FILE'] = str(Path(directory) / 'run.jsonl')
+        os.environ['OTOP_RUN_HISTORY_FILE'] = str(Path(directory) / 'runs.jsonl')
+        try:
+            started = {'schema': 2, 'event': 'started', 'run_id': 'pi-run',
+                       'source': 'pi', 'model': 'model',
+                       'started_at': '2026-11-01T12:00:00Z'}
+            assert otop.process_run_event(started)
+            assert otop.load_run_events(max_age=10 ** 9)[0]['source'] == 'pi'
+            completed = dict(started, event='completed', finished_at='2026-11-01T12:00:01Z',
+                             prompt_tokens=2, output_tokens=3)
+            assert otop.process_run_event(completed)
+            assert otop.load_run_events(max_age=10 ** 9) == []
+            assert otop.load_run_history()[0]['source'] == 'pi'
+        finally:
+            if old_live is None:
+                os.environ.pop('OTOP_RUN_FILE', None)
+            else:
+                os.environ['OTOP_RUN_FILE'] = old_live
+            if old_history is None:
+                os.environ.pop('OTOP_RUN_HISTORY_FILE', None)
+            else:
+                os.environ['OTOP_RUN_HISTORY_FILE'] = old_history
+
+
 if __name__ == '__main__':
     test_run_metric_detail()
     test_run_history_defaults_to_hundred()
@@ -129,4 +155,5 @@ if __name__ == '__main__':
     test_live_run_keeps_active_run_until_final()
     test_stale_live_runs_are_pruned()
     test_parallel_live_updates_do_not_resurrect_runs()
+    test_pi_events_use_existing_collector_schema()
     print('OK')

@@ -1,11 +1,13 @@
 # status.md — otop
 
-**Version 1.8.4** · Stand 31.10.2026 · Status: Präzise Spaltenmarkierung und Abstand zur Statusleiste.
+**Version 1.8.5** · Stand 01.11.2026 · Status: Aufgeteilte Kernmodule und nicht blockierende TUI-Erfassung.
 
 ## Aktueller Stand
 
-`otop.py` ist eine einzelne Python-Standardbibliotheks-Anwendung mit curses-TUI
-und `--once`-Ausgabe. Die TUI zeigt die Bereiche System, GPU, Ollama und
+`otop.py` ist der Programmeinstieg einer Python-Standardbibliotheks-Anwendung
+mit curses-TUI und `--once`-Ausgabe. Die Datenerfassung liegt in
+`otop_sources.py`, Run-Metriken, History und Collector in `otop_metrics.py`
+sowie Rendering und TUI-Sampler in `otop_tui.py`. Die TUI zeigt die Bereiche System, GPU, Ollama und
 History in dieser Reihenfolge. CPU, RAM, GPU, VRAM und Power verwenden
 konsistente Balken, Abstände und eine globale Farbsyntax. Struktur ist Cyan,
 Statuswerte und Temperaturen verwenden Grün/Gelb/Rot, Sekundärinfos sind
@@ -24,6 +26,17 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 1.8.5
+
+- Sensoren, Ollama-Zugriffe, Run-Metriken/Collector und curses-TUI sind in drei
+  überschaubare Kernmodule aufgeteilt; `otop.py` bleibt der kompatible Einstieg.
+- Die TUI erfasst Daten in einem einzelnen Hintergrund-Thread. HTTP-,
+  `nvidia-smi`-, sysfs- und History-Schreibzugriffe blockieren die Tastatur und
+  das Rendering nicht mehr.
+- Schema-2-Ereignisse mit Quelle `pi` werden durch denselben Collector wie Open
+  WebUI verarbeitet und sind damit für den späteren optionalen Pi-Adapter
+  vorbereitet.
 
 ## Korrekturen in 1.8.4
 
@@ -96,10 +109,9 @@ Ollama-Endpunkte beziehungsweise vorhandene Dateien.
   in den verfügbaren Bereich, zeigt die TUI ihre Anzahl als ausgeblendet an;
   die Run-History ist unabhängig davon scrollbar.
 - Power-Limits sind nur verfügbar, wenn die jeweilige Quelle sie meldet.
-- Langsame HTTP- oder `nvidia-smi`-Abfragen blockieren derzeit kurzzeitig die
-  TUI-Eingabe; eine Entkopplung ist eine spätere technische Verbesserung.
-- Die TUI arbeitet weiterhin synchron; langsame API- oder Sensorabfragen können
-  kurzzeitig die Eingabe blockieren.
+- Die TUI zeigt während einer langsamen Quelle den letzten vollständigen
+  Snapshot. Der Hintergrund-Sampler selbst wartet weiterhin auf den jeweiligen
+  HTTP- oder `nvidia-smi`-Timeout; es gibt bewusst noch keine Parallelabfragen.
 - Git ist im Projektverzeichnis initialisiert; Entwicklungsbranch ist `master`.
 - Der direkte Client-Modus instrumentiert nur Aufrufe, die über `otop` selbst
   erfolgen; fremde Ollama-Clients bleiben ohne Adapter unsichtbar.
@@ -122,7 +134,7 @@ Ollama-Endpunkte beziehungsweise vorhandene Dateien.
 
 
 - `python3 -m py_compile otop.py`: OK.
-- `python3 otop.py --version`: `otop 1.8.4`.
+- `python3 otop.py --version`: `otop 1.8.5`.
 - `python3 otop.py --once` und `--once --no-nvidia`: OK.
 - Mock-Rendering: 0/100-, 44/56-, 50/50-, 56/44-, 100/0- und fehlende
   Speichergrößen nutzen erwartete Segmentbreiten, Offload-Farben,
