@@ -210,8 +210,9 @@ def test_tui_draws_loaded_model():
     assert any("\t" in text for text in screen.text)
     assert any(text.startswith("Pi\tmodel\trunning\t") for text in screen.text)
     assert ("model", 12) in screen.calls
-    assert ("Kontext".ljust(9), 11) in screen.calls
-    assert any("20.0 %  20 / 100" in text for text in screen.text)
+    context_index = screen.calls.index(("Kontext".ljust(9), 11))
+    assert screen.calls[context_index + 2][0] == "20.0 %".rjust(7)
+    assert screen.calls[context_index + 3][0] == "20 / 100"
 
 
 if __name__ == '__main__':

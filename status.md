@@ -1,6 +1,6 @@
 # status.md — otop
 
-**Version 1.10.4** · Stand 01.11.2026 · Status: Kontext mit Prozent vor Verbrauch und eingerückte Bereichsüberschriften.
+**Version 1.10.5** · Stand 01.11.2026 · Status: Kontext folgt dem CPU-/GPU-Raster.
 
 ## Aktueller Stand
 
@@ -26,6 +26,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Korrekturen in 1.10.5
+
+- Kontextanzeige auf das Raster von CPU und GPU ausgerichtet: Prozentwert
+  rechtsbündig nach dem Balken, Verbrauch/Limit gedimmt grau danach.
 
 ## Korrekturen in 1.10.4
 
@@ -181,7 +186,7 @@ Ollama-Endpunkte beziehungsweise vorhandene Dateien.
 
 
 - `python3 -m py_compile otop.py`: OK.
-- `python3 otop.py --version`: `otop 1.10.4`.
+- `python3 otop.py --version`: `otop 1.10.5`.
 - `python3 otop.py --once` und `--once --no-nvidia`: OK.
 - Mock-Rendering: 0/100-, 44/56-, 50/50-, 56/44-, 100/0- und fehlende
   Speichergrößen nutzen erwartete Segmentbreiten, Offload-Farben,

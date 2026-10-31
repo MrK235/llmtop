@@ -355,9 +355,15 @@ def _draw(scr, st, host, interval):
             value = (f"{compact_tokens(used)} / {compact_tokens(limit)}"
                      if used is not None else "warten auf Provider")
             pct_text = f"{pct:.1f} %" if pct is not None else "n/a"
-            _add(scr, row, 0, "Kontext".ljust(9), colors["context_label"])
-            _add(scr, row, 9, f"{bar(pct, bar_w)} {pct_text}  {value}",
-                 _util_color(colors, pct))
+            x = 0
+            _add(scr, row, x, "Kontext".ljust(label_w), colors["context_label"])
+            x += label_w
+            meter = bar(pct, bar_w)
+            _add(scr, row, x, meter, _util_color(colors, pct))
+            x += len(meter) + 1
+            _add(scr, row, x, pct_text.rjust(7), _util_color(colors, pct))
+            x += 8
+            _add(scr, row, x, value, colors["secondary"])
             row += 1
     else:
         _add(scr, row, 0, "Keine instrumentierten Requests", colors["secondary"])

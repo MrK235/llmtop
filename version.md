@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 1.10.5 — 01.11.2026
+
+- Kontextanzeige an CPU-/GPU-Raster angepasst: Prozentwert rechtsbündig nach
+  dem Balken, gedimmter Verbrauch danach.
+
 ### 1.10.4 — 01.11.2026
 
 - Kontextanzeige aktueller Runs ordnet Prozent vor Verbrauch und Limit an.
