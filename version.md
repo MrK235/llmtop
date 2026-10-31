@@ -12,6 +12,12 @@ gebracht.
 
 ## Changelog
 
+### 1.10.0 — 01.11.2026
+
+- Modell-Speicheranzeige in „VRAM/RAM“ umbenannt und Werte entsprechend
+  beschriftet.
+- Modellnamen hellgrün sowie Kontextlabel vor dem Balken dunkelgrün dargestellt.
+
 ### 1.9.0 — 01.11.2026
 
 - Letzten abgeschlossenen Run weiterhin im Bereich „Aktuelle Runs“ anzeigen,

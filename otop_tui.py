@@ -66,6 +66,7 @@ def _offload_color(colors, gpu_pct):
 def _init_colors():
     """Zentrale Farbrollen: Struktur, Status, Offload und Sekundärtext."""
     c = {"structure": curses.A_BOLD, "secondary": curses.A_DIM,
+         "model_name": curses.A_BOLD, "context_label": 0,
          "status_green": curses.A_BOLD, "status_yellow": curses.A_BOLD,
          "error": curses.A_BOLD, "offload_good": curses.A_BOLD,
          "offload_mixed": curses.A_BOLD, "offload_cpu": curses.A_BOLD}
@@ -76,6 +77,8 @@ def _init_colors():
         curses.init_pair(4, curses.COLOR_CYAN, curses.COLOR_BLACK)
         curses.init_pair(5, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
         c["status_green"] = curses.color_pair(1) | curses.A_BOLD
+        c["model_name"] = curses.color_pair(1) | curses.A_BOLD
+        c["context_label"] = curses.color_pair(1)
         c["status_yellow"] = curses.color_pair(2) | curses.A_BOLD
         c["error"] = curses.color_pair(3) | curses.A_BOLD
         c["structure"] = curses.color_pair(4) | curses.A_BOLD
@@ -245,7 +248,7 @@ def _draw(scr, st, host, interval):
         name = model.get("name", "?")
         meta = (f"{details.get('parameter_size', '-')} {details.get('quantization_level', '-')}  "
                 f"ctx {model.get('context_length', '-')}  {model.get('runner', '-')}")
-        _add(scr, row, 0, name, colors["structure"])
+        _add(scr, row, 0, name, colors["model_name"])
         _add(scr, row, len(name) + 2, meta, colors["secondary"])
         exp = model.get("expires_at")
         if exp:
@@ -259,7 +262,7 @@ def _draw(scr, st, host, interval):
                 pass
         row += 1
         x = 0
-        _add(scr, row, x, "Speicher ".ljust(label_w), colors["structure"])
+        _add(scr, row, x, "VRAM/RAM ".ljust(label_w), colors["structure"])
         x += label_w
         if gpu_pct is None:
             _add(scr, row, x, "[", colors["structure"])
@@ -275,12 +278,12 @@ def _draw(scr, st, host, interval):
             _add(scr, row, x + bar_w + 1, "]", colors["structure"])
         x += bar_w + 3
         if gpu_pct is None:
-            _add(scr, row, x, "GPU/CPU n/a", colors["secondary"])
+            _add(scr, row, x, "VRAM/RAM n/a", colors["secondary"])
         else:
-            gpu_text = f"GPU {gpu_pct:.0f} % {fmt_bytes(vram)}"
+            gpu_text = f"VRAM {gpu_pct:.0f} % {fmt_bytes(vram)}"
             _add(scr, row, x, gpu_text, gpu_attr)
             _add(scr, row, x + len(gpu_text) + 3,
-                 f"CPU {100 - gpu_pct:.0f} % {fmt_bytes(cpu_mem)}", colors["secondary"])
+                 f"RAM {100 - gpu_pct:.0f} % {fmt_bytes(cpu_mem)}", colors["secondary"])
         return row + 1
 
     oll = st["ollama"]
@@ -348,7 +351,8 @@ def _draw(scr, st, host, interval):
             value = (f"{compact_tokens(used)} / {compact_tokens(limit)}"
                      if used is not None else "warten auf Provider")
             pct_text = f"{pct:.1f} %" if pct is not None else "n/a"
-            _add(scr, row, 0, f"{'Kontext'.ljust(9)}{bar(pct, bar_w)} {value}  {pct_text}",
+            _add(scr, row, 0, "Kontext".ljust(9), colors["context_label"])
+            _add(scr, row, 9, f"{bar(pct, bar_w)} {value}  {pct_text}",
                  _util_color(colors, pct))
             row += 1
     else:

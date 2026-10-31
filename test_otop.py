@@ -165,25 +165,31 @@ def test_pi_events_use_existing_collector_schema():
 
 def test_tui_draws_loaded_model():
     class Screen:
+        def __init__(self):
+            self.text = []
+
         def getmaxyx(self):
             return 40, 120
 
         def erase(self):
             pass
 
-        def addstr(self, *_args):
-            pass
+        def addstr(self, _y, _x, text, _attr=0):
+            self.text.append(text)
 
         def refresh(self):
             pass
 
-    colors = {name: 0 for name in ("structure", "secondary", "status_green",
-                                    "status_yellow", "error", "offload_good",
-                                    "offload_mixed", "offload_cpu")}
+    colors = {name: 0 for name in ("structure", "secondary", "model_name",
+                                    "context_label", "status_green", "status_yellow",
+                                    "error", "offload_good", "offload_mixed", "offload_cpu")}
     state = {"colors": colors, "help": False, "cpu": 10.0,
              "cpu_temp": None, "cpu_temp_source": None,
              "ram": (20.0, 16.0, 12.0), "gpus": [], "gpu_err": None,
-             "collector_status": "nicht aktiv", "runs": [], "run_history": [{
+             "collector_status": "nicht aktiv", "runs": [{
+                 "schema": 2, "run_id": "current", "source": "pi", "model": "model",
+                 "status": "running", "context_tokens": 20, "context_limit": 100,
+             }], "run_history": [{
                  "schema": 2, "run_id": "history", "source": "pi", "model": "model",
                  "status": "completed", "finished_at": "2030-01-01T00:00:00Z",
                  "prompt_tokens": 2, "output_tokens": 3,
@@ -193,7 +199,10 @@ def test_tui_draws_loaded_model():
                  "context_length": 4096, "expires_at": "2030-01-01T00:00:00Z",
                  "details": {"parameter_size": "1B", "quantization_level": "Q4"},
              }]}}
-    otop_tui._draw(Screen(), state, "http://localhost:11434", 2.0)
+    screen = Screen()
+    otop_tui._draw(screen, state, "http://localhost:11434", 2.0)
+    assert any("VRAM/RAM" in text for text in screen.text)
+    assert any("Kontext" in text for text in screen.text)
 
 
 if __name__ == '__main__':
