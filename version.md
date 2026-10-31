@@ -12,6 +12,12 @@ gebracht.
 
 ## Changelog
 
+### 1.10.4 — 01.11.2026
+
+- Kontextanzeige aktueller Runs ordnet Prozent vor Verbrauch und Limit an.
+- Bereichsüberschriften eingerückt und mit Linien vor sowie nach dem Titel
+  dargestellt.
+
 ### 1.10.3 — 01.11.2026
 
 - Modellnamen grau und unterstrichen dargestellt.

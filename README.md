@@ -1,10 +1,10 @@
 # otop — Ollama Terminal Monitor mit GPU-, RAM- und VRAM-Sensoren
 
-**Version 1.10.3 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
+**Version 1.10.4 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
 die über die Ollama-API das **geladene Modell** sowie **CPU-/RAM/GPU-Auslastung**
 anzeigt. Versionsgeschichte und Versionsschema: `version.md`.
 
-Die Version wird angezeigt: in der TUI-Kopfzeile (`otop 1.10.3 • Ollama …`), in der
+Die Version wird angezeigt: in der TUI-Kopfzeile (`otop 1.10.4 • Ollama …`), in der
 ersten Zeile von `--once`, und über `--version`. Maßgebliche Zahl ist `VERSION`
 in `otop.py`.
 
@@ -87,7 +87,8 @@ Datenbank-Fallback kann `OTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 ## TUI-Layout
 
 Die Vollbildansicht gliedert sich von oben nach unten in **System**, **GPU**,
-**Ollama** und **History**. Bei 40×18 verwendet sie eine kompakte Ansicht mit
+**Ollama** und **History**. Bereichsüberschriften sind eingerückt und von
+horizontalen Linien vor und nach dem Titel eingerahmt. Bei 40×18 verwendet sie eine kompakte Ansicht mit
 Kernwerten, Modellanzahl und History-Status, damit sich keine Bereiche überzeichnen.
 CPU, RAM, GPU-Auslastung, VRAM und Power verwenden
 pro Terminal dieselbe Balkenbreite; Label, Prozentwert und Detailwert sind
@@ -145,7 +146,8 @@ Snapshot-Pfad kann über `OTOP_HISTORY_FILE`, die Run-Historie über
   Runs sind per Tabulator ausgerichtet. Label und Klammern sind Cyan. VRAM ist oberhalb 55 % Grün,
   bei 45–55 % Gelb und darunter Rot; RAM und sein Text bleiben gedimmt grau.
   Beide Anteile verwenden `#`; Prozent- und Größenwerte bleiben daneben lesbar.
-  Das Label „Kontext“ vor dem Balken eines aktuellen Runs ist Cyan.
+  Das Label „Kontext“ vor dem Balken eines aktuellen Runs ist Cyan. Die
+  Kontextanzeige zeigt nach dem Balken zuerst Prozent und danach Verbrauch/Limit.
 
 ## Open-WebUI-Adapter
 

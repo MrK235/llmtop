@@ -99,8 +99,9 @@ def _draw(scr, st, host, interval):
     bar_w = max(8, min(24, w - 50))
 
     def section(row, title):
-        prefix = f" {title} "
-        _add(scr, row, 0, prefix + "─" * max(0, w - len(prefix) - 1), colors["structure"])
+        x = 2
+        prefix = f"── {title} "
+        _add(scr, row, x, prefix + "─" * max(0, w - x - len(prefix) - 1), colors["structure"])
         return row + 1
 
     def sensor(row, label, pct, value, detail="", value_attr=None, accent="", accent_attr=None):
@@ -355,7 +356,7 @@ def _draw(scr, st, host, interval):
                      if used is not None else "warten auf Provider")
             pct_text = f"{pct:.1f} %" if pct is not None else "n/a"
             _add(scr, row, 0, "Kontext".ljust(9), colors["context_label"])
-            _add(scr, row, 9, f"{bar(pct, bar_w)} {value}  {pct_text}",
+            _add(scr, row, 9, f"{bar(pct, bar_w)} {pct_text}  {value}",
                  _util_color(colors, pct))
             row += 1
     else:

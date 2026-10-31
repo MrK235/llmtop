@@ -205,11 +205,13 @@ def test_tui_draws_loaded_model():
              }]}}
     screen = Screen()
     otop_tui._draw(screen, state, "http://localhost:11434", 2.0)
+    assert any(text.startswith("── System ") for text in screen.text)
     assert any("VRAM/RAM" in text for text in screen.text)
     assert any("\t" in text for text in screen.text)
     assert any(text.startswith("Pi\tmodel\trunning\t") for text in screen.text)
     assert ("model", 12) in screen.calls
     assert ("Kontext".ljust(9), 11) in screen.calls
+    assert any("20.0 %  20 / 100" in text for text in screen.text)
 
 
 if __name__ == '__main__':
