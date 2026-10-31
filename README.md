@@ -1,10 +1,10 @@
 # otop — Ollama Terminal Monitor mit GPU-, RAM- und VRAM-Sensoren
 
-**Version 1.8.8 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
+**Version 1.9.0 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
 die über die Ollama-API das **geladene Modell** sowie **CPU-/RAM/GPU-Auslastung**
 anzeigt. Versionsgeschichte und Versionsschema: `version.md`.
 
-Die Version wird angezeigt: in der TUI-Kopfzeile (`otop 1.8.8 • Ollama …`), in der
+Die Version wird angezeigt: in der TUI-Kopfzeile (`otop 1.9.0 • Ollama …`), in der
 ersten Zeile von `--once`, und über `--version`. Maßgebliche Zahl ist `VERSION`
 in `otop.py`.
 
@@ -117,7 +117,7 @@ Snapshot-Pfad kann über `OTOP_HISTORY_FILE`, die Run-Historie über
 * **Kopfzeile**: `otop <VERSION>`, Ollama-Version und Erreichbarkeit
   (`/api/version`), `verbunden` / `OFFLINE` sowie bei ausreichender Breite das
   Refresh-Intervall; bei 40 Spalten wird sie gezielt verdichtet.
-* **Aktuelle Runs**: bis zu drei aktive Schema-2-Runs aus `OTOP_RUN_FILE`, jeweils mit Quelle (`Pi`, `Open WebUI`, `Ollama CLI`), Status, Modell und verfügbaren Token-/Dauerwerten. Eine Open-WebUI-Chat-Anfrage bleibt auch bei internen Tool- oder Fortsetzungsrunden genau ein aktueller Run. Verwaiste Live-Einträge werden nach 90 Sekunden ohne Lebenszeichen entfernt und nicht als aktuelle Runs angezeigt. Lange Streams senden regelmäßig Lebenszeichen. Schema-1-Daten bleiben als `Legacy` lesbar. Status, Modell, Kontextlimit und grafischer Kontextverbrauch (Prompt- plus Ausgabetoken),
+* **Aktuelle Runs**: bis zu drei aktive Schema-2-Runs aus `OTOP_RUN_FILE`, jeweils mit Quelle (`Pi`, `Open WebUI`, `Ollama CLI`), Status, Modell und verfügbaren Token-/Dauerwerten. Nach dem Abschluss bleibt der letzte Run mit den finalen Token- und Zeitwerten sichtbar, bis ein neuer Run startet. Eine Open-WebUI-Chat-Anfrage bleibt auch bei internen Tool- oder Fortsetzungsrunden genau ein aktueller Run. Verwaiste nicht-finale Live-Einträge werden nach 90 Sekunden ohne Lebenszeichen entfernt und nicht als aktuelle Runs angezeigt. Lange Streams senden regelmäßig Lebenszeichen. Schema-1-Daten bleiben als `Legacy` lesbar. Status, Modell, Kontextlimit und grafischer Kontextverbrauch (Prompt- plus Ausgabetoken),
   Prompt-/Ausgabe-/Gesamttoken und Ausgabe-Rate. `--chat` und `--generate`
   instrumentieren eigene direkte Ollama-Aufrufe ohne Reverse Proxy. Während
   des Streamings liefert Ollama keine Tokenwerte; bis zum Abschluss stehen sie

@@ -1,6 +1,6 @@
 # status.md — otop
 
-**Version 1.8.8** · Stand 01.11.2026 · Status: Aufgeteilte Kernmodule und nicht blockierende TUI-Erfassung.
+**Version 1.9.0** · Stand 01.11.2026 · Status: Finaler aktueller Run bleibt bis zum nächsten Start sichtbar.
 
 ## Aktueller Stand
 
@@ -26,6 +26,13 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 1.9.0
+
+- Der letzte abgeschlossene aktuelle Run bleibt mit seinen finalen Token- und
+  Zeitwerten sichtbar, bis ein neuer Run beginnt.
+- Finale Ereignisse ergänzen zuvor bekannte Start- und Kontextwerte vor der
+  Persistierung in die Run-History.
 
 ## Korrekturen in 1.8.8
 
@@ -149,7 +156,7 @@ Ollama-Endpunkte beziehungsweise vorhandene Dateien.
 
 
 - `python3 -m py_compile otop.py`: OK.
-- `python3 otop.py --version`: `otop 1.8.8`.
+- `python3 otop.py --version`: `otop 1.9.0`.
 - `python3 otop.py --once` und `--once --no-nvidia`: OK.
 - Mock-Rendering: 0/100-, 44/56-, 50/50-, 56/44-, 100/0- und fehlende
   Speichergrößen nutzen erwartete Segmentbreiten, Offload-Farben,

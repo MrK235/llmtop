@@ -81,7 +81,13 @@ def test_live_run_keeps_active_run_until_final():
                      prompt_tokens=4, output_tokens=6)
         assert otop.append_run_history(final, history)
         assert otop.write_live_run(final, live)
-        assert list(otop.load_run_events(live)) == []
+        displayed = otop.load_run_events(live)
+        assert len(displayed) == 1
+        assert displayed[0]["status"] == "completed"
+        assert displayed[0]["prompt_tokens"] == 4
+        next_run = dict(run, run_id="next", status="running")
+        assert otop.write_live_run(next_run, live)
+        assert [item["run_id"] for item in otop.load_run_events(live)] == ["next"]
         assert len(otop.load_run_history(history)) == 1
 
 
@@ -117,7 +123,9 @@ def test_parallel_live_updates_do_not_resurrect_runs():
             thread.start()
         for thread in threads:
             thread.join()
-        assert otop.load_run_events(live, max_age=10 ** 9) == []
+        displayed = otop.load_run_events(live, max_age=10 ** 9)
+        assert len(displayed) == 1
+        assert displayed[0]["status"] == "completed"
 
 
 def test_pi_events_use_existing_collector_schema():
@@ -129,15 +137,21 @@ def test_pi_events_use_existing_collector_schema():
         os.environ['OTOP_RUN_HISTORY_FILE'] = str(Path(directory) / 'runs.jsonl')
         try:
             started = {'schema': 2, 'event': 'started', 'run_id': 'pi-run',
-                       'source': 'pi', 'model': 'model',
+                       'source': 'pi', 'model': 'model', 'context_limit': 4096,
                        'started_at': '2026-11-01T12:00:00Z'}
             assert otop.process_run_event(started)
             assert otop.load_run_events(max_age=10 ** 9)[0]['source'] == 'pi'
             completed = dict(started, event='completed', finished_at='2026-11-01T12:00:01Z',
                              prompt_tokens=2, output_tokens=3)
             assert otop.process_run_event(completed)
-            assert otop.load_run_events(max_age=10 ** 9) == []
+            displayed = otop.load_run_events(max_age=10 ** 9)
+            assert displayed[0]['status'] == 'completed'
+            assert displayed[0]['prompt_tokens'] == 2
             assert otop.load_run_history()[0]['source'] == 'pi'
+            assert otop.load_run_history()[0]['context_limit'] == 4096
+            next_run = dict(started, run_id='pi-next', started_at='2026-11-01T12:00:02Z')
+            assert otop.process_run_event(next_run)
+            assert [item['run_id'] for item in otop.load_run_events(max_age=10 ** 9)] == ['pi-next']
         finally:
             if old_live is None:
                 os.environ.pop('OTOP_RUN_FILE', None)

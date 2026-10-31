@@ -12,6 +12,13 @@ gebracht.
 
 ## Changelog
 
+### 1.9.0 — 01.11.2026
+
+- Letzten abgeschlossenen Run weiterhin im Bereich „Aktuelle Runs“ anzeigen,
+  bis ein neuer Run startet.
+- Finale Metriken ergänzen zuvor erfasste Run-Daten vor Live-Anzeige und
+  History-Persistierung.
+
 ### 1.8.8 — 01.11.2026
 
 - TUI-Abbruch beim Anzeigen von History-Token behoben; `total_tokens` wird im

@@ -179,8 +179,22 @@ def write_live_run(run, path=None):
                 runs[(candidate["source"], candidate["run_id"])] = candidate
         key = (normalized["source"], normalized["run_id"])
         if normalized["status"] in FINAL_RUN_EVENTS:
-            runs.pop(key, None)
+            # Der letzte Abschluss bleibt als aktueller Run sichtbar, bis ein
+            # neuer Run beginnt. Seine finalen Werte ersetzen Zwischenstände.
+            prior = runs.get(key)
+            if prior:
+                merged = dict(prior)
+                merged.update(normalized)
+                normalized = normalize_run(merged) or normalized
+            runs = {item_key: item for item_key, item in runs.items()
+                    if item_key == key or item["status"] not in FINAL_RUN_EVENTS}
+            runs[key] = normalized
         else:
+            # Ein neuer Run ersetzt den bislang angezeigten Abschluss, aktive
+            # parallele Runs bleiben erhalten.
+            if key not in runs or runs[key]["status"] in FINAL_RUN_EVENTS:
+                runs = {item_key: item for item_key, item in runs.items()
+                        if item["status"] not in FINAL_RUN_EVENTS}
             runs[key] = normalized
         records = [{"timestamp": item.get("updated_at") or item.get("started_at"), "run": item}
                    for item in sorted(runs.values(), key=lambda value: _parse_time(
@@ -189,11 +203,12 @@ def write_live_run(run, path=None):
 
 
 def load_run_events(path=None, max_age=DEFAULT_RUN_MAX_AGE, limit=3):
-    """Liest aktive Runs und entfernt verwaiste Einträge aus der Live-Datei.
+    """Liest aktive Runs plus den letzten Abschluss aus der Live-Datei.
 
     Ein Run ohne Update bleibt für lange Anfragen bis zum Sicherheits-Timeout
     sichtbar. Danach wird er nicht als aktueller Run dargestellt und aus der
-    Live-Datei entfernt; er wird nicht nachträglich historisiert.
+    Live-Datei entfernt; er wird nicht nachträglich historisiert. Der letzte
+    finale Run bleibt dagegen sichtbar, bis ein neuer Run beginnt.
     """
     target = os.path.expanduser(path or run_path())
     with RUN_FILE_LOCK:
@@ -201,18 +216,18 @@ def load_run_events(path=None, max_age=DEFAULT_RUN_MAX_AGE, limit=3):
         for item in read_jsonl(target):
             candidate = item.get("run") if isinstance(item.get("run"), dict) else item
             candidate = normalize_run(candidate)
-            if candidate and candidate["status"] not in FINAL_RUN_EVENTS:
+            if candidate:
                 runs[(candidate["source"], candidate["run_id"])] = candidate
         now = datetime.now(timezone.utc)
         fresh = {}
         for key, run in runs.items():
-            stamp = _parse_time(run.get("updated_at") or run.get("started_at"))
-            if stamp:
+            stamp = _parse_time(run.get("updated_at") or run.get("finished_at") or run.get("started_at"))
+            if run["status"] not in FINAL_RUN_EVENTS and stamp:
                 age = max(0.0, (now - stamp).total_seconds())
                 if age > max_age:
                     continue
                 run["age_seconds"] = age
-            else:
+            elif run["status"] not in FINAL_RUN_EVENTS:
                 run["age_seconds"] = None
             fresh[key] = run
         if len(fresh) != len(runs):
@@ -472,6 +487,14 @@ def process_run_event(event):
     run.setdefault("updated_at", now)
     if run["status"] in FINAL_RUN_EVENTS:
         run.setdefault("finished_at", now)
+        # Finale Adapter-Ereignisse duerfen nur die am Ende verfuegbaren Werte
+        # enthalten. Bereits bekannte Start-/Kontextdaten bleiben erhalten.
+        prior = next((item for item in load_run_events(limit=DEFAULT_RUN_HISTORY_LIMIT)
+                      if item["source"] == run["source"] and item["run_id"] == run["run_id"]), None)
+        if prior:
+            merged = dict(prior)
+            merged.update(run)
+            run = normalize_run(merged) or run
         missing = {key for key in ("prompt_tokens", "output_tokens", "eval_duration_s") if key not in run}
         if missing and run.get("source") == "open-webui":
             run.update({key: value for key, value in OpenWebUIFinalMetricsReader().read(
