@@ -1,0 +1,63 @@
+import asyncio
+import importlib.util
+import pathlib
+
+
+PATH = pathlib.Path(__file__).with_name("otop_run_metrics.py")
+SPEC = importlib.util.spec_from_file_location("otop_filter", PATH)
+MODULE = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(MODULE)
+
+
+def test_find_metrics():
+    metrics = MODULE.find_metrics({"done": True, "prompt_eval_count": 4, "eval_count": 8,
+                                   "eval_duration": 1_000_000_000})
+    assert metrics == {"prompt_eval_count": 4, "eval_count": 8,
+                       "eval_duration": 1_000_000_000}
+    assert MODULE.find_metrics({"usage": {"input_tokens": 2, "output_tokens": 3}}) == {
+        "prompt_tokens": 2, "output_tokens": 3}
+    assert MODULE.find_metrics({"usage": {"prompt_tokens": 2, "completion_tokens": 3}}) == {
+        "prompt_tokens": 2, "output_tokens": 3}
+    assert MODULE.find_metrics({"usage": {"completion_tokens": 3, "total_duration": 4}}) == {
+        "output_tokens": 3, "total_duration": 4}
+    assert MODULE.find_metrics({"usage": {"output_tokens": 3, "response_token/s": 4}}) == {
+        "output_tokens": 3, "output_rate": 4}
+
+
+async def exercise():
+    adapter = MODULE.Filter()
+    sent = []
+
+    async def capture(event):
+        sent.append(event)
+
+    adapter._send = capture
+    assert not adapter._is_ollama({"model": "remote:model"}, {"id": "remote:model", "owned_by": "openai"})
+    assert not adapter._is_ollama({"model": "unknown"}, None)
+    model = {"id": "qwen:test", "owned_by": "ollama"}
+    metadata = {"message_id": "message-1"}
+    body = {"model": "qwen:test", "messages": [{"role": "user", "content": "secret"}]}
+    await adapter.request(body, metadata, model)
+    assert sent[0]["event"] == "started"
+    assert "messages" not in sent[0]
+    await adapter.stream({"model": "qwen:test", "usage": {
+        "prompt_tokens": 2, "completion_tokens": 3, "eval_duration": 1_000_000_000}}, metadata, model)
+    assert sent[1]["event"] == "updated"
+    assert sent[1]["output_tokens"] == 3
+    await adapter.stream({"model": "qwen:test", "done": True, "eval_count": 5}, metadata, model)
+    assert sent[2]["event"] == "completed"
+    assert sent[2]["eval_count"] == 5
+    await adapter.outlet({"model": "qwen:test", "messages": []}, metadata, model)
+    assert len(sent) == 3
+
+    await adapter.request(body, {"message_id": "a"}, model)
+    await adapter.request(body, {"message_id": "b"}, model)
+    await adapter.outlet({"model": "qwen:test"}, {"message_id": "a"}, model)
+    await adapter.outlet({"model": "qwen:test"}, {"message_id": "b"}, model)
+    assert len({event["run_id"] for event in sent if event["event"] == "completed"}) == 3
+
+
+if __name__ == "__main__":
+    test_find_metrics()
+    asyncio.run(exercise())
+    print("OK")

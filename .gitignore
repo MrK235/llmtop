@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.env
+run.jsonl
+runs.jsonl
+history.jsonl
