@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 1.10.10 — 01.11.2026
+
+- Kopfzeile um Ollama- und Collector-Verbindungsstatus erweitert.
+- TUI-Standardintervall auf 0,5 s und Untergrenze auf 0,2 s reduziert.
+
 ### 1.10.9 — 01.11.2026
 
 - Bereichslinien bis zum linken Rand gezogen und Inhalte um ein Zeichen

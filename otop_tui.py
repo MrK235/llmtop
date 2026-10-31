@@ -139,15 +139,25 @@ def _draw(scr, st, host, interval):
         return row + 1
 
     def draw_header(ollama):
-        conn = "verbunden" if ollama["ok"] else "OFFLINE"
-        ver = ollama["version"] if ollama["ok"] else "?"
-        header = f"otop {VERSION}  •  Ollama {ver}  •  {conn}"
+        ollama_state = "verbunden" if ollama["ok"] else "OFFLINE"
+        ollama_short = "OK" if ollama["ok"] else "OFF"
+        version = ollama["version"] if ollama["ok"] else "?"
+        collector_status = st.get("collector_status", "nicht aktiv")
+        collector_active = collector_status.startswith("aktiv")
+        collector_state = "aktiv" if collector_active else "nicht aktiv"
+        collector_short = "OK" if collector_active else "OFF"
+        header = (f"otop {VERSION}  •  Ollama {version} {ollama_state}  •  "
+                  f"Collector {collector_state}")
+        compact = f"otop {VERSION} • Ollama:{ollama_short} • Coll:{collector_short}"
         interval_text = f"Intervall {interval:.1f}s"
         if len(header) + len(interval_text) + 2 <= w:
             _add(scr, 0, 0, header, colors["structure"])
             _add(scr, 0, w - len(interval_text) - 2, interval_text, colors["secondary"])
+        elif len(compact) + len(interval_text) + 2 <= w:
+            _add(scr, 0, 0, compact, colors["structure"])
+            _add(scr, 0, w - len(interval_text) - 2, interval_text, colors["secondary"])
         else:
-            _add(scr, 0, 0, f"otop {VERSION}  •  Ollama {conn}", colors["structure"])
+            _add(scr, 0, 0, compact, colors["structure"])
 
     def history_columns():
         if w >= 118:
@@ -425,7 +435,7 @@ def _draw(scr, st, host, interval):
     if st["help"]:
         sources = ", ".join(sorted(set(g.get("source", "?") for g in st["gpus"]))) or "keine"
         box = ["Hilfe", "", "q  Q  beenden", "r  Programm neu laden",
-               "h  Hilfe ein/aus", "-  Intervall halbieren (min 0.5s)",
+               "h  Hilfe ein/aus", "-  Intervall halbieren (min 0.2s)",
                "+  Intervall verdoppeln (max 60s)",
                "Tab / Shift-Tab  History-Spalte wechseln", "s  History-Sortierrichtung",
                "↑/↓ Bild↑/Bild↓ Pos1/Ende  History scrollen", "",
@@ -486,7 +496,7 @@ def _run_tui(host, interval, use_nvidia, version):
                               "cpu_temp_source": cpu_temp_source, "history_ok": history_ok,
                               "collector_status": collector.status()})
                 delay = interval
-            refresh.wait(max(0.5, delay))
+            refresh.wait(max(0.2, delay))
             refresh.clear()
 
     worker = threading.Thread(target=sample, name="otop-sampler", daemon=True)
@@ -517,7 +527,7 @@ def _run_tui(host, interval, use_nvidia, version):
                     interval = min(60.0, interval * 2)
                     refresh.set()
                 elif key == ord("-"):
-                    interval = max(0.5, interval / 2)
+                    interval = max(0.2, interval / 2)
                     refresh.set()
                 elif key == 9:
                     index = HISTORY_COLUMNS.index(state["history_sort"])

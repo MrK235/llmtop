@@ -5,7 +5,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "1.10.9"  # Single Source of Truth; History in version.md
+VERSION = "1.10.10"  # Single Source of Truth; History in version.md
 DEFAULT_HOST = "http://localhost:11434"
 
 
@@ -98,7 +98,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(prog="otop", description="Ollama Terminal Monitor")
     ap.add_argument("--version", action="version", version=f"otop {VERSION}")
     ap.add_argument("--host", default=os.environ.get("OLLAMA_HOST", DEFAULT_HOST))
-    ap.add_argument("--interval", type=float, default=2.0, help="Refresh-Sekunden (TUI)")
+    ap.add_argument("--interval", type=float, default=0.5, help="Refresh-Sekunden (TUI)")
     request_group = ap.add_mutually_exclusive_group()
     request_group.add_argument("--chat", metavar="JSON", help="direkter /api/chat-Request mit Run-Metriken")
     request_group.add_argument("--generate", metavar="JSON", help="direkter /api/generate-Request mit Run-Metriken")
@@ -150,7 +150,7 @@ def main(argv=None):
         sys.stderr.write("kein Terminal gefunden; bitte --once verwenden\n")
         return 1
     from otop_tui import _run_tui
-    return _run_tui(host, max(0.5, args.interval), not args.no_nvidia, VERSION)
+    return _run_tui(host, max(0.2, args.interval), not args.no_nvidia, VERSION)
 
 
 if __name__ == "__main__":

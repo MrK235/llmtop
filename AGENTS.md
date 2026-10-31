@@ -51,7 +51,7 @@
 - Keine neuen Dateien unter `/` außer der Python-Datei und den vier Versionsdokumenten.
 - Keine pip-Installationen oder neue System-Packages.
 - Keine Konverter, keine Umstellung auf andere Ausgabeformate neben TUI und `--once`.
-- Keine Änderungen an der sourceset-Kette (nvidia-smi → sysfs), bestehenden Exit-Codes, Tastaturbefehlen oder Refresh-Grenzen (0.5–60 s).
+- Keine Änderungen an der sourceset-Kette (nvidia-smi → sysfs), bestehenden Exit-Codes, Tastaturbefehlen oder Refresh-Grenzen (0.2–60 s).
 - Keine destruktiven Git-Befehle wie `reset --hard`, `clean`, erzwungenes Checkout oder Rebase ohne ausdrücklichen Auftrag.
 - Commits, Tags, Branchwechsel und Releases nur nach ausdrücklicher Freigabe; lesende Git-Befehle und `git diff` gehören zum normalen Arbeitsablauf.
 

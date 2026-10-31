@@ -1,10 +1,10 @@
 # otop — Ollama Terminal Monitor mit GPU-, RAM- und VRAM-Sensoren
 
-**Version 1.10.9 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
+**Version 1.10.10 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
 die über die Ollama-API das **geladene Modell** sowie **CPU-/RAM/GPU-Auslastung**
 anzeigt. Versionsgeschichte und Versionsschema: `version.md`.
 
-Die Version wird angezeigt: in der TUI-Kopfzeile (`otop 1.10.9 • Ollama …`), in der
+Die Version wird angezeigt: in der TUI-Kopfzeile (`otop 1.10.10 • Ollama …`), in der
 ersten Zeile von `--once`, und über `--version`. Maßgebliche Zahl ist `VERSION`
 in `otop.py`.
 
@@ -33,7 +33,7 @@ Tags verwenden das Format `vX.Y.Z`.
 ## Start
 
 ```bash
-python3 otop.py                      # Vollbild-TUI (curses), Refresh alle 2 s
+python3 otop.py                      # Vollbild-TUI (curses), Refresh alle 0,5 s
 python3 otop.py --interval 1         # TUI mit 1 s Refresh
 python3 otop.py --once               # ein Einzel-Snapshot (Skripte / kein Terminal)
 python3 otop.py --host http://127.0.0.1:11434
@@ -53,7 +53,7 @@ Datenbank-Fallback kann `OTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 | Option | Verhalten |
 |--------|-----------|
 | `--host` | Ollama-URL; Default `$OLLAMA_HOST`, sonst `http://localhost:11434` |
-| `--interval` | Refresh-Sekunden im TUI; Default 2 s, **auf 0.5–60 s begrenzt** (`--interval 0.1` → 0.5 s) |
+| `--interval` | Refresh-Sekunden im TUI; Default 0,5 s, **auf 0,2–60 s begrenzt** (`--interval 0.1` → 0,2 s) |
 | `--once` | ein Snapshot, kein Vollbild; ignoriert `--interval` (CPU-Messung 1 s) |
 | `--no-nvidia` | `nvidia-smi` nicht aufrufen, sysfs benutzen |
 | `--chat JSON` | direkter Streaming-Aufruf an `/api/chat`, Abschlussmetriken lokal speichern |
@@ -78,7 +78,7 @@ Datenbank-Fallback kann `OTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 | `q` / `Q` | beenden |
 | `r` / `R` | Programm mit denselben Optionen neu laden |
 | `h` / `H` | Hilfe ein/aus (wird ignoriert, wenn das Overlay nicht ins Terminal passt) |
-| `-` | Intervall halbieren (min. 0.5 s) |
+| `-` | Intervall halbieren (min. 0,2 s) |
 | `+` / `=` | Intervall verdoppeln (max. 60 s) |
 | `Tab` / `Shift-Tab` | nächste / vorherige Sortierspalte der Run-History |
 | `s` / `S` | Sortierrichtung der Run-History umschalten |
@@ -117,8 +117,10 @@ Snapshot-Pfad kann über `OTOP_HISTORY_FILE`, die Run-Historie über
 ## Angezeigte Werte
 
 * **Kopfzeile**: `otop <VERSION>`, Ollama-Version und Erreichbarkeit
-  (`/api/version`), `verbunden` / `OFFLINE` sowie bei ausreichender Breite das
-  Refresh-Intervall; bei 40 Spalten wird sie gezielt verdichtet.
+  (`/api/version`) sowie Collector-Status (`aktiv` / `nicht aktiv`). Bei
+  ausreichender Breite steht zusätzlich das Refresh-Intervall dort; bei 40
+  Spalten werden beide Verbindungsstati als `Ollama:OK/OFF` und `Coll:OK/OFF`
+  gezielt verdichtet.
 * **Aktuelle Runs**: bis zu drei aktive Schema-2-Runs aus `OTOP_RUN_FILE`, jeweils mit Quelle (`Pi`, `Open WebUI`, `Ollama CLI`), Status, Modell und verfügbaren Token-/Dauerwerten. Nach dem Abschluss bleibt der letzte Run mit den finalen Token- und Zeitwerten sichtbar, bis ein neuer Run startet. Eine Open-WebUI-Chat-Anfrage bleibt auch bei internen Tool- oder Fortsetzungsrunden genau ein aktueller Run. Verwaiste nicht-finale Live-Einträge werden nach 90 Sekunden ohne Lebenszeichen entfernt und nicht als aktuelle Runs angezeigt. Lange Streams senden regelmäßig Lebenszeichen. Schema-1-Daten bleiben als `Legacy` lesbar. Status, Modell, Kontextlimit und grafischer Kontextverbrauch (Prompt- plus Ausgabetoken),
   Prompt-/Ausgabe-/Gesamttoken und Ausgabe-Rate. `--chat` und `--generate`
   instrumentieren eigene direkte Ollama-Aufrufe ohne Reverse Proxy. Während

@@ -214,6 +214,8 @@ def test_tui_draws_loaded_model():
              }]}}
     screen = Screen()
     otop_tui._draw(screen, state, "http://localhost:11434", 2.0)
+    assert any("Ollama test verbunden" in text and "Collector nicht aktiv" in text
+               for text in screen.text)
     assert any(text.startswith("── System ") and x == 0 for text, x in screen.positions)
     assert any(text.startswith("CPU") and x == 1 for text, x in screen.positions)
     assert any(text.startswith("1B\t") and x == 17 for text, x in screen.positions)

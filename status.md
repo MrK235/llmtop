@@ -1,6 +1,6 @@
 # status.md — otop
 
-**Version 1.10.9** · Stand 01.11.2026 · Status: Linker Inhaltsrand, durchgehende Bereichslinien und kompaktere Modellmetadaten.
+**Version 1.10.10** · Stand 01.11.2026 · Status: Kopfzeile mit Ollama- und Collector-Status, schnelleres Standardintervall.
 
 ## Aktueller Stand
 
@@ -26,6 +26,12 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 1.10.10
+
+- Kopfzeile zeigt Ollama- und Collector-Verbindungsstatus, auch verdichtet bei
+  schmalem Terminal.
+- TUI-Standardintervall auf 0,5 s und Untergrenze auf 0,2 s gesetzt.
 
 ## Korrekturen in 1.10.9
 
@@ -205,7 +211,7 @@ Ollama-Endpunkte beziehungsweise vorhandene Dateien.
 
 
 - `python3 -m py_compile otop.py`: OK.
-- `python3 otop.py --version`: `otop 1.10.9`.
+- `python3 otop.py --version`: `otop 1.10.10`.
 - `python3 otop.py --once` und `--once --no-nvidia`: OK.
 - Mock-Rendering: 0/100-, 44/56-, 50/50-, 56/44-, 100/0- und fehlende
   Speichergrößen nutzen erwartete Segmentbreiten, Offload-Farben,
