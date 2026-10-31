@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 1.8.8 — 01.11.2026
+
+- TUI-Abbruch beim Anzeigen von History-Token behoben; `total_tokens` wird im
+  ausgelagerten curses-Modul korrekt importiert und getestet.
+
 ### 1.8.7 — 01.11.2026
 
 - TUI-Abbruch bei geladenen Modellen behoben; `datetime` für die Unload-Anzeige

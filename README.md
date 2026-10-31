@@ -1,10 +1,10 @@
 # otop — Ollama Terminal Monitor mit GPU-, RAM- und VRAM-Sensoren
 
-**Version 1.8.7 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
+**Version 1.8.8 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
 die über die Ollama-API das **geladene Modell** sowie **CPU-/RAM/GPU-Auslastung**
 anzeigt. Versionsgeschichte und Versionsschema: `version.md`.
 
-Die Version wird angezeigt: in der TUI-Kopfzeile (`otop 1.8.7 • Ollama …`), in der
+Die Version wird angezeigt: in der TUI-Kopfzeile (`otop 1.8.8 • Ollama …`), in der
 ersten Zeile von `--once`, und über `--version`. Maßgebliche Zahl ist `VERSION`
 in `otop.py`.
 

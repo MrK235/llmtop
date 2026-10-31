@@ -169,8 +169,11 @@ def test_tui_draws_loaded_model():
     state = {"colors": colors, "help": False, "cpu": 10.0,
              "cpu_temp": None, "cpu_temp_source": None,
              "ram": (20.0, 16.0, 12.0), "gpus": [], "gpu_err": None,
-             "collector_status": "nicht aktiv", "runs": [], "run_history": [],
-             "history_sort": "zeit", "history_desc": True, "history_offset": 0,
+             "collector_status": "nicht aktiv", "runs": [], "run_history": [{
+                 "schema": 2, "run_id": "history", "source": "pi", "model": "model",
+                 "status": "completed", "finished_at": "2030-01-01T00:00:00Z",
+                 "prompt_tokens": 2, "output_tokens": 3,
+             }], "history_sort": "zeit", "history_desc": True, "history_offset": 0,
              "ollama": {"ok": True, "version": "test", "error": None, "models": [{
                  "name": "model", "size": 100, "size_vram": 50,
                  "context_length": 4096, "expires_at": "2030-01-01T00:00:00Z",
