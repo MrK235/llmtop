@@ -168,6 +168,7 @@ def test_tui_draws_loaded_model():
         def __init__(self):
             self.text = []
             self.calls = []
+            self.positions = []
 
         def getmaxyx(self):
             return 40, 120
@@ -178,6 +179,7 @@ def test_tui_draws_loaded_model():
         def addstr(self, _y, _x, text, _attr=0):
             self.text.append(text)
             self.calls.append((text, _attr))
+            self.positions.append((text, _x))
 
         def refresh(self):
             pass
@@ -212,7 +214,9 @@ def test_tui_draws_loaded_model():
              }]}}
     screen = Screen()
     otop_tui._draw(screen, state, "http://localhost:11434", 2.0)
-    assert any(text.startswith("── System ") for text in screen.text)
+    assert any(text.startswith("── System ") and x == 0 for text, x in screen.positions)
+    assert any(text.startswith("CPU") and x == 1 for text, x in screen.positions)
+    assert any(text.startswith("1B\t") and x == 17 for text, x in screen.positions)
     assert any("VRAM/RAM" in text for text in screen.text)
     assert ("50%", 16) in screen.calls
     assert ("/50%", 17) in screen.calls

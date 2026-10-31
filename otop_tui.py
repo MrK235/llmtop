@@ -19,8 +19,11 @@ from otop_sources import (
     GPU_POWER_BOOST_W, bar, collect_gpus, collect_ollama, cpu_percent,
     cpu_temperature, get_ram_pct, loadavg, read_cpu_totals,
 )
-def _add(scr, y, x, text, attr=0):
+def _add(scr, y, x, text, attr=0, indent=True):
+    """Zeichnet normalen Inhalt mit einem linken Leerzeichen-Rand."""
     h, w = scr.getmaxyx()
+    if indent:
+        x += 1
     if y < 0 or y >= h or x >= w:
         return
     s = text[: w - x - 1]
@@ -114,9 +117,10 @@ def _draw(scr, st, host, interval):
     bar_w = max(8, min(24, w - 50))
 
     def section(row, title):
-        x = 2
+        x = 0
         prefix = f"── {title} "
-        _add(scr, row, x, prefix + "─" * max(0, w - x - len(prefix) - 1), colors["structure"])
+        _add(scr, row, x, prefix + "─" * max(0, w - len(prefix) - 1),
+             colors["structure"], indent=False)
         return row + 1
 
     def sensor(row, label, pct, value, detail="", value_attr=None, accent="", accent_attr=None):
@@ -141,7 +145,7 @@ def _draw(scr, st, host, interval):
         interval_text = f"Intervall {interval:.1f}s"
         if len(header) + len(interval_text) + 2 <= w:
             _add(scr, 0, 0, header, colors["structure"])
-            _add(scr, 0, w - len(interval_text) - 1, interval_text, colors["secondary"])
+            _add(scr, 0, w - len(interval_text) - 2, interval_text, colors["secondary"])
         else:
             _add(scr, 0, 0, f"otop {VERSION}  •  Ollama {conn}", colors["structure"])
 
@@ -265,7 +269,7 @@ def _draw(scr, st, host, interval):
                           str(details.get("quantization_level", "-")),
                           f"ctx {model.get('context_length', '-')}",
                           str(model.get("runner", "-"))))
-        meta_x = max(24, ((len(name) + 9) // 8) * 8)
+        meta_x = max(16, ((len(name) + 9) // 8) * 8)
         _add(scr, row, 0, name, colors["model_name"])
         _add(scr, row, meta_x, meta, colors["secondary"])
         exp = model.get("expires_at")
@@ -275,7 +279,7 @@ def _draw(scr, st, host, interval):
                 secs = int((dt - datetime.now(dt.tzinfo)).total_seconds())
                 unload = "unload jetzt" if secs < 0 else f"unload in {secs // 60}:{secs % 60:02d}"
                 attr = colors["error"] if secs < 0 else colors["status_yellow"] if secs < 300 else colors["secondary"]
-                _add(scr, row, max(2, w - len(unload) - 1), unload, attr)
+                _add(scr, row, max(2, w - len(unload) - 2), unload, attr)
             except (AttributeError, TypeError, ValueError):
                 pass
         row += 1
@@ -433,10 +437,10 @@ def _draw(scr, st, host, interval):
         if bw <= w and y0 + bh <= h - 1:
             for j in range(bh):
                 if j == 0 or j == bh - 1:
-                    _add(scr, y0 + j, x0, "+" + "-" * (bw - 2) + "+", colors["structure"])
+                    _add(scr, y0 + j, x0, "+" + "-" * (bw - 2) + "+", colors["structure"], indent=False)
                 else:
                     text = box[j - 1]
-                    _add(scr, y0 + j, x0, "| " + text.ljust(bw - 4) + " |", colors["structure"])
+                    _add(scr, y0 + j, x0, "| " + text.ljust(bw - 4) + " |", colors["structure"], indent=False)
     scr.refresh()
 
 

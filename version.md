@@ -12,6 +12,12 @@ gebracht.
 
 ## Changelog
 
+### 1.10.9 — 01.11.2026
+
+- Bereichslinien bis zum linken Rand gezogen und Inhalte um ein Zeichen
+  eingerückt.
+- Tabulatorposition zwischen Modellname und Metadaten von 24 auf 16 verkürzt.
+
 ### 1.10.8 — 01.11.2026
 
 - Tok/s-Farben ohne Fettdruck dargestellt.
