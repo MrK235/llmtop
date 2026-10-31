@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 1.10.8 — 01.11.2026
+
+- Tok/s-Farben ohne Fettdruck dargestellt.
+
 ### 1.10.7 — 01.11.2026
 
 - Nur VRAM-Prozent farbig, `/RAM%` und Größen gedimmt grau dargestellt.

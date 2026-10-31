@@ -68,10 +68,10 @@ def _rate_color(colors, rate):
     if rate is None:
         return colors["secondary"]
     if rate < 10:
-        return colors["error"]
+        return colors["rate_error"]
     if rate < 50:
-        return colors["status_yellow"]
-    return colors["status_green"]
+        return colors["rate_yellow"]
+    return colors["rate_green"]
 
 
 def _init_colors():
@@ -79,6 +79,7 @@ def _init_colors():
     c = {"structure": curses.A_BOLD, "secondary": curses.A_DIM,
          "model_name": curses.A_DIM | curses.A_UNDERLINE, "context_label": curses.A_BOLD,
          "status_green": curses.A_BOLD, "status_yellow": curses.A_BOLD,
+         "rate_green": 0, "rate_yellow": 0, "rate_error": 0,
          "error": curses.A_BOLD, "offload_good": curses.A_BOLD,
          "offload_mixed": curses.A_BOLD, "offload_cpu": curses.A_BOLD}
     if curses.COLORS >= 8:
@@ -90,6 +91,9 @@ def _init_colors():
         c["status_green"] = curses.color_pair(1) | curses.A_BOLD
         c["context_label"] = curses.color_pair(4) | curses.A_BOLD
         c["status_yellow"] = curses.color_pair(2) | curses.A_BOLD
+        c["rate_green"] = curses.color_pair(1)
+        c["rate_yellow"] = curses.color_pair(2)
+        c["rate_error"] = curses.color_pair(3)
         c["error"] = curses.color_pair(3) | curses.A_BOLD
         c["structure"] = curses.color_pair(4) | curses.A_BOLD
         c["offload_good"] = curses.color_pair(1) | curses.A_BOLD

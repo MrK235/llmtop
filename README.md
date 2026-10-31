@@ -1,10 +1,10 @@
 # otop — Ollama Terminal Monitor mit GPU-, RAM- und VRAM-Sensoren
 
-**Version 1.10.7 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
+**Version 1.10.8 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
 die über die Ollama-API das **geladene Modell** sowie **CPU-/RAM/GPU-Auslastung**
 anzeigt. Versionsgeschichte und Versionsschema: `version.md`.
 
-Die Version wird angezeigt: in der TUI-Kopfzeile (`otop 1.10.7 • Ollama …`), in der
+Die Version wird angezeigt: in der TUI-Kopfzeile (`otop 1.10.8 • Ollama …`), in der
 ersten Zeile von `--once`, und über `--version`. Maßgebliche Zahl ist `VERSION`
 in `otop.py`.
 
@@ -151,7 +151,8 @@ Snapshot-Pfad kann über `OTOP_HISTORY_FILE`, die Run-Historie über
   Das Label „Kontext“ vor dem Balken eines aktuellen Runs ist Cyan. Die
   Kontextanzeige folgt dem CPU-/GPU-Raster: Balken, rechtsbündiger Prozentwert
   und danach gedimmt grau Verbrauch/Limit. Tok/s aktueller Runs ist rot unter
-  10, gelb von 10 bis unter 50 und grün ab 50 Tok/s.
+  10, gelb von 10 bis unter 50 und grün ab 50 Tok/s; diese Tok/s-Farbe ist
+  nicht fett.
 
 ## Open-WebUI-Adapter
 

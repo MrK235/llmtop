@@ -184,12 +184,13 @@ def test_tui_draws_loaded_model():
 
     colors = {name: 0 for name in ("structure", "secondary", "model_name",
                                     "context_label", "status_green", "status_yellow",
-                                    "error", "offload_good", "offload_mixed", "offload_cpu")}
+                                    "rate_green", "rate_yellow", "rate_error", "error",
+                                    "offload_good", "offload_mixed", "offload_cpu")}
     colors["model_name"] = 12
     colors["context_label"] = 11
-    colors["status_green"] = 13
-    colors["status_yellow"] = 14
-    colors["error"] = 15
+    colors["rate_green"] = 13
+    colors["rate_yellow"] = 14
+    colors["rate_error"] = 15
     colors["offload_mixed"] = 16
     colors["secondary"] = 17
     state = {"colors": colors, "help": False, "cpu": 10.0,
