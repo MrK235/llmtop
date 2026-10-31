@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 1.8.7 — 01.11.2026
+
+- TUI-Abbruch bei geladenen Modellen behoben; `datetime` für die Unload-Anzeige
+  wird im ausgelagerten curses-Modul korrekt importiert.
+
 ### 1.8.6 — 01.11.2026
 
 - TUI-Abbruch beim Formatieren vorhandener Run-History behoben; das ausgelagerte

@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import otop_metrics as otop
+import otop_tui
 
 
 def test_run_metric_detail():
@@ -148,6 +149,36 @@ def test_pi_events_use_existing_collector_schema():
                 os.environ['OTOP_RUN_HISTORY_FILE'] = old_history
 
 
+def test_tui_draws_loaded_model():
+    class Screen:
+        def getmaxyx(self):
+            return 40, 120
+
+        def erase(self):
+            pass
+
+        def addstr(self, *_args):
+            pass
+
+        def refresh(self):
+            pass
+
+    colors = {name: 0 for name in ("structure", "secondary", "status_green",
+                                    "status_yellow", "error", "offload_good",
+                                    "offload_mixed", "offload_cpu")}
+    state = {"colors": colors, "help": False, "cpu": 10.0,
+             "cpu_temp": None, "cpu_temp_source": None,
+             "ram": (20.0, 16.0, 12.0), "gpus": [], "gpu_err": None,
+             "collector_status": "nicht aktiv", "runs": [], "run_history": [],
+             "history_sort": "zeit", "history_desc": True, "history_offset": 0,
+             "ollama": {"ok": True, "version": "test", "error": None, "models": [{
+                 "name": "model", "size": 100, "size_vram": 50,
+                 "context_length": 4096, "expires_at": "2030-01-01T00:00:00Z",
+                 "details": {"parameter_size": "1B", "quantization_level": "Q4"},
+             }]}}
+    otop_tui._draw(Screen(), state, "http://localhost:11434", 2.0)
+
+
 if __name__ == '__main__':
     test_run_metric_detail()
     test_run_history_defaults_to_hundred()
@@ -156,4 +187,5 @@ if __name__ == '__main__':
     test_stale_live_runs_are_pruned()
     test_parallel_live_updates_do_not_resurrect_runs()
     test_pi_events_use_existing_collector_schema()
+    test_tui_draws_loaded_model()
     print('OK')
