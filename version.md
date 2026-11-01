@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.1.16 — 01.11.2026
+
+- Modell-Speichergrößen auf `MiB / MiB` mit einmaliger Einheit umgestellt.
+
 ### 2.1.15 — 01.11.2026
 
 - Modell-Speichergrößen auf das kompakte Format `GiB / GiB` reduziert.

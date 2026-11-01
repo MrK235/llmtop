@@ -366,8 +366,8 @@ def _draw(scr, st, host, interval):
             # Prozentwert exakt auf der Sensor-Flucht; der CPU/RAM-Anteil
             # bleibt ausschließlich als grauer Balkenanteil und Größenangabe.
             _add(scr, row, x, f"{gpu_pct:.0f} %".rjust(7), gpu_attr)
-            sizes = (f"{vram / (1024 ** 3):.1f} GiB / "
-                     f"{cpu_mem / (1024 ** 3):.1f} GiB")
+            sizes = (f"{vram / (1024 ** 2):.0f} / "
+                     f"{cpu_mem / (1024 ** 2):.0f} MiB")
             _add(scr, row, x + 8, sizes, colors["secondary"])
         return row + 1
 
