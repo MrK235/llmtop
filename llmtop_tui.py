@@ -231,7 +231,7 @@ def _draw(scr, st, host, interval):
         pct_text = f"{pct:.0f}%" if pct is not None else "n/a"
         meter = bar(pct, 12)
         limit_text = compact_tokens(limit) if limit is not None else "n/a"
-        return f"{pct_text} {meter} {compact_tokens(used)}/{limit_text}"
+        return f"{pct_text} {meter} {limit_text}"
 
     def history_cell(run, column):
         model = model_for_run(run, oll.get("models", [])) if oll else None
@@ -271,7 +271,7 @@ def _draw(scr, st, host, interval):
             return
         pct_text = f"{pct:.0f}%" if pct is not None else "n/a"
         meter = bar(pct, 12)
-        suffix = f" {compact_tokens(used)}/{compact_tokens(limit) if limit is not None else 'n/a'}"
+        suffix = f" {compact_tokens(limit) if limit is not None else 'n/a'}"
         prefix = f"{pct_text} "
         available = max(0, width - len(prefix) - len(meter) - len(suffix))
         suffix = " " * available + suffix

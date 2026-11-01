@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.4 — 01.11.2026
+
+- Kontextspalten auf Prozent, Balken und maximales Kontextlimit reduziert.
+
 ### 2.2.3 — 01.11.2026
 
 - Tokenstände aktiver Runs gegen unvollständige Provider-Zwischenmeldungen mit `0` abgesichert.

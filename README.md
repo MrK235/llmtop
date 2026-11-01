@@ -124,7 +124,7 @@ Zeit, Quelle, Modell, Status, Tokens, Kontext, Tok/s und Dauer. Die Breite jeder
 sichtbaren Spalte richtet sich dynamisch nach Überschrift und Inhalt; aktuelle
 Runs und History nutzen dabei dieselben Spaltenbreiten. Die History berücksichtigt
 dafür stets ihre gesamte Liste. Die Kontextspalte
-zeigt den Fortschritt als farbigen Prozent-/Balkenwert sowie graues Verbrauch/Limit. **History** zeigt
+zeigt den Fortschritt als farbigen Prozent-/Balkenwert sowie danach nur das graue Kontextlimit. **History** zeigt
 eine scrollbare Tabelle mit bis zu 100 abgeschlossenen instrumentierten Runs.
 Sie kann nach Abschlusszeit, Quelle, Modell, Status, Tokens, Kontextverbrauch,
 Ausgaberate und Dauer sortiert werden. Die aktive Sortierspalte ist im
@@ -133,8 +133,8 @@ beziehungsweise `▴` markiert; die History-Überschrift bleibt frei von
 Sortierdetails. Eine Leerzeile trennt die History von der Statusleiste.
 Kontext wird nach dem prozentualen Verbrauch sortiert, nicht nach der absoluten
 Tokengröße. Die Kontextspalte zeigt Prozentwert, Fortschrittsbalken und danach
-Verbrauch/Limit im Format `42% [######      ] 6.8k/16.4k`; fehlende
-Providerwerte bleiben `n/a`. Die Daten bleiben
+nur das Limit im Format `42% [######      ] 16.4k`; fehlende Providerwerte
+bleiben `n/a`. Die Daten bleiben
 als begrenzte JSONL-Datei gespeichert; eine Datenbank ist bei 100 Einträgen
 nicht nötig. Zusätzlich speichert llmtop lokale, begrenzte System-Snapshots. Der
 Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
