@@ -11,7 +11,7 @@ PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚
 
 from llmtop_metrics import (
     DEFAULT_RUN_HISTORY_LIMIT, HISTORY_COLUMNS, CollectorService, _parse_time, _token_value,
-    backfill_context_limits, compact_tokens, context_values, history_context_cell,
+    backfill_context_limits, compact_tokens, context_values,
     history_header_label, load_run_events, load_run_history, model_for_run,
     run_metric_detail, snapshot_record, sort_run_history, source_label, token_rate, total_tokens,
     write_history,
@@ -195,20 +195,31 @@ def _draw(scr, st, host, interval):
         # Quelle/Provider bleibt in jeder Breite sichtbar; Detailspalten sind
         # nachrangig, weil nur so Pi- und WebUI-Runs unterscheidbar sind.
         if w >= 118:
-            return (("zeit", 17), ("quelle", 12), ("modell", 21), ("status", 11),
-                    ("tokens", 8), ("kontext", 15), ("rate", 8), ("dauer", 8))
+            return (("zeit", 12), ("quelle", 12), ("modell", 16), ("status", 10),
+                    ("tokens", 8), ("kontext", 30), ("rate", 8), ("dauer", 8))
         if w >= 80:
-            return (("zeit", 12), ("quelle", 14), ("modell", 16), ("status", 10),
-                    ("tokens", 8), ("kontext", 14))
+            return (("zeit", 8), ("quelle", 10), ("modell", 12), ("status", 8),
+                    ("tokens", 7), ("kontext", 30))
         if w >= 60:
             return (("zeit", 11), ("quelle", 14), ("modell", 16), ("status", 10))
         return (("zeit", 8), ("quelle", 9), ("modell", 11), ("status", 8))
+
+    def context_table_cell(run, model=None):
+        used, limit, pct = context_values(run, model)
+        if used is None:
+            return "n/a"
+        pct_text = f"{pct:.0f}%" if pct is not None else "n/a"
+        meter = bar(pct, 12)
+        limit_text = compact_tokens(limit) if limit is not None else "n/a"
+        return f"{pct_text} {meter} {compact_tokens(used)}/{limit_text}"
 
     def history_cell(run, column):
         model = model_for_run(run, oll.get("models", [])) if oll else None
         if column == "zeit":
             finished = _parse_time(run.get("finished_at"))
-            return finished.strftime("%d.%m %H:%M") if finished else "n/a"
+            if not finished:
+                return "n/a"
+            return finished.strftime("%d.%m %H:%M") if w >= 118 else finished.strftime("%H:%M")
         if column == "quelle":
             return source_label(run.get("source"), run.get("provider"))
         if column == "modell":
@@ -218,7 +229,7 @@ def _draw(scr, st, host, interval):
         if column == "tokens":
             return compact_tokens(total_tokens(run))
         if column == "kontext":
-            return history_context_cell(run, model)
+            return context_table_cell(run, model)
         if column == "rate":
             rate = token_rate(run)
             return f"{rate:.1f}" if rate is not None else "n/a"
@@ -311,11 +322,6 @@ def _draw(scr, st, host, interval):
                 if len(items) == 1:
                     item = items[0]
                     text += f"  {item.get('model', '?')} · {run_status(item)}"
-                    used, limit, pct = context_values(item, model_for_run(item, oll.get("models", [])))
-                    if used is not None:
-                        limit_text = compact_tokens(limit) if limit is not None else "n/a"
-                        pct_text = f"{pct:.1f}%" if pct is not None else "n/a"
-                        text += f" · Kontext {compact_tokens(used)}/{limit_text} {pct_text}"
                 _add(scr, row, 0, text, colors["secondary"])
                 row += 1
         if row < h - 2:
@@ -470,8 +476,7 @@ def _draw(scr, st, host, interval):
                     [run for _source, _running, finished in groups for run in finished])
     columns = history_columns()
     total_run_rows = max(3, min(12, h - row - history_rows - 2))
-    # Jeder Run benötigt eine Tabellenzeile plus eine Kontext-Balkenzeile.
-    visible_runs = max(1, (total_run_rows - 1 - len(groups)) // 2)
+    visible_runs = max(1, total_run_rows - 1 - len(groups))
     max_run_offset = max(0, len(grouped_runs) - visible_runs)
     st["run_offset"] = min(max(0, st.get("run_offset", 0)), max_run_offset)
     visible = grouped_runs[st["run_offset"]:st["run_offset"] + visible_runs]
@@ -497,19 +502,6 @@ def _draw(scr, st, host, interval):
                     rate_x = sum(width + 1 for _name, width in columns[:rate_column])
                     rate_value = current_run_cell(run, "rate")[:columns[rate_column][1]].rjust(columns[rate_column][1])
                     _add(scr, row, rate_x, rate_value, _rate_color(colors, token_rate(run)))
-                row += 1
-                used, limit, pct = context_values(run, model_for_run(run, oll["models"]))
-                context_value = (f"{compact_tokens(used)} / {compact_tokens(limit)}"
-                                 if used is not None else "warten auf Provider")
-                context_pct = f"{pct:.1f} %" if pct is not None else "n/a"
-                x = 0
-                _add(scr, row, x, "Kontext".ljust(label_w), colors["context_label"])
-                x += label_w
-                meter = bar(pct, bar_w)
-                _add(scr, row, x, meter, _util_color(colors, pct))
-                x += len(meter) + 1
-                _add(scr, row, x, context_pct.rjust(7), _util_color(colors, pct))
-                _add(scr, row, x + 8, context_value, colors["secondary"])
                 row += 1
         if len(grouped_runs) > visible_runs:
             _add(scr, row, 0, f"Runs {st['run_offset'] + 1}-{min(len(grouped_runs), st['run_offset'] + visible_runs)} von {len(grouped_runs)}  ·  a/↑↓ scrollen",

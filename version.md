@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.1.20 — 01.11.2026
+
+- Kontextspalte in History und aktuellen Runs als Prozent, Balken und Verbrauch/Limit vereinheitlicht.
+- Zusätzliche Live-Kontextzeile entfernt; der Balken erscheint ausschließlich in der Tabellenspalte.
+
 ### 2.1.19 — 01.11.2026
 
 - Zusätzliche Kontextzeile mit Fortschrittsbalken unter aktuellen Runs ergänzt.
