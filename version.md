@@ -12,6 +12,12 @@ gebracht.
 
 ## Changelog
 
+### 2.0.4 — 01.11.2026
+
+- Pixel-Logo auf acht Zeichen Breite erweitert, damit es im Terminalraster
+  optisch quadratisch ist.
+- Zwei freie Spalten zwischen Logo und Kopftext ergänzt.
+
 ### 2.0.3 — 01.11.2026
 
 - Quadratisches Pixel-Logo für den vierzeiligen TUI-Kopf gestaltet.

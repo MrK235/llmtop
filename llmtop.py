@@ -5,8 +5,8 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.0.3"  # Single Source of Truth; History in version.md
-PIXEL_ICON = ("▛▀▀▜", "▌▞▞▐", "▌▞▞▐", "▙▄▄▟")  # Quadratisches Pixel-Logo für die TUI.
+VERSION = "2.0.4"  # Single Source of Truth; History in version.md
+PIXEL_ICON = ("▛▀▀▀▀▀▀▜", "▌▞▞▞▞▞▞▐", "▌▞▞▞▞▞▞▐", "▙▄▄▄▄▄▄▟")  # Optisch quadratisches Logo im Terminal-Zeichenraster.
 DEFAULT_HOST = "http://localhost:11434"
 
 

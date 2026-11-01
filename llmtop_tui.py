@@ -7,7 +7,7 @@ import time
 from datetime import datetime
 
 VERSION = "?"
-PIXEL_ICON = ("▛▀▀▜", "▌▞▞▐", "▌▞▞▐", "▙▄▄▟")
+PIXEL_ICON = ("▛▀▀▀▀▀▀▜", "▌▞▞▞▞▞▞▐", "▌▞▞▞▞▞▞▐", "▙▄▄▄▄▄▄▟")
 
 from llmtop_metrics import (
     DEFAULT_RUN_HISTORY_LIMIT, HISTORY_COLUMNS, CollectorService, _parse_time, _token_value,
@@ -155,7 +155,9 @@ def _draw(scr, st, host, interval):
         for row, pixel in enumerate(icon):
             _add(scr, row, 1, pixel, colors["structure"], indent=False)
 
-        x = 5
+        # Acht Zeichen Breite gleichen bei Terminal-Zeichen annähernd vier Zeilen Höhe aus.
+        # Zwei freie Spalten trennen das Logo vom Textblock.
+        x = 11
         if w >= 72:
             label_width = 22
             _add(scr, 0, x, f"llmtop {VERSION}", colors["structure"], indent=False)
