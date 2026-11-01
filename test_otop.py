@@ -193,6 +193,8 @@ def test_tui_draws_loaded_model():
     colors["rate_green"] = 13
     colors["rate_yellow"] = 14
     colors["rate_error"] = 15
+    colors["status_green"] = 18
+    colors["error"] = 19
     colors["offload_mixed"] = 16
     colors["secondary"] = 17
     state = {"colors": colors, "help": False, "cpu": 10.0,
@@ -214,8 +216,10 @@ def test_tui_draws_loaded_model():
              }]}}
     screen = Screen()
     otop_tui._draw(screen, state, "http://localhost:11434", 2.0)
-    assert any("Ollama test verbunden" in text and "Collector nicht aktiv" in text
-               for text in screen.text)
+    assert ("Ollama", 0) in screen.calls
+    assert ("verbunden", 18) in screen.calls
+    assert ("Open-WebUI Collector", 0) in screen.calls
+    assert ("nicht aktiv", 19) in screen.calls
     assert any(text.startswith("── System ") and x == 0 for text, x in screen.positions)
     assert any(text.startswith("CPU") and x == 1 for text, x in screen.positions)
     assert any(text.startswith("1B\t") and x == 17 for text, x in screen.positions)

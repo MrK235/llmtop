@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 1.10.11 — 01.11.2026
+
+- Collector als „Open-WebUI Collector“ bezeichnet.
+- Verbindungsnamen Cyan sowie aktive/inaktive Stati Grün/Rot dargestellt.
+
 ### 1.10.10 — 01.11.2026
 
 - Kopfzeile um Ollama- und Collector-Verbindungsstatus erweitert.

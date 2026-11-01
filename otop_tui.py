@@ -141,23 +141,33 @@ def _draw(scr, st, host, interval):
     def draw_header(ollama):
         ollama_state = "verbunden" if ollama["ok"] else "OFFLINE"
         ollama_short = "OK" if ollama["ok"] else "OFF"
+        ollama_attr = colors["status_green"] if ollama["ok"] else colors["error"]
         version = ollama["version"] if ollama["ok"] else "?"
         collector_status = st.get("collector_status", "nicht aktiv")
         collector_active = collector_status.startswith("aktiv")
         collector_state = "aktiv" if collector_active else "nicht aktiv"
         collector_short = "OK" if collector_active else "OFF"
-        header = (f"otop {VERSION}  •  Ollama {version} {ollama_state}  •  "
-                  f"Collector {collector_state}")
-        compact = f"otop {VERSION} • Ollama:{ollama_short} • Coll:{collector_short}"
+        collector_attr = colors["status_green"] if collector_active else colors["error"]
+        full = [(f"otop {VERSION}  •  ", colors["structure"]),
+                ("Ollama", colors["structure"]), (f" {version} ", colors["secondary"]),
+                (ollama_state, ollama_attr), ("  •  ", colors["structure"]),
+                ("Open-WebUI Collector", colors["structure"]), (" ", colors["secondary"]),
+                (collector_state, collector_attr)]
+        compact = [(f"otop {VERSION} • ", colors["structure"]),
+                   ("Ollama:", colors["structure"]), (ollama_short, ollama_attr),
+                   (" • ", colors["structure"]), ("OWC:", colors["structure"]),
+                   (collector_short, collector_attr)]
         interval_text = f"Intervall {interval:.1f}s"
-        if len(header) + len(interval_text) + 2 <= w:
-            _add(scr, 0, 0, header, colors["structure"])
-            _add(scr, 0, w - len(interval_text) - 2, interval_text, colors["secondary"])
-        elif len(compact) + len(interval_text) + 2 <= w:
-            _add(scr, 0, 0, compact, colors["structure"])
-            _add(scr, 0, w - len(interval_text) - 2, interval_text, colors["secondary"])
-        else:
-            _add(scr, 0, 0, compact, colors["structure"])
+        full_width = sum(len(text) for text, _attr in full)
+        compact_width = sum(len(text) for text, _attr in compact)
+        parts = full if full_width + len(interval_text) + 2 <= w else compact
+        width = full_width if parts is full else compact_width
+        x = 1
+        for text, attr in parts:
+            _add(scr, 0, x, text, attr, indent=False)
+            x += len(text)
+        if width + len(interval_text) + 2 <= w:
+            _add(scr, 0, w - len(interval_text) - 1, interval_text, colors["secondary"], indent=False)
 
     def history_columns():
         if w >= 118:
@@ -255,7 +265,7 @@ def _draw(scr, st, host, interval):
             row += 1
         row += 1
         row = section(row, "Ollama")
-        _add(scr, row, 0, "Collector: " + st.get("collector_status", "nicht konfiguriert"),
+        _add(scr, row, 0, "Open-WebUI Collector: " + st.get("collector_status", "nicht konfiguriert"),
              colors["secondary"])
         row += 1
         model_count = len(oll.get("models", []))
@@ -372,7 +382,7 @@ def _draw(scr, st, host, interval):
 
     row += 1
     row = section(row, "Ollama")
-    _add(scr, row, 0, "Collector: " + st.get("collector_status", "nicht konfiguriert"),
+    _add(scr, row, 0, "Open-WebUI Collector: " + st.get("collector_status", "nicht konfiguriert"),
          colors["secondary"])
     row += 2
     row = section(row, f"Aktuelle Runs ({len(active_runs)})")
