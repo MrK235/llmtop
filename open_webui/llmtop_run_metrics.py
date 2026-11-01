@@ -1,9 +1,9 @@
 """
 title: llmtop Run Metrics
 author: llmtop
-version: 2.0.0
+version: 2.1.0
 required_open_webui_version: 0.12.3
-description: Meldet datensparsame Ollama-Runmetriken an den lokalen llmtop-Collector.
+description: Meldet datensparsame Provider-Runmetriken an den lokalen llmtop-Collector.
 """
 
 import asyncio
@@ -94,14 +94,17 @@ class Filter:
         self._runs: dict[str, deque[dict]] = defaultdict(deque)
         self._lock = asyncio.Lock()
 
-    def _is_ollama(self, _body: dict, model: Optional[dict]) -> bool:
-        """Ohne verifizierten Provider nie instrumentieren."""
+    def _provider(self, model: Optional[dict]) -> Optional[str]:
+        """Liefert nur vorhandene, kurze Provider-Metadaten ohne Chatinhalte."""
         if not isinstance(model, dict):
-            return False
-        owned_by = str(model.get("owned_by", "")).lower()
-        base_url = str(model.get("base_url", ""))
-        return (owned_by == "ollama" or
-                base_url.rstrip("/") == self.valves.ollama_base_url.rstrip("/"))
+            return None
+        owned_by = str(model.get("owned_by", "")).strip()
+        if owned_by:
+            return owned_by[:120]
+        base_url = str(model.get("base_url", "")).rstrip("/")
+        if base_url == self.valves.ollama_base_url.rstrip("/"):
+            return "ollama"
+        return "unknown"
 
     @staticmethod
     def _key(model: str, metadata: Optional[dict]) -> str:
@@ -150,7 +153,8 @@ class Filter:
         __model__: Optional[dict] = None,
         __request__: Any = None,
     ) -> dict:
-        if not self._is_ollama(body, __model__):
+        provider = self._provider(__model__)
+        if provider is None:
             return body
         model = str(body.get("model") or (__model__ or {}).get("id") or "unknown")
         now = utc_now()
@@ -178,6 +182,7 @@ class Filter:
                     "started_at": now,
                     "created": now_mono,
                     "last_heartbeat": now_mono,
+                    "provider": provider,
                 }
                 self._runs[key].append(run)
                 is_new = True
@@ -192,6 +197,7 @@ class Filter:
             "event": "started",
             "run_id": run["run_id"],
             "source": "open-webui",
+            "provider": provider,
             "model": model,
             "started_at": now,
             "updated_at": now,
@@ -225,8 +231,8 @@ class Filter:
         now = utc_now()
         await self._send({
             "schema": 2, "event": "updated", "run_id": run["run_id"],
-            "source": "open-webui", "model": run["model"],
-            "started_at": run["started_at"], "updated_at": now, **changed,
+            "source": "open-webui", "provider": run.get("provider", "unknown"),
+            "model": run["model"], "started_at": run["started_at"], "updated_at": now, **changed,
         })
 
     async def _heartbeat(self, model: str, metadata: Optional[dict]) -> None:
@@ -241,8 +247,8 @@ class Filter:
         now = utc_now()
         await self._send({
             "schema": 2, "event": "updated", "run_id": run["run_id"],
-            "source": "open-webui", "model": run["model"],
-            "started_at": run["started_at"], "updated_at": now,
+            "source": "open-webui", "provider": run.get("provider", "unknown"),
+            "model": run["model"], "started_at": run["started_at"], "updated_at": now,
         })
 
     async def _complete(self, model: str, metadata: Optional[dict], metrics: Optional[dict]) -> None:
@@ -267,6 +273,7 @@ class Filter:
             "event": "completed",
             "run_id": run["run_id"],
             "source": "open-webui",
+            "provider": run.get("provider", "unknown"),
             "model": run["model"],
             "started_at": run["started_at"],
             "updated_at": now,

@@ -114,9 +114,11 @@ def normalize_run(run, final=False):
         value = duration_seconds(run.get(source_key))
         if value is not None:
             out[target] = value
-    for key in ("status_detail", "error", "context_limit_source"):
-        if isinstance(run.get(key), str):
-            out[key] = run[key]
+    for key in ("status_detail", "error", "context_limit_source", "provider", "provider_model"):
+        value = run.get(key)
+        if isinstance(value, str) and value:
+            # Provider-Metadaten bleiben klein und enthalten keine Inhalte.
+            out[key] = value[:120]
     if "context_tokens" not in out and "prompt_tokens" in out and "output_tokens" in out:
         out["context_tokens"] = out["prompt_tokens"] + out["output_tokens"]
     if final and (status not in FINAL_RUN_EVENTS or not _parse_time(out.get("finished_at"))):
@@ -205,7 +207,7 @@ def write_live_run(run, path=None):
         return write_jsonl(records, target)
 
 
-def load_run_events(path=None, max_age=DEFAULT_RUN_MAX_AGE, limit=3):
+def load_run_events(path=None, max_age=DEFAULT_RUN_MAX_AGE, limit=None):
     """Liest aktive Runs plus den letzten Abschluss aus der Live-Datei.
 
     Ein Run ohne Update bleibt für lange Anfragen bis zum Sicherheits-Timeout
@@ -241,7 +243,7 @@ def load_run_events(path=None, max_age=DEFAULT_RUN_MAX_AGE, limit=3):
         ordered = sorted(fresh.values(), key=lambda item: _parse_time(
             item.get("updated_at") or item.get("started_at")) or datetime.min.replace(tzinfo=timezone.utc),
                          reverse=True)
-        return ordered[:limit]
+        return ordered if limit is None else ordered[:max(0, int(limit))]
 
 
 def load_run_history(path=None, limit=DEFAULT_RUN_HISTORY_LIMIT):
@@ -304,9 +306,11 @@ def duration_seconds(value):
     return value / 1_000_000_000 if isinstance(value, (int, float)) and value >= 0 else None
 
 
-def source_label(source):
-    return {"pi": "Pi", "open-webui": "Open WebUI", "ollama-cli": "Ollama CLI",
-            "legacy": "Legacy"}.get(source, source or "?")
+def source_label(source, provider=None):
+    """Kurzlabel aus Clientquelle und optionalem Modellprovider."""
+    label = {"pi": "Pi", "open-webui": "Open WebUI", "ollama-cli": "Ollama CLI",
+             "legacy": "Legacy"}.get(source, source or "?")
+    return f"{label}/{provider}" if provider else label
 
 
 def run_metric_detail(run):
@@ -354,7 +358,7 @@ def history_sort_value(run, column):
         value = _parse_time(run.get("finished_at"))
         return (value is None, value or datetime.min.replace(tzinfo=timezone.utc))
     if column == "quelle":
-        return (False, source_label(run.get("source")).casefold())
+        return (False, source_label(run.get("source"), run.get("provider")).casefold())
     if column == "modell":
         return (False, str(run.get("model", "")).casefold())
     if column == "status":

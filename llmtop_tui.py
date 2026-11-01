@@ -201,7 +201,7 @@ def _draw(scr, st, host, interval):
             finished = _parse_time(run.get("finished_at"))
             return finished.strftime("%d.%m %H:%M") if finished else "n/a"
         if column == "quelle":
-            return source_label(run.get("source"))
+            return source_label(run.get("source"), run.get("provider"))
         if column == "modell":
             return str(run.get("model", "?"))
         if column == "status":
@@ -389,11 +389,17 @@ def _draw(scr, st, host, interval):
 
     row += 1
     row = section(row, f"Aktuelle Runs ({len(active_runs)})")
+    # Zwei Zeilen je Run; bei vielen parallelen Clients bleibt jeder Eintrag
+    # über den eigenen Scroll-Offset erreichbar statt nach drei zu verschwinden.
+    available_run_rows = max(2, min(8, h - row - 12))
+    visible_runs = max(1, available_run_rows // 2)
+    max_run_offset = max(0, len(active_runs) - visible_runs)
+    st["run_offset"] = min(max(0, st.get("run_offset", 0)), max_run_offset)
     if active_runs:
-        for run in active_runs[:3]:
+        for run in active_runs[st["run_offset"]:st["run_offset"] + visible_runs]:
             age = (f"vor {run['age_seconds']:.1f}s" if run.get("age_seconds") is not None else "")
             details, _separator, rate_text = run_metric_detail(run).rpartition(" · ")
-            columns = (source_label(run.get("source")), str(run.get("model", "?")),
+            columns = (source_label(run.get("source"), run.get("provider")), str(run.get("model", "?")),
                        str(run.get("status", "unknown")), details)
             text = "\t".join(columns) + "\t"
             _add(scr, row, 0, text, colors["secondary"])
@@ -415,6 +421,10 @@ def _draw(scr, st, host, interval):
             _add(scr, row, x, pct_text.rjust(7), _util_color(colors, pct))
             x += 8
             _add(scr, row, x, value, colors["secondary"])
+            row += 1
+        if len(active_runs) > visible_runs:
+            _add(scr, row, 0, f"Runs {st['run_offset'] + 1}-{min(len(active_runs), st['run_offset'] + visible_runs)} von {len(active_runs)}  ·  a/↑↓ scrollen",
+                 colors["secondary"])
             row += 1
     else:
         _add(scr, row, 0, "Keine instrumentierten Requests", colors["secondary"])
@@ -444,14 +454,15 @@ def _draw(scr, st, host, interval):
     row += 1
     draw_history_table(row, h - row - 2)
 
-    draw_footer("q quit  r neu laden  Tab/Shift-Tab Spalte  s Richtung  ↑↓ scrollen")
+    draw_footer("q quit  r neu laden  a Runs/History  Tab/s sortieren  ↑↓ scrollen")
     if st["help"]:
         sources = ", ".join(sorted(set(g.get("source", "?") for g in st["gpus"]))) or "keine"
         box = ["Hilfe", "", "q  Q  beenden", "r  Programm neu laden",
                "h  Hilfe ein/aus", "-  Intervall halbieren (min 0.2s)",
                "+  Intervall verdoppeln (max 60s)",
+               "a  Aktuelle Runs oder History fokussieren",
                "Tab / Shift-Tab  History-Spalte wechseln", "s  History-Sortierrichtung",
-               "↑/↓ Bild↑/Bild↓ Pos1/Ende  History scrollen", "",
+               "↑/↓ Bild↑/Bild↓ Pos1/Ende  fokussierten Bereich scrollen", "",
                "System / GPU / Ollama / History", "GPU-Quelle: " + sources]
         bh = len(box) + 2
         bw = max(len(b) for b in box) + 4
@@ -482,7 +493,8 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon):
              "gpus": [], "gpu_err": None, "ram": (None, None, None),
              "history_ok": None, "runs": [], "run_history": [],
              "collector_status": collector.status(), "history_sort": "zeit",
-             "history_desc": True, "history_offset": 0}
+             "history_desc": True, "history_offset": 0, "run_offset": 0,
+             "run_focus": False}
     lock = threading.Lock()
     stop = threading.Event()
     refresh = threading.Event()
@@ -543,6 +555,8 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon):
                 elif key == ord("-"):
                     interval = max(0.2, interval / 2)
                     refresh.set()
+                elif key in (ord("a"), ord("A")):
+                    state["run_focus"] = not state["run_focus"]
                 elif key == 9:
                     index = HISTORY_COLUMNS.index(state["history_sort"])
                     state["history_sort"] = HISTORY_COLUMNS[(index + 1) % len(HISTORY_COLUMNS)]
@@ -555,17 +569,22 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon):
                     state["history_desc"] = not state["history_desc"]
                     state["history_offset"] = 0
                 elif key == curses.KEY_UP:
-                    state["history_offset"] = max(0, state["history_offset"] - 1)
+                    target = "run_offset" if state["run_focus"] else "history_offset"
+                    state[target] = max(0, state[target] - 1)
                 elif key == curses.KEY_DOWN:
-                    state["history_offset"] += 1
+                    target = "run_offset" if state["run_focus"] else "history_offset"
+                    state[target] += 1
                 elif key == curses.KEY_PPAGE:
-                    state["history_offset"] = max(0, state["history_offset"] - 5)
+                    target = "run_offset" if state["run_focus"] else "history_offset"
+                    state[target] = max(0, state[target] - 5)
                 elif key == curses.KEY_NPAGE:
-                    state["history_offset"] += 5
+                    target = "run_offset" if state["run_focus"] else "history_offset"
+                    state[target] += 5
                 elif key == curses.KEY_HOME:
-                    state["history_offset"] = 0
+                    state["run_offset" if state["run_focus"] else "history_offset"] = 0
                 elif key == curses.KEY_END:
-                    state["history_offset"] = max(0, len(state["run_history"]) - 1)
+                    target = "run_offset" if state["run_focus"] else "history_offset"
+                    state[target] = max(0, (len(state["runs"]) if state["run_focus"] else len(state["run_history"])) - 1)
         return 0
 
     try:

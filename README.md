@@ -1,6 +1,6 @@
 # llmtop — LLM Terminal Monitor für Ollama mit GPU-, RAM- und VRAM-Sensoren
 
-**Version 2.0.7 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
+**Version 2.1.0 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
 die über die Ollama-API das **geladene Modell** sowie **CPU-/RAM/GPU-Auslastung**
 anzeigt. Versionsgeschichte und Versionsschema: `version.md`.
 
@@ -19,6 +19,7 @@ Pixel-Icon; maßgebliche Zahl ist `VERSION` in `llmtop.py`.
 | `README.md` | diese Anleitung |
 | `status.md` | Projektstand, bekannte Grenzen und Prüfhinweise |
 | `version.md` | Versionsschema, Versionsanzeige, Changelog |
+| `pi/llmtop_run_metrics.ts` | optionaler globaler Pi-Adapter für lokale und Cloud-Provider |
 | `.gitignore` | lokale Python-Artefakte ausschließen |
 | `plan/` | akzeptierte Arbeitspläne (Plan-Mode-Artefakte) |
 
@@ -91,7 +92,8 @@ Datenbank-Fallback kann `LLMTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 | `+` / `=` | Intervall verdoppeln (max. 60 s) |
 | `Tab` / `Shift-Tab` | nächste / vorherige Sortierspalte der Run-History |
 | `s` / `S` | Sortierrichtung der Run-History umschalten |
-| `↑` / `↓`, `Bild↑` / `Bild↓`, `Pos1` / `Ende` | Run-History scrollen |
+| `a` / `A` | Fokus zwischen aktuellen Runs und Run-History wechseln |
+| `↑` / `↓`, `Bild↑` / `Bild↓`, `Pos1` / `Ende` | fokussierten Run-Bereich scrollen |
 
 ## TUI-Layout
 
@@ -145,7 +147,7 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   gedimmt grau; verbundene/aktive Stati sind Grün und OFFLINE/nicht aktive
   Stati Rot. Bei 40 Spalten werden die Verbindungsstati als `Ollama OK/OFF` und
   `OW Collector OK/OFF` verdichtet.
-* **Aktuelle Runs**: bis zu drei aktive Schema-2-Runs aus `LLMTOP_RUN_FILE`, jeweils mit Quelle (`Pi`, `Open WebUI`, `Ollama CLI`), Status, Modell und verfügbaren Token-/Dauerwerten. Nach dem Abschluss bleibt der letzte Run mit den finalen Token- und Zeitwerten sichtbar, bis ein neuer Run startet. Eine Open-WebUI-Chat-Anfrage bleibt auch bei internen Tool- oder Fortsetzungsrunden genau ein aktueller Run. Verwaiste nicht-finale Live-Einträge werden nach 90 Sekunden ohne Lebenszeichen entfernt und nicht als aktuelle Runs angezeigt. Lange Streams senden regelmäßig Lebenszeichen. Schema-1-Daten bleiben als `Legacy` lesbar. Status, Modell, Kontextlimit und grafischer Kontextverbrauch (Prompt- plus Ausgabetoken),
+* **Aktuelle Runs**: alle aktiven Schema-2-Runs aus `LLMTOP_RUN_FILE`, jeweils mit Quelle und Provider (etwa `Pi/OpenAI`, `Pi/Ollama`, `Open WebUI/Ollama`), Status, Modell und verfügbaren Token-/Dauerwerten. Bei mehr Runs als sichtbaren Zeilen ist der Bereich mit `a` und den Scrolltasten erreichbar. Nach dem Abschluss bleibt der letzte Run mit den finalen Token- und Zeitwerten sichtbar, bis ein neuer Run startet. Eine Open-WebUI-Chat-Anfrage bleibt auch bei internen Tool- oder Fortsetzungsrunden genau ein aktueller Run. Verwaiste nicht-finale Live-Einträge werden nach 90 Sekunden ohne Lebenszeichen entfernt und nicht als aktuelle Runs angezeigt. Lange Streams senden regelmäßig Lebenszeichen. Schema-1-Daten bleiben als `Legacy` lesbar. Status, Modell, Kontextlimit und grafischer Kontextverbrauch (Prompt- plus Ausgabetoken),
   Prompt-/Ausgabe-/Gesamttoken und Ausgabe-Rate. `--chat` und `--generate`
   instrumentieren eigene direkte Ollama-Aufrufe ohne Reverse Proxy. Während
   des Streamings liefert Ollama keine Tokenwerte; bis zum Abschluss stehen sie
@@ -183,7 +185,7 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
 
 ## Open-WebUI-Adapter
 
-Der Filter liegt in `open_webui/llmtop_run_metrics.py` und wird ausschließlich über die Open-WebUI-API installiert. Die lokale `.env` benötigt zusätzlich zu `LLMTOP_COLLECTOR_TOKEN` einen Admin-API-Key:
+Der Filter liegt in `open_webui/llmtop_run_metrics.py` und wird ausschließlich über die Open-WebUI-API installiert. Er überträgt verifizierte Modellprovider neutral; fehlende finale Usage bleibt sichtbar als `n/a`. Die lokale `.env` benötigt zusätzlich zu `LLMTOP_COLLECTOR_TOKEN` einen Admin-API-Key:
 
 ```dotenv
 OPEN_WEBUI_URL=http://127.0.0.1:3000
@@ -208,7 +210,18 @@ python3 llmtop.py --install-open-webui-adapter
 `--collector` bleibt für einen separat laufenden, blockierenden Dienstmodus
 verfügbar.
 
-Der Installationsbefehl erkennt die private Docker-Gateway-Adresse, setzt die Filter-Valves, aktiviert den Filter und schaltet ihn global. Der Filter überträgt ausschließlich Quelle, UUID, Modell, Zeit- und Nutzungswerte. Collector-Fehler werden abgefangen und beeinflussen die Chatantwort nicht. Die gleiche Schema-2-Schnittstelle (`POST /v1/runs`, `source: "pi"`) ist für einen optionalen Pi-Adapter vorgesehen; der Kern benötigt dafür keine Pi-Abhängigkeit.
+Der Installationsbefehl erkennt die private Docker-Gateway-Adresse, setzt die Filter-Valves, aktiviert den Filter und schaltet ihn global. Der Filter überträgt ausschließlich Quelle, Provider, UUID, Modell, Zeit- und Nutzungswerte. Collector-Fehler werden abgefangen und beeinflussen die Chatantwort nicht. Die gleiche Schema-2-Schnittstelle verarbeitet auch den optionalen Pi-Adapter; der Kern benötigt dafür keine Pi-Abhängigkeit.
+
+## Pi-Adapter
+
+Der optionale, dependency-freie Adapter unter `pi/llmtop_run_metrics.ts` erfasst Pi-Modellturns für lokale und Cloud-Provider. Er benötigt nur die im Startprozess von Pi gesetzten Variablen `LLMTOP_COLLECTOR_URL` und `LLMTOP_COLLECTOR_TOKEN`; ohne beide Werte bleibt er ein No-op. Für alle Projekte einmal global installieren und Pi neu starten oder `/reload` ausführen:
+
+```bash
+mkdir -p ~/.pi/agent/extensions
+cp pi/llmtop_run_metrics.ts ~/.pi/agent/extensions/
+```
+
+Er sendet ausschließlich Quelle, Provider, Modell, UUID, Zeit und von Pi gelieferte Tokenzähler. Prompt, Antwort, Tooldaten, Sessionpfade und Credentials bleiben lokal in Pi.
 
 ## Bekannte Grenzen
 

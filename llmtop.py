@@ -5,7 +5,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.0.7"  # Single Source of Truth; History in version.md
+VERSION = "2.1.0"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -70,7 +70,7 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
     if active_runs:
         for item in active_runs:
             detail = run_metric_detail(item)
-            lines.append(f"Aktueller Run {source_label(item.get('source'))}  {item.get('model', '?')}  "
+            lines.append(f"Aktueller Run {source_label(item.get('source'), item.get('provider'))}  {item.get('model', '?')}  "
                          f"{item.get('status', 'unknown')}  {detail} · "
                          f"{context_text(item, model_for_run(item, st.get('models', [])))}")
     else:
@@ -79,7 +79,7 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
     for item in runs:
         finished = __import__('llmtop_metrics')._parse_time(item.get("finished_at"))
         when = finished.strftime("%H:%M") if finished else "?"
-        lines.append(format_run_line(item, f"Run-History {when}  {source_label(item.get('source'))}  "
+        lines.append(format_run_line(item, f"Run-History {when}  {source_label(item.get('source'), item.get('provider'))}  "
                                      f"{item['model']}  {item['status']}  ",
                                      model_for_run(item, st.get("models", []))))
     return lines

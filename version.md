@@ -12,6 +12,12 @@ gebracht.
 
 ## Changelog
 
+### 2.1.0 — 01.11.2026
+
+- Optionalen globalen Pi-Adapter für lokale und Cloud-Provider ergänzt.
+- Quelle und Provider in Live-Runs, `--once` und History ergänzt; aktuelle Runs sind nicht mehr auf drei Einträge begrenzt und separat scrollbar.
+- Open-WebUI-Adapter auf providerneutrale Erfassung erweitert.
+
 ### 2.0.7 — 01.11.2026
 
 - Intervallanzeige samt `-/+`-Legende rechtsbündig in der unteren Statusleiste
