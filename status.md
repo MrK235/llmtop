@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.0.0** · Stand 01.11.2026 · Status: Harter Namenswechsel zu llmtop mit Pixel-Icon.
+**Version 2.0.1** · Stand 01.11.2026 · Status: Open-WebUI-Filter wird beim TUI-Start geprüft und ergänzt.
 
 ## Aktueller Stand
 
@@ -26,6 +26,13 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 2.0.1
+
+- Normaler TUI-Start prüft den global aktiven Open-WebUI-Filter asynchron und
+  installiert ihn bei Fehlen oder Deaktivierung automatisch.
+- Ohne vollständige lokale Konfiguration, bei API-Fehlern sowie in `--once`-
+  und Skriptmodi bleibt die Adapter-Konfiguration unverändert.
 
 ## Neu in 2.0.0
 
@@ -232,7 +239,7 @@ Ollama-Endpunkte beziehungsweise vorhandene Dateien.
 
 
 - `python3 -m py_compile llmtop.py`: OK.
-- `python3 llmtop.py --version`: `llmtop 2.0.0`.
+- `python3 llmtop.py --version`: `llmtop 2.0.1`.
 - `python3 llmtop.py --once` und `--once --no-nvidia`: OK.
 - Mock-Rendering: 0/100-, 44/56-, 50/50-, 56/44-, 100/0- und fehlende
   Speichergrößen nutzen erwartete Segmentbreiten, Offload-Farben,

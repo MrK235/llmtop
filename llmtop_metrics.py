@@ -24,6 +24,9 @@ MAX_COLLECTOR_BODY = 32 * 1024
 ALLOWED_RUN_SOURCES = {"pi", "open-webui", "ollama-cli", "legacy"}
 FINAL_RUN_EVENTS = {"completed", "error", "cancelled"}
 RUN_FILE_LOCK = threading.RLock()
+OPEN_WEBUI_FUNCTION_ID = "llmtop_run_metrics"
+
+
 def history_path():
     """Liefert den konfigurierbaren JSONL-Pfad ohne Verzeichnis anzulegen."""
     return os.environ.get(
@@ -669,6 +672,38 @@ def filter_source_path():
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), "open_webui", "llmtop_run_metrics.py")
 
 
+def open_webui_adapter_ready():
+    """Prüft, ob der llmtop-Filter vorhanden, aktiv und global ist."""
+    url, key, _collector_token = open_webui_config()
+    try:
+        _status, function = open_webui_api(
+            url, key, "GET", f"/api/v1/functions/id/{OPEN_WEBUI_FUNCTION_ID}")
+    except ValueError as exc:
+        # Die geprüften Open-WebUI-Versionen antworten bei fehlender Function
+        # teils mit 401 statt 404. Beide Fälle bedeuten hier: installieren.
+        if "HTTP 401" in str(exc) or "HTTP 404" in str(exc):
+            return False
+        raise
+    return bool(isinstance(function, dict) and function.get("is_active") and
+                function.get("is_global"))
+
+
+def ensure_open_webui_adapter():
+    """Installiert den Filter nur bei vorhandener lokaler Konfiguration.
+
+    Diese Funktion ist für den asynchronen TUI-Start gedacht. Fehler bleiben
+    absichtlich lokal: Ein nicht erreichbares Open WebUI beeinträchtigt weder
+    den Monitor noch den Collector.
+    """
+    try:
+        if open_webui_adapter_ready():
+            return "bereit"
+        action, _function_id = install_open_webui_adapter()
+        return action
+    except (OSError, ValueError, urllib.error.URLError):
+        return None
+
+
 def install_open_webui_adapter():
     """Installiert Filter, Valves und Aktivierung idempotent über die Admin-API."""
     url, key, collector_token = open_webui_config()
@@ -677,11 +712,11 @@ def install_open_webui_adapter():
         raise ValueError("private Docker-Gateway-Adresse von open-webui nicht ermittelbar")
     with open(filter_source_path(), encoding="utf-8") as fh:
         content = fh.read()
-    function_id = "llmtop_run_metrics"
+    function_id = OPEN_WEBUI_FUNCTION_ID
     try:
         _status, function = open_webui_api(url, key, "GET", f"/api/v1/functions/id/{function_id}")
     except ValueError as exc:
-        if "HTTP 401" not in str(exc):
+        if "HTTP 401" not in str(exc) and "HTTP 404" not in str(exc):
             raise
         function = None
     if function is None:

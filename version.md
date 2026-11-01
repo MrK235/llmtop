@@ -12,6 +12,13 @@ gebracht.
 
 ## Changelog
 
+### 2.0.1 — 01.11.2026
+
+- TUI-Start prüft den global aktiven Open-WebUI-Filter `llmtop_run_metrics`
+  asynchron und installiert ihn bei Fehlen oder Deaktivierung automatisch.
+- Ohne lokale Zugangsdaten, bei API-Fehlern sowie in `--once`- und Skriptmodi
+  bleibt die Adapter-Konfiguration unverändert.
+
 ### 2.0.0 — 01.11.2026
 
 - Projekt hart von **otop** zu **llmtop** umbenannt: Startdatei, Module,

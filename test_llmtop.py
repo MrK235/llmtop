@@ -163,6 +163,28 @@ def test_pi_events_use_existing_collector_schema():
                 os.environ['LLMTOP_RUN_HISTORY_FILE'] = old_history
 
 
+def test_open_webui_adapter_auto_install():
+    original_config = llmtop.open_webui_config
+    original_api = llmtop.open_webui_api
+    original_install = llmtop.install_open_webui_adapter
+    try:
+        llmtop.open_webui_config = lambda: ("http://webui", "key", "token")
+        llmtop.open_webui_api = lambda *_args: (200, {"is_active": True, "is_global": True})
+        llmtop.install_open_webui_adapter = lambda: (_ for _ in ()).throw(AssertionError())
+        assert llmtop.ensure_open_webui_adapter() == "bereit"
+
+        def missing(*_args):
+            raise ValueError("Open-WebUI-API HTTP 404")
+
+        llmtop.open_webui_api = missing
+        llmtop.install_open_webui_adapter = lambda: ("installiert", "llmtop_run_metrics")
+        assert llmtop.ensure_open_webui_adapter() == "installiert"
+    finally:
+        llmtop.open_webui_config = original_config
+        llmtop.open_webui_api = original_api
+        llmtop.install_open_webui_adapter = original_install
+
+
 def test_tui_draws_loaded_model():
     class Screen:
         def __init__(self):
@@ -248,5 +270,6 @@ if __name__ == '__main__':
     test_stale_live_runs_are_pruned()
     test_parallel_live_updates_do_not_resurrect_runs()
     test_pi_events_use_existing_collector_schema()
+    test_open_webui_adapter_auto_install()
     test_tui_draws_loaded_model()
     print('OK')

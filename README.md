@@ -1,10 +1,10 @@
 # llmtop — LLM Terminal Monitor für Ollama mit GPU-, RAM- und VRAM-Sensoren
 
-**Version 2.0.0 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
+**Version 2.0.1 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
 die über die Ollama-API das **geladene Modell** sowie **CPU-/RAM/GPU-Auslastung**
 anzeigt. Versionsgeschichte und Versionsschema: `version.md`.
 
-Die Version wird angezeigt: in der TUI-Kopfzeile (`▞ llmtop 2.0.0 • Ollama …`), in
+Die Version wird angezeigt: in der TUI-Kopfzeile (`▞ llmtop 2.0.1 • Ollama …`), in
 der ersten Zeile von `--once`, und über `--version`. Das Icon `▞` ist ein
 kompaktes 2×2-Pixelmuster. Maßgebliche Zahl ist `VERSION` in `llmtop.py`.
 
@@ -176,6 +176,13 @@ Der Filter liegt in `open_webui/llmtop_run_metrics.py` und wird ausschließlich 
 OPEN_WEBUI_URL=http://127.0.0.1:3000
 OPEN_WEBUI_API_KEY=<Open-WebUI-Admin-API-Key>
 ```
+
+Beim normalen TUI-Start prüft llmtop bei vorhandenem `OPEN_WEBUI_API_KEY` und
+`LLMTOP_COLLECTOR_TOKEN` asynchron, ob der globale aktive Filter
+`llmtop_run_metrics` installiert ist. Fehlt oder deaktiviert der Filter, wird
+ersatzweise die bestehende Installationsroutine ausgeführt. Ohne vollständige
+lokale Konfiguration und bei API-Fehlern bleibt der Start unverändert; `--once`
+und die Skriptmodi führen keine Adapter-Änderung aus.
 
 Danach genügt der normale TUI-Start; der Collector wird bei konfiguriertem
 `LLMTOP_COLLECTOR_TOKEN` automatisch im Hintergrund gestartet:
