@@ -12,6 +12,12 @@ gebracht.
 
 ## Changelog
 
+### 2.0.3 — 01.11.2026
+
+- Quadratisches Pixel-Logo für den vierzeiligen TUI-Kopf gestaltet.
+- Eine Leerzeile trennt den Kopf von den Messwerten; die Ollama-Version steht
+  direkt hinter dem Namen.
+
 ### 2.0.2 — 01.11.2026
 
 - TUI-Kopfbereich als vierzeilige Produktidentität mit Pixel-Icon, Version,

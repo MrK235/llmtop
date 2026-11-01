@@ -1,6 +1,6 @@
 # llmtop — LLM Terminal Monitor für Ollama mit GPU-, RAM- und VRAM-Sensoren
 
-**Version 2.0.2 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
+**Version 2.0.3 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
 die über die Ollama-API das **geladene Modell** sowie **CPU-/RAM/GPU-Auslastung**
 anzeigt. Versionsgeschichte und Versionsschema: `version.md`.
 
@@ -95,9 +95,10 @@ Datenbank-Fallback kann `LLMTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 
 ## TUI-Layout
 
-Ein vierzeiliger Kopfbereich zeigt das Pixel-Icon, Produkt und Version,
-Ollama- und Open-WebUI-Collector-Status sowie Autor, Technik und Intervall.
-Die Vollbildansicht gliedert sich danach von oben nach unten in **System**, **GPU**,
+Ein vierzeiliger Kopfbereich zeigt ein quadratisches Pixel-Logo, Produkt und
+Version, Ollama- und Open-WebUI-Collector-Status sowie Autor, Technik und
+Intervall. Eine Leerzeile trennt ihn von den Messwerten. Die Vollbildansicht
+gliedert sich danach von oben nach unten in **System**, **GPU**,
 **Aktuelle Runs**, **Geladene Modelle** und **History**. Bereichslinien beginnen am linken Rand und laufen
 vor sowie nach dem Titel; alle übrigen Inhalte haben einen Leerzeichen-Rand
 links. Bei 40×18 verwendet sie eine kompakte Ansicht mit
@@ -128,9 +129,10 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
 
 ## Angezeigte Werte
 
-* **Kopfbereich**: vierzeiliges Pixel-Icon, `llmtop <VERSION>` und Produktname,
-  Ollama-Version und Erreichbarkeit (`/api/version`) sowie **Open-WebUI
-  Collector**-Status (`aktiv` / `nicht aktiv`). Die vierte Zeile nennt Autor,
+* **Kopfbereich**: vierzeiliges, quadratisches Pixel-Logo, `llmtop <VERSION>`
+  und Produktname, `Ollama v<VERSION>` mit Erreichbarkeit (`/api/version`) sowie
+  **Open-WebUI Collector**-Status (`aktiv` / `nicht aktiv`). Eine Leerzeile
+  folgt vor den Messwerten. Die vierte Zeile nennt Autor,
   Python-Standardbibliothek und Refresh-Intervall. Namen und Metadaten sind
   gedimmt grau; verbundene/aktive Stati sind Grün und OFFLINE/nicht aktive
   Stati Rot. Bei 40 Spalten werden die Verbindungsstati als `Ollama OK/OFF` und

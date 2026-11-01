@@ -239,9 +239,9 @@ def test_tui_draws_loaded_model():
     screen = Screen()
     llmtop_tui._draw(screen, state, "http://localhost:11434", 2.0)
     assert any(text.startswith("llmtop ") for text in screen.text)
-    assert [text for text, x in screen.positions if x == 1][:4] == ["▟▙", "▙▟", "▟▙", "▙▟"]
+    assert [text for text, x in screen.positions if x == 1][:4] == ["▛▀▀▜", "▌▞▞▐", "▌▞▞▐", "▙▄▄▟"]
     assert ("Autor: llmtop  ·  Python-Standardbibliothek  ·  Intervall 2.0s", 17) in screen.calls
-    assert ("Ollama".ljust(22), 17) in screen.calls
+    assert ("Ollama vtest".ljust(22), 17) in screen.calls
     assert ("verbunden", 18) in screen.calls
     assert ("Open-WebUI Collector".ljust(22), 17) in screen.calls
     assert ("nicht aktiv", 19) in screen.calls

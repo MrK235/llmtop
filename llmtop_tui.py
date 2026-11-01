@@ -7,7 +7,7 @@ import time
 from datetime import datetime
 
 VERSION = "?"
-PIXEL_ICON = ("▟▙", "▙▟", "▟▙", "▙▟")
+PIXEL_ICON = ("▛▀▀▜", "▌▞▞▐", "▌▞▞▐", "▙▄▄▟")
 
 from llmtop_metrics import (
     DEFAULT_RUN_HISTORY_LIMIT, HISTORY_COLUMNS, CollectorService, _parse_time, _token_value,
@@ -160,17 +160,18 @@ def _draw(scr, st, host, interval):
             label_width = 22
             _add(scr, 0, x, f"llmtop {VERSION}", colors["structure"], indent=False)
             _add(scr, 0, x + 18, "LLM Terminal Monitor", colors["secondary"], indent=False)
-            _add(scr, 1, x, "Ollama".ljust(label_width), colors["secondary"], indent=False)
-            _add(scr, 1, x + label_width, f"v{version}  ", colors["secondary"], indent=False)
-            _add(scr, 1, x + label_width + len(f"v{version}  "), ollama_state, ollama_attr, indent=False)
+            ollama_label = f"Ollama v{version}"
+            _add(scr, 1, x, ollama_label.ljust(label_width), colors["secondary"], indent=False)
+            _add(scr, 1, x + label_width, ollama_state, ollama_attr, indent=False)
             _add(scr, 2, x, "Open-WebUI Collector".ljust(label_width), colors["secondary"], indent=False)
             _add(scr, 2, x + label_width, collector_state, collector_attr, indent=False)
             _add(scr, 3, x, f"Autor: llmtop  ·  Python-Standardbibliothek  ·  Intervall {interval:.1f}s",
                  colors["secondary"], indent=False)
         else:
             _add(scr, 0, x, f"llmtop {VERSION}", colors["structure"], indent=False)
-            _add(scr, 1, x, "Ollama ", colors["secondary"], indent=False)
-            _add(scr, 1, x + 7, ollama_short, ollama_attr, indent=False)
+            ollama_label = f"Ollama v{version} "
+            _add(scr, 1, x, ollama_label, colors["secondary"], indent=False)
+            _add(scr, 1, x + len(ollama_label), ollama_short, ollama_attr, indent=False)
             _add(scr, 2, x, "OW Collector ", colors["secondary"], indent=False)
             _add(scr, 2, x + 13, collector_short, collector_attr, indent=False)
             _add(scr, 3, x, f"Autor: llmtop · {interval:.1f}s", colors["secondary"], indent=False)
@@ -244,7 +245,7 @@ def _draw(scr, st, host, interval):
     if h < 26:
         oll = st["ollama"]
         draw_header(oll)
-        row = 4
+        row = 5
         row = section(row, "System")
         cpu = st["cpu"]
         cpu_value = f"{cpu:.1f} %" if cpu is not None else "n/a"
@@ -334,7 +335,7 @@ def _draw(scr, st, host, interval):
     runs = st.get("run_history", [])
     draw_header(oll)
 
-    row = 4
+    row = 5
     row = section(row, "System")
     cpu = st["cpu"]
     cpu_value = f"{cpu:.1f} %" if cpu is not None else "n/a"
