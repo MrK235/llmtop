@@ -52,11 +52,11 @@ Tokenwerte werden erst in der abschließenden Antwort des jeweiligen Requests
 
 1. **Empfohlen:** Der Client, der `/api/chat` oder `/api/generate` aufruft,
    schreibt seine Streaming- und Abschlussmetriken in ein lokales Ereignis-
-   format, das `otop` liest.
+   format, das `llmtop` liest.
 2. **Optional:** Ein lokaler, transparenter Ollama-Proxy beobachtet Requests
    und Streaming-Antworten. Das ist invasiver und muss Authentifizierung,
    Streaming und Fehlerfälle korrekt durchreichen.
-3. **Nur Anzeige:** Ohne Instrumentierung zeigt `otop` `kein aktiver Run` und
+3. **Nur Anzeige:** Ohne Instrumentierung zeigt `llmtop` `kein aktiver Run` und
    weiterhin das bekannte Kontextlimit aus `/api/ps`; erfundene Livewerte werden
    ausdrücklich vermieden.
 
@@ -109,7 +109,7 @@ Das bestehende History-Ereignis wird um einen optionalen Run-Block erweitert:
 ```json
 {
   "timestamp": "2026-10-31T14:30:00Z",
-  "source": "otop",
+  "source": "llmtop",
   "run": {
     "id": "client-defined-id",
     "status": "running|completed|error|unknown",
@@ -151,7 +151,7 @@ Regeln:
   Datei oder einen lokalen Unix-Socket.
 - Ein optionales Hilfsmodul/CLI kann Streaming-Fortschritt und Abschlussmetriken
   aus Ollama-Responses in diesen Eingang schreiben.
-- `otop` liest das letzte gültige Run-Ereignis, prüft Alter und Schema und zeigt
+- `llmtop` liest das letzte gültige Run-Ereignis, prüft Alter und Schema und zeigt
   bei Fehlern den letzten Zustand mit `stale` an.
 
 ### Schritt 3 – Client-Integration und Parallelität

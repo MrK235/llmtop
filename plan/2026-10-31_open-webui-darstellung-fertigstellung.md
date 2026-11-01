@@ -1,12 +1,12 @@
-# Plan: Open-WebUI-Runmetriken in otop dauerhaft darstellen
+# Plan: Open-WebUI-Runmetriken in llmtop dauerhaft darstellen
 
 ## Ziel
 
-Ein laufendes `otop` soll Open-WebUI-Ollama-Aufrufe ohne zweiten manuellen Collector-Prozess sofort unter **Aktuelle Runs** zeigen und nach Abschluss zuverlässig unter **History** historisieren. Quelle, Modell, Status, Token, Rate und verfügbare Dauerwerte bleiben in kleinen Terminals sichtbar.
+Ein laufendes `llmtop` soll Open-WebUI-Ollama-Aufrufe ohne zweiten manuellen Collector-Prozess sofort unter **Aktuelle Runs** zeigen und nach Abschluss zuverlässig unter **History** historisieren. Quelle, Modell, Status, Token, Rate und verfügbare Dauerwerte bleiben in kleinen Terminals sichtbar.
 
 ## Geprüfter Ist-Stand
 
-- Der Open-WebUI-Filter `otop_run_metrics` ist über die API installiert, aktiv und global.
+- Der Open-WebUI-Filter `llmtop_run_metrics` ist über die API installiert, aktiv und global.
 - Die API-Valves `collector_url` und `collector_token` sind gesetzt; Werte wurden nicht ausgegeben.
 - Ein echter Chat über `/api/chat/completions` mit `qwen3.5:4b` lieferte HTTP 200 und erzeugte einen finalen Run mit Quelle `open-webui`, Prompt- und Ausgabe-Token.
 - Der Collector ist aus dem Container über die private Gateway-Adresse erreichbar.
@@ -24,7 +24,7 @@ Ein laufendes `otop` soll Open-WebUI-Ollama-Aufrufe ohne zweiten manuellen Colle
    - im Hintergrund starten,
    - sauber herunterfahren,
    - gebundene Adressen und Fehlerstatus bereitstellen.
-2. Die TUI startet den Service automatisch, wenn `OTOP_COLLECTOR_TOKEN` konfiguriert ist.
+2. Die TUI startet den Service automatisch, wenn `LLMTOP_COLLECTOR_TOKEN` konfiguriert ist.
 3. `--collector` bleibt als expliziter, dauerhaft blockierender Dienstmodus erhalten und verwendet dieselbe Klasse.
 4. Ist bereits ein Collector aktiv und der Port belegt, beendet die TUI sich nicht. Sie zeigt einen nicht störenden Hinweis, dass kein eigener Listener gestartet werden konnte; vorhandene Run-Dateien werden weiter gelesen.
 5. Fehlt der Token, bleibt die TUI funktionsfähig und zeigt klar „Collector nicht konfiguriert“ statt eines Fehlers beim Start.
@@ -51,7 +51,7 @@ Ein laufendes `otop` soll Open-WebUI-Ollama-Aufrufe ohne zweiten manuellen Colle
 
 | Fall | Erwartung |
 |---|---|
-| `python3 otop.py` mit Token | startet TUI und privaten Collector automatisch |
+| `python3 llmtop.py` mit Token | startet TUI und privaten Collector automatisch |
 | Open-WebUI-Chat während TUI läuft | aktiver `Open WebUI`-Run sichtbar, dann ein History-Eintrag |
 | `--once` nach Chat | Quelle, Modell und echte Tokenwerte sichtbar |
 | fehlender Token | TUI läuft, Collector-Status klar als nicht konfiguriert |
@@ -70,4 +70,4 @@ Ein laufendes `otop` soll Open-WebUI-Ollama-Aufrufe ohne zweiten manuellen Colle
 
 ## Abnahme
 
-Nach Start von `python3 otop.py` erscheint ein realer Open-WebUI-Ollama-Chat ohne zusätzlichen Collector-Befehl zunächst unter **Aktuelle Runs** und nach Abschluss genau einmal mit Quelle `Open WebUI` in **History**. Fehlende serverseitige Dauerwerte sind erkennbar als `n/a` markiert.
+Nach Start von `python3 llmtop.py` erscheint ein realer Open-WebUI-Ollama-Chat ohne zusätzlichen Collector-Befehl zunächst unter **Aktuelle Runs** und nach Abschluss genau einmal mit Quelle `Open WebUI` in **History**. Fehlende serverseitige Dauerwerte sind erkennbar als `n/a` markiert.

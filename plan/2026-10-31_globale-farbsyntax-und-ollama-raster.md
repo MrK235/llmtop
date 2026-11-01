@@ -41,7 +41,7 @@ bleibt zusätzlich mit Text (`GPU`, `CPU`, Prozent und Größe) verständlich.
 
 ## Umsetzung
 
-1. **Farbrollen zentralisieren (`otop.py`)**
+1. **Farbrollen zentralisieren (`llmtop.py`)**
    - `_init_colors()` auf die oben definierten semantischen Rollen reduzieren:
      `structure`, `status_*`, `gpu_memory`, `cpu_memory`, `secondary`,
      `error`.

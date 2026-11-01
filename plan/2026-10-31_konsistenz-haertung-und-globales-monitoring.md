@@ -2,7 +2,7 @@
 
 ## Ziel
 
-`otop` soll als lokaler, verlässlicher Sensor-Endpunkt stabil bleiben und später
+`llmtop` soll als lokaler, verlässlicher Sensor-Endpunkt stabil bleiben und später
 Zeitreihen sowie mehrere LLM-Quellen (Ollama, Open WebUI, Pi, Strata) in einem
 globalen Monitoring zusammenführen. Dieser Plan trennt die bereits umgesetzte
 Soforthärtung von den nächsten, komplexeren Schritten.
@@ -44,7 +44,7 @@ Soforthärtung von den nächsten, komplexeren Schritten.
 
 ## Bereits umgesetzte Härtung
 
-1. Kleine Eingangs- und Antwortvalidierung in `otop.py`.
+1. Kleine Eingangs- und Antwortvalidierung in `llmtop.py`.
 2. Plausibilisierung der Sensor- und Offload-Prozentwerte.
 3. Dokumentationsabgleich auf Version 1.3.5.
 4. Syntax-, Versions- und Live-`--once`-Prüfung mit Ollama sowie sysfs-Fallback.
@@ -106,7 +106,7 @@ Soforthärtung von den nächsten, komplexeren Schritten.
 
 ## Abnahmekriterien
 
-- `python3 -m py_compile otop.py`, `--version`, `--once` und `--once --no-nvidia`
+- `python3 -m py_compile llmtop.py`, `--version`, `--once` und `--once --no-nvidia`
   funktionieren.
 - Ungültige API-Daten und Sensorwerte führen zu einer verständlichen Anzeige,
   nicht zu einem Traceback.

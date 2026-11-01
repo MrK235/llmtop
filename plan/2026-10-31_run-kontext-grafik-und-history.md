@@ -26,7 +26,7 @@ KV-Caches; ohne explizite Metrik wird kein solcher Wert behauptet.
 Aktuell kann weder `/api/ps` noch die passive Ollama-API einen aktiven Request
 mit einem exakten Kontextverbrauch oder Live-Tokenfortschritt verknüpfen.
 Der Open-WebUI-Adapter sieht ebenfalls vor allem finale Usage. Deshalb zeigt
-otop während eines Runs zunächst einen klaren Wartezustand, statt Fortschritt
+llmtop während eines Runs zunächst einen klaren Wartezustand, statt Fortschritt
 zu schätzen. Sobald finale Zähler vorliegen, ist der Balken vollständig.
 
 ## Datenmodell und Prioritäten
@@ -101,7 +101,7 @@ konfigurierten Modells ergänzt.
 
 1. **Reine Kontextfunktionen und Rendering**
    - Kleine Hilfsfunktionen für Kontexttoken, Limitauflösung, Prozentwert,
-     Ampelfarbe und kompakten Text in `otop.py` ergänzen.
+     Ampelfarbe und kompakten Text in `llmtop.py` ergänzen.
    - Aktive Runs gegen die bereits abgefragte `/api/ps`-Modellliste abgleichen
      und TUI/`--once` mit dem Balken erweitern.
    - Höhenberechnung so anpassen, dass der Mindestmodus 40×18 und die

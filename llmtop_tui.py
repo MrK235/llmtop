@@ -1,4 +1,4 @@
-"""curses-Oberflaeche fuer otop."""
+"""curses-Oberflaeche fuer llmtop."""
 import curses
 import os
 import sys
@@ -7,15 +7,16 @@ import time
 from datetime import datetime
 
 VERSION = "?"
+PIXEL_ICON = "▞"
 
-from otop_metrics import (
+from llmtop_metrics import (
     DEFAULT_RUN_HISTORY_LIMIT, HISTORY_COLUMNS, CollectorService, _parse_time, _token_value,
     backfill_context_limits, compact_tokens, context_values, history_context_cell,
     history_header_label, load_run_events, load_run_history, model_for_run,
     run_metric_detail, snapshot_record, sort_run_history, source_label, token_rate, total_tokens,
     write_history,
 )
-from otop_sources import (
+from llmtop_sources import (
     GPU_POWER_BOOST_W, bar, collect_gpus, collect_ollama, cpu_percent,
     cpu_temperature, get_ram_pct, loadavg, read_cpu_totals,
 )
@@ -148,12 +149,12 @@ def _draw(scr, st, host, interval):
         collector_state = "aktiv" if collector_active else "nicht aktiv"
         collector_short = "OK" if collector_active else "OFF"
         collector_attr = colors["status_green"] if collector_active else colors["error"]
-        full = [(f"otop {VERSION}  •  ", colors["structure"]),
+        full = [(f"{PIXEL_ICON} llmtop {VERSION}  •  ", colors["structure"]),
                 ("Ollama", colors["secondary"]), (f" {version} ", colors["secondary"]),
                 (ollama_state, ollama_attr), ("  •  ", colors["structure"]),
                 ("Open-WebUI Collector", colors["secondary"]), (" ", colors["secondary"]),
                 (collector_state, collector_attr)]
-        compact = [(f"otop {VERSION} • ", colors["structure"]),
+        compact = [(f"{PIXEL_ICON} llmtop {VERSION} • ", colors["structure"]),
                    ("Ollama:", colors["secondary"]), (ollama_short, ollama_attr),
                    (" • ", colors["structure"]), ("OWC:", colors["secondary"]),
                    (collector_short, collector_attr)]
@@ -458,10 +459,11 @@ def _draw(scr, st, host, interval):
 
 
 
-def _run_tui(host, interval, use_nvidia, version):
+def _run_tui(host, interval, use_nvidia, version, pixel_icon):
     """Fuehrt curses im Hauptthread und die Erfassung im Hintergrund aus."""
-    global VERSION
+    global VERSION, PIXEL_ICON
     VERSION = version
+    PIXEL_ICON = pixel_icon
     collector = CollectorService()
     collector.start()
     state = {"colors": None, "help": False, "prev_cpu": read_cpu_totals(),
@@ -501,7 +503,7 @@ def _run_tui(host, interval, use_nvidia, version):
             refresh.wait(max(0.2, delay))
             refresh.clear()
 
-    worker = threading.Thread(target=sample, name="otop-sampler", daemon=True)
+    worker = threading.Thread(target=sample, name="llmtop-sampler", daemon=True)
     worker.start()
 
     def session(scr):

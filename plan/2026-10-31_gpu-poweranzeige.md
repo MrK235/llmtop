@@ -20,7 +20,7 @@ angezeigt. Ein farbiger Prozentbalken erscheint nur, wenn eine belastbare
 Leistungsgrenze verfügbar ist; es wird keine willkürliche Watt-Skala erfunden.
 
 ## Umsetzung
-1. **Leistungsgrenze besser ermitteln (`otop.py`)**
+1. **Leistungsgrenze besser ermitteln (`llmtop.py`)**
    - NVIDIA-Abfrage um die verfügbare effektive Leistungsgrenze (z. B.
      `enforced.power.limit`) ergänzen und als Fallback zur bisherigen Grenze
      verwenden.
@@ -29,7 +29,7 @@ Leistungsgrenze verfügbar ist; es wird keine willkürliche Watt-Skala erfunden.
    - Nicht verfügbare oder ungültige Limits bleiben `None`; Messwerte in Watt
      werden dadurch nicht verworfen.
 
-2. **Power-Sensor korrekt zeichnen (`otop.py`)**
+2. **Power-Sensor korrekt zeichnen (`llmtop.py`)**
    - Mit Limit: Balken, Prozentwert und Ampelfarbe aus `power_watt / limit`
      berechnen; Detailwert zeigt `X W / Y W`.
    - Ohne Limit: `X.X W` als primären Sensorwert in der Wertspalte anzeigen,

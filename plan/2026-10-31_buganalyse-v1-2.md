@@ -1,7 +1,7 @@
 # Buganalyse v1.2.0
 
 ## Geprüfter Stand
-Statische Analyse von `otop.py` sowie Abgleich mit README und `status.md`.
+Statische Analyse von `llmtop.py` sowie Abgleich mit README und `status.md`.
 Ausführungstests waren in diesem Modus nicht möglich.
 
 ## Priorisierte Befunde
@@ -53,10 +53,10 @@ Ausführungstests waren in diesem Modus nicht möglich.
 
 ## Prüfung
 ```bash
-python3 -m py_compile otop.py
-python3 otop.py --version
-python3 otop.py --once
-python3 otop.py --once --no-nvidia
+python3 -m py_compile llmtop.py
+python3 llmtop.py --version
+python3 llmtop.py --once
+python3 llmtop.py --once --no-nvidia
 ```
 Zusätzlich TUI im Pseudo-TTY bei 80×24 und 40×8 starten, `h`, `r`, `+`, `-` und
 `q` prüfen sowie den TUI-Lauf in einem echten Terminal visuell abnehmen.

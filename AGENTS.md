@@ -1,29 +1,29 @@
-# AGENTS.md — otop
+# AGENTS.md — llmtop
 
 ## Das Projekt
 
-`otop` ist eine kleine Python-Terminalanwendung mit `otop.py` als Einstieg sowie drei Kernmodulen für Quellen, Metriken und curses-TUI. Sie zeigt über die Ollama-API den Status des geladenen Modells sowie CPU-, RAM-, GPU- und VRAM-Sensoren und bietet `--once`, lokalen Collector und Open-WebUI-Adapter.
+`llmtop` ist eine kleine Python-Terminalanwendung mit `llmtop.py` als Einstieg sowie drei Kernmodulen für Quellen, Metriken und curses-TUI. Sie zeigt über die Ollama-API den Status des geladenen Modells sowie CPU-, RAM-, GPU- und VRAM-Sensoren und bietet `--once`, lokalen Collector und Open-WebUI-Adapter.
 
 **Leitprinzip:** Einfachheit durch Standardbibliothek allein — kein pip, keine System-Packages, keine Konfigurationsdateien neben `.env`. Ausgeführt auf jedem Linux out of the box.
 
 ## 1. Grundsätze
 
 ### Ausrichtung und Ziele
-- **Kleine Kernmodule:** `otop.py`, `otop_sources.py`, `otop_metrics.py` und `otop_tui.py` sind die Quellcodedateien im Projektstamm. Keine weitere Aufspaltung ohne konkreten Bedarf.
+- **Kleine Kernmodule:** `llmtop.py`, `llmtop_sources.py`, `llmtop_metrics.py` und `llmtop_tui.py` sind die Quellcodedateien im Projektstamm. Keine weitere Aufspaltung ohne konkreten Bedarf.
 - **Nur Standardbibliothek:** Keine Pip-Abhängigkeiten, keine System-Packages. Alle Sensoren kommen von `/proc`, sysfs oder den lokalen Binaries `nvidia-smi`.
 - **Out-of-the-box auf Linux:** Das Projekt läuft ohne Vorinstallation oder Konfiguration außer optionaler `.env` für Collector und Open-WebUI-Adapter. Es muss keine Installation oder Initialisierung stattfinden.
 - **Fehler-tolerant:** Sensoren greifen kettenbasierte Fallbacks (nvidia-smi → sysfs) zurück; fehlende Hardware wird als `n/a` angezeigt statt zu crashen.
 
 ### Architektur-Entscheidungen
-- `otop_sources.py` enthält Sensoren und Ollama-Zugriffe, `otop_metrics.py` Run-Schema, History und Collector, `otop_tui.py` ausschließlich curses-Rendering und Sampler; `otop.py` bleibt CLI-Einstieg.
-- Das `open_webui/`-Verzeichnis enthält nur den Open-WebUI-Filteradapter (`otop_run_metrics.py`) als zusätzliche Verteilungsschicht; ein späterer Pi-Adapter nutzt dasselbe Schema 2 über den Collector.
+- `llmtop_sources.py` enthält Sensoren und Ollama-Zugriffe, `llmtop_metrics.py` Run-Schema, History und Collector, `llmtop_tui.py` ausschließlich curses-Rendering und Sampler; `llmtop.py` bleibt CLI-Einstieg.
+- Das `open_webui/`-Verzeichnis enthält nur den Open-WebUI-Filteradapter (`llmtop_run_metrics.py`) als zusätzliche Verteilungsschicht; ein späterer Pi-Adapter nutzt dasselbe Schema 2 über den Collector.
 - Sensoren greifen auf Systemressourcen zurück: `/proc/stat` (CPU), `/proc/meminfo` (RAM), sysfs oder `nvidia-smi` (GPU/VRAM), `/proc/loadavg` (Load).
-- Collector und History nutzen getrennte, begrenzte JSONL-Dateien unter `$XDG_STATE_HOME/otop/`.
+- Collector und History nutzen getrennte, begrenzte JSONL-Dateien unter `$XDG_STATE_HOME/llmtop/`.
 
 ## 2. Arbeitsweise mit diesem Projekt
 
 ### Änderungen an den Kernmodulen
-- Fachgrenzen beibehalten: Quellen in `otop_sources.py`, Runmetriken und Collector in `otop_metrics.py`, curses in `otop_tui.py`, CLI in `otop.py`.
+- Fachgrenzen beibehalten: Quellen in `llmtop_sources.py`, Runmetriken und Collector in `llmtop_metrics.py`, curses in `llmtop_tui.py`, CLI in `llmtop.py`.
 - Alle neuen Sensoren und Funktionen müssen die Standardbibliothek einhalten. Kein `subprocess` für neue externe Tools außer wo bereits etabliert (`nvidia-smi`).
 - Bestehende CLI-Optionen, Tastatürkürzel und Exit-Codes nur erweitern, nicht umbenennen oder löschen.
 - Farbschema (Cyan Struktur, Grün/Gelb/Rot Status) und Balkengeometrie konsistent halten.
@@ -37,12 +37,12 @@
 ### Validierung vor jeder Änderung
 1. Vor Arbeitsbeginn `git status --short`, aktuellen Branch und vorhandene Tags prüfen.
 2. Bestehende, nicht zur Aufgabe gehörende Änderungen weder überschreiben noch zurücksetzen.
-3. `python3 -m py_compile otop.py` → keine Syntaxfehler.
-4. `python3 otop.py --once` und `--once --no-nvidia` → fehlerfrei auf beiden Pfaden.
-5. `otop.py --version` zeigt die korrekte Versionsnummer mit Exit 0.
+3. `python3 -m py_compile llmtop.py` → keine Syntaxfehler.
+4. `python3 llmtop.py --once` und `--once --no-nvidia` → fehlerfrei auf beiden Pfaden.
+5. `llmtop.py --version` zeigt die korrekte Versionsnummer mit Exit 0.
 
 ### Dokumentation
-- Bei jeder funktionalen Änderung: `VERSION` (in `otop.py`), `README.md`, `status.md` und `version.md` synchronisieren.
+- Bei jeder funktionalen Änderung: `VERSION` (in `llmtop.py`), `README.md`, `status.md` und `version.md` synchronisieren.
 - Neue Sensoren in `README.md → Angezeigte Werte` dokumentieren.
 - Bekannte Grenzen in `status.md` dokumentieren, nicht Code als Workaround verbergen.
 
@@ -74,7 +74,7 @@ Tests laufen ausschließlich im temp-Verzeichnis: `python` aus `/tmp/pi/...`. Mo
 - Schlägt der Collector fehl, bricht die Anwendung nicht ab — Sensoren und TUI funktionieren unverändert weiter.
 
 ### History
-- Path: `$XDG_STATE_HOME/otop/history.jsonl` (fallback `~/.local/state/otop/history.jsonl`).
+- Path: `$XDG_STATE_HOME/llmtop/history.jsonl` (fallback `~/.local/state/llmtop/history.jsonl`).
 - Begrenzte JSONL-Snapshots mit UTC-Zeitstempeln; atomisches Schreiben.
 - Alte Zeilen werden beim Überschreiten der Maximalgröße automatisch abgeschnitten.
 
@@ -83,7 +83,7 @@ Tests laufen ausschließlich im temp-Verzeichnis: `python` aus `/tmp/pi/...`. Mo
 - Git ist die verbindliche Grundlage für nachvollziehbare Projektstände und Vergleiche zwischen Versionen.
 - Vor Änderungen den Ausgangsstand mit `git status --short`, `git branch --show-current` und passenden Tags prüfen.
 - Nach Änderungen `git diff --check`, einen gezielten `git diff` und die vorgeschriebenen Tests ausführen.
-- Semantische Versionierung (`MAJOR.MINOR.PATCH`) in `otop.py`, `version.md` und `README.md` synchronisieren.
+- Semantische Versionierung (`MAJOR.MINOR.PATCH`) in `llmtop.py`, `version.md` und `README.md` synchronisieren.
 - Standardmäßig nur den Patchstand erhöhen, auch bei kleinen Anzeige- oder Bedienverbesserungen. Einen Minor- oder Major-Sprung nur auf ausdrücklichen Benutzerwunsch verwenden.
 - Jeder vollständig implementierte und erfolgreich geprüfte Versionsstand mit erhöhter `VERSION` wird zum Abschluss der Aufgabe als Git-Commit gesichert; dafür ist keine zusätzliche Freigabe erforderlich.
 - Tags und Releases (`vX.Y.Z`) weiterhin nur nach ausdrücklicher Freigabe erstellen.

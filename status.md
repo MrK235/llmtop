@@ -1,14 +1,14 @@
-# status.md — otop
+# status.md — llmtop
 
-**Version 1.10.12** · Stand 01.11.2026 · Status: Graue Verbindungsnamen und kompaktere TUI ohne Ollama-Block.
+**Version 2.0.0** · Stand 01.11.2026 · Status: Harter Namenswechsel zu llmtop mit Pixel-Icon.
 
 ## Aktueller Stand
 
-`otop.py` ist der Programmeinstieg einer Python-Standardbibliotheks-Anwendung
+`llmtop.py` ist der Programmeinstieg einer Python-Standardbibliotheks-Anwendung
 mit curses-TUI und `--once`-Ausgabe. Die Datenerfassung liegt in
-`otop_sources.py`, Run-Metriken, History und Collector in `otop_metrics.py`
-sowie Rendering und TUI-Sampler in `otop_tui.py`. Die TUI zeigt die Bereiche System, GPU, Ollama und
-History in dieser Reihenfolge. CPU, RAM, GPU, VRAM und Power verwenden
+`llmtop_sources.py`, Run-Metriken, History und Collector in `llmtop_metrics.py`
+sowie Rendering und TUI-Sampler in `llmtop_tui.py`. Die TUI zeigt die Bereiche
+System, GPU, aktuelle Runs, geladene Modelle und History in dieser Reihenfolge. CPU, RAM, GPU, VRAM und Power verwenden
 konsistente Balken, Abstände und eine globale Farbsyntax. Struktur ist Cyan,
 Statuswerte und Temperaturen verwenden Grün/Gelb/Rot, Sekundärinfos sind
 gedimmt. Ollama-Modelle zeigen einen geteilten Speicherbalken im gleichen
@@ -26,6 +26,14 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 2.0.0
+
+- Harter Namenswechsel von otop zu llmtop: Kommando, Python-Module,
+  Open-WebUI-Filter, `LLMTOP_*`-Umgebungsvariablen und State-Pfad sind umgestellt.
+- Kopfzeile und `--once` verwenden das neue Mini-Pixel-Icon `▞`.
+- Alte otop-Dateien, Variablen und State-Pfade werden nicht mehr unterstützt;
+  der neue Open-WebUI-Filter muss einmal installiert werden.
 
 ## Korrekturen in 1.10.12
 
@@ -117,7 +125,7 @@ Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
 ## Neu in 1.8.5
 
 - Sensoren, Ollama-Zugriffe, Run-Metriken/Collector und curses-TUI sind in drei
-  überschaubare Kernmodule aufgeteilt; `otop.py` bleibt der kompatible Einstieg.
+  überschaubare Kernmodule aufgeteilt; `llmtop.py` bleibt der kompatible Einstieg.
 - Die TUI erfasst Daten in einem einzelnen Hintergrund-Thread. HTTP-,
   `nvidia-smi`-, sysfs- und History-Schreibzugriffe blockieren die Tastatur und
   das Rendering nicht mehr.
@@ -200,11 +208,11 @@ Ollama-Endpunkte beziehungsweise vorhandene Dateien.
   Snapshot. Der Hintergrund-Sampler selbst wartet weiterhin auf den jeweiligen
   HTTP- oder `nvidia-smi`-Timeout; es gibt bewusst noch keine Parallelabfragen.
 - Git ist im Projektverzeichnis initialisiert; Entwicklungsbranch ist `master`.
-- Der direkte Client-Modus instrumentiert nur Aufrufe, die über `otop` selbst
+- Der direkte Client-Modus instrumentiert nur Aufrufe, die über `llmtop` selbst
   erfolgen; fremde Ollama-Clients bleiben ohne Adapter unsichtbar.
 - Der Open-WebUI-Adapter wird mit `--install-open-webui-adapter` per Admin-API
   installiert, konfiguriert und global aktiviert. Dafür muss ausschließlich
-  `OPEN_WEBUI_API_KEY` in der lokalen otop-`.env` gesetzt sein. Der Pi-Adapter
+  `OPEN_WEBUI_API_KEY` in der lokalen llmtop-`.env` gesetzt sein. Der Pi-Adapter
   ist weiterhin offen.
 
 ## Prüfung am 31.10.2026
@@ -212,17 +220,20 @@ Ollama-Endpunkte beziehungsweise vorhandene Dateien.
 - Pseudo-TTY-Prüfung: Bei 120×40 erscheinen Tabellenkopf, Sortierstatus und Kontextspalte; bei 40×18 bleibt die kompakte Tabellenansicht sichtbar. Normaler `q`-Exit ist auf beiden Größen Code 0.
 - Sortier- und Kontexttests: alle acht Spalten, fehlende Werte und 100 geladene Historieneinträge erfolgreich.
 - Visuelles Live-Debugging mit drei `request`-Aufrufen derselben Open-WebUI-Identität: Die Anzeige blieb durchgehend bei genau einem aktuellen Run; das finale Outlet entfernte ihn und erzeugte genau einen History-Eintrag.
-- Installierter Open-WebUI-Filter und lokale Version sind identisch (`1.3.2`), aktiv und global. Ein echter Streaming-Aufruf über `/api/chat/completions` zeigte maximal einen Live-Eintrag.
+- Vor dem 2.0-Umstieg waren installierter Open-WebUI-Filter und lokale Version
+  `1.3.2` identisch. Der neue llmtop-Filter trägt `2.0.0` und wird separat
+  installiert; ein echter Streaming-Aufruf über `/api/chat/completions` zeigte
+  zuvor maximal einen Live-Eintrag.
 - Run-History zeigt in `--once` zehn Einträge; bestehende ältere `cancelled`-Einträge bleiben als historische Altdaten unverändert.
 - Lokaler und global installierter Open-WebUI-Adapter sind identisch, aktiv und global aktiviert; der Disconnect-Watcher ist entfernt.
-- `python3 otop.py --install-open-webui-adapter`: erfolgreich.
-- `python3 -m py_compile`, beide otop-Testmodule, `--once`, `--once --no-nvidia` und `--version`: erfolgreich.
+- `python3 llmtop.py --install-open-webui-adapter`: erfolgreich.
+- `python3 -m py_compile`, beide llmtop-Testmodule, `--once`, `--once --no-nvidia` und `--version`: erfolgreich.
 - Paralleler Live-Run-Test: keine verwaisten Einträge nach konkurrierenden Start-/Abschlussupdates.
 
 
-- `python3 -m py_compile otop.py`: OK.
-- `python3 otop.py --version`: `otop 1.10.12`.
-- `python3 otop.py --once` und `--once --no-nvidia`: OK.
+- `python3 -m py_compile llmtop.py`: OK.
+- `python3 llmtop.py --version`: `llmtop 2.0.0`.
+- `python3 llmtop.py --once` und `--once --no-nvidia`: OK.
 - Mock-Rendering: 0/100-, 44/56-, 50/50-, 56/44-, 100/0- und fehlende
   Speichergrößen nutzen erwartete Segmentbreiten, Offload-Farben,
   Übergangsmarker sowie gedimmtes `n/a`: OK.
@@ -231,7 +242,7 @@ Ollama-Endpunkte beziehungsweise vorhandene Dateien.
 - Open-WebUI-Filtertest: Start, finaler Stream-Chunk, Outlet-Deduplizierung,
   parallele Metadaten-Schlüssel und datensparsame Ereignisse: OK.
 - Container-Netz geprüft: `open-webui` nutzt `ai-net`, Gateway `172.18.0.1`.
-- API-Installation mit lokalem Admin-Key: Filter `otop_run_metrics` erfolgreich
+- API-Installation mit lokalem Admin-Key: Filter `llmtop_run_metrics` erfolgreich
   angelegt, Valves gesetzt sowie aktiv und global geschaltet.
 - Live-Chat über `/api/chat/completions` mit `qwen3.5:4b`: HTTP 200, ein
   finaler `open-webui`-Run mit Prompt- und Ausgabe-Token in `runs.jsonl`.

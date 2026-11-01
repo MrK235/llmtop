@@ -137,7 +137,7 @@ Regeln:
 ## Kalibrierungsspeicher
 
 Die modellbezogenen Faktoren werden getrennt von Run- und System-History als
-kleine, begrenzte JSON-Datei unter dem bestehenden otop-State-Verzeichnis
+kleine, begrenzte JSON-Datei unter dem bestehenden llmtop-State-Verzeichnis
 geführt, zum Beispiel `context-calibration.json`.
 
 Beispiel:
@@ -270,7 +270,7 @@ gegen Ollamas tatsächliches Kontextlimit.
   Ausgabe- und Kontextwert ohne Warten auf den finalen Chunk.
 - Jede nicht autoritative Zahl ist sichtbar mit `≈` und Qualitätsstatus
   gekennzeichnet.
-- Nach Abschluss ersetzt otop die Schätzung durch echte Providerwerte und
+- Nach Abschluss ersetzt llmtop die Schätzung durch echte Providerwerte und
   berechnet die Abweichung.
 - Wiederholte Runs desselben Modells verwenden einen kalibrierten Faktor und
   zeigen gegenüber `Zeichen / 4` messbar geringere mittlere Abweichung.

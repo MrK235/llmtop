@@ -2,7 +2,7 @@
 
 ## Ziel
 
-`otop` soll Metriken laufender und abgeschlossener Ollama-Requests erfassen,
+`llmtop` soll Metriken laufender und abgeschlossener Ollama-Requests erfassen,
 in der TUI darstellen und dauerhaft historisieren. Jeder Eintrag muss seine
 Quelle ausweisen:
 
@@ -11,7 +11,7 @@ Quelle ausweisen:
 - `ollama-cli` – instrumentierter Terminal-Aufruf.
 
 Die Modellanfrage läuft weiterhin direkt vom jeweiligen Client zu Ollama. Der
-neue Mechanismus überträgt ausschließlich Metadaten an `otop`; er ist kein
+neue Mechanismus überträgt ausschließlich Metadaten an `llmtop`; er ist kein
 Reverse Proxy und verändert keine Request- oder Antwortdaten.
 
 ## Verifizierte technische Grundlage
@@ -39,7 +39,7 @@ Reverse Proxy und verändert keine Request- oder Antwortdaten.
 
 ### Lokaler Metrik-Kollektor
 
-`otop.py` erhält einen optionalen Modus `--collector`, der ausschließlich auf
+`llmtop.py` erhält einen optionalen Modus `--collector`, der ausschließlich auf
 `127.0.0.1` lauscht. Er nimmt `POST /v1/runs` mit einem kleinen JSON-Ereignis
 entgegen, validiert es und schreibt die vorhandenen Dateien atomar:
 
@@ -62,11 +62,11 @@ einen versehentlich erreichbaren Container-Port:
 
 ```dotenv
 # .env – nur lokal, Modus 0600, niemals committen
-OTOP_COLLECTOR_TOKEN=<zufälliger-langer-wert>
-OTOP_COLLECTOR_URL=http://127.0.0.1:11435
+LLMTOP_COLLECTOR_TOKEN=<zufälliger-langer-wert>
+LLMTOP_COLLECTOR_URL=http://127.0.0.1:11435
 ```
 
-- `.env` wird beim Start von `otop` mit einem kleinen eigenen Parser gelesen;
+- `.env` wird beim Start von `llmtop` mit einem kleinen eigenen Parser gelesen;
   keine neue Abhängigkeit.
 - `.env` und lokale Run-Dateien werden in `.gitignore` aufgenommen.
 - `.env.example` enthält nur Namen und Platzhalter, nie einen Token.
@@ -125,7 +125,7 @@ Regeln:
 7. Der Collector antwortet nur mit HTTP 202, 400, 401, 413 oder 429 und
    protokolliert keine geheimen Header oder Bodies.
 
-## Darstellung in `otop`
+## Darstellung in `llmtop`
 
 ### Aktuelle Runs
 
@@ -198,7 +198,7 @@ der an lokales Ollama geht.
 
 ### Ollama-Terminal
 
-**Ziel:** Ein expliziter `otop ask`- beziehungsweise `otop generate`-Modus
+**Ziel:** Ein expliziter `llmtop ask`- beziehungsweise `llmtop generate`-Modus
 führt einfache direkte Requests aus und ist mit Quelle `ollama-cli` markiert.
 
 - Er nutzt `/api/chat` oder `/api/generate`, gibt NDJSON unverändert auf stdout
@@ -230,14 +230,14 @@ freigegeben; kein öffentlicher Bind und kein Reverse Proxy.
 
 ### Phase 1 – Erste sinnvolle Grundfunktion: Collector und generischer Run
 
-1. Versioniertes Schema-2-Parsing und Eventzustandsmaschine in `otop.py`
+1. Versioniertes Schema-2-Parsing und Eventzustandsmaschine in `llmtop.py`
    ergänzen.
 2. `--collector` mit Token-Prüfung, restriktiver Requestgröße, kurzem
    Logging und sauberem Beenden implementieren.
 3. Aktive Runs als Liste und finalisierte Run-History mit Quellenlabel
    implementieren; Schema-1-Einträge weiter lesbar halten, Quelle dort als
    `legacy` markieren.
-4. Einen rein lokalen Testsender `otop emit --file event.json` ergänzen. Er
+4. Einen rein lokalen Testsender `llmtop emit --file event.json` ergänzen. Er
    ist Testwerkzeug, keine neue Clientintegration.
 5. Tests: Authentifizierung, ungültiges Schema, parallele Starts, doppelte
    Abschlussereignisse, `stale`, JSONL-Recovery, enge Terminalhöhe und
@@ -274,7 +274,7 @@ markiert, und er kann nicht mit gleichzeitigem Pi-Run kollidieren.
 
 ### Phase 4 – instrumentiertes Ollama-Terminal und Konsolidierung
 
-1. `otop ask`/`generate` auf Collector migrieren und Quelle `ollama-cli`
+1. `llmtop ask`/`generate` auf Collector migrieren und Quelle `ollama-cli`
    sicherstellen.
 2. Skript-, Fehler- und Abbruchverhalten testen.
 3. README, `status.md`, `version.md` und Bedienhilfe aktualisieren.
@@ -292,7 +292,7 @@ markiert, und er kann nicht mit gleichzeitigem Pi-Run kollidieren.
 | paralleler Pi- und WebUI-Run | beide aktiv mit eigener Quelle |
 | Ollama-finaler Chunk | Token und Nanosekunden korrekt übernommen/umgerechnet |
 | Collector nicht erreichbar | Clientantwort bleibt funktional, nur Metrik fehlt |
-| Neustart von `otop` | finale History bleibt lesbar |
+| Neustart von `llmtop` | finale History bleibt lesbar |
 | Terminal mit geringer Höhe | jüngster History-Eintrag und Quelle bleiben sichtbar |
 
 ## Nichtziele der ersten Umsetzung

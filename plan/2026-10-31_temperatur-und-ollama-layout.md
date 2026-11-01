@@ -59,7 +59,7 @@ ohne neue API-Aufrufe.
 
 ## Umsetzung
 
-1. **Temperaturerfassung in `otop.py`**
+1. **Temperaturerfassung in `llmtop.py`**
    - `cpu_temperature()` für bekannte CPU-hwmon-Namen (`k10temp`, bei anderen
      Linux-Systemen optional `coretemp`/`zenpower`) ergänzen; fehlende oder
      ungültige Werte ergeben `None`.

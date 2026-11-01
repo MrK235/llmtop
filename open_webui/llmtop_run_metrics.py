@@ -1,9 +1,9 @@
 """
-title: otop Run Metrics
-author: otop
-version: 1.3.2
+title: llmtop Run Metrics
+author: llmtop
+version: 2.0.0
 required_open_webui_version: 0.12.3
-description: Meldet datensparsame Ollama-Runmetriken an den lokalen otop-Collector.
+description: Meldet datensparsame Ollama-Runmetriken an den lokalen llmtop-Collector.
 """
 
 import asyncio
@@ -83,8 +83,8 @@ def find_metrics(value: Any) -> Optional[dict]:
 class Filter:
     class Valves(BaseModel):
         priority: int = 0
-        collector_url: str = Field(default_factory=lambda: os.getenv("OTOP_COLLECTOR_URL", "http://172.18.0.1:11435"))
-        collector_token: str = Field(default_factory=lambda: os.getenv("OTOP_COLLECTOR_TOKEN", ""))
+        collector_url: str = Field(default_factory=lambda: os.getenv("LLMTOP_COLLECTOR_URL", "http://172.18.0.1:11435"))
+        collector_token: str = Field(default_factory=lambda: os.getenv("LLMTOP_COLLECTOR_TOKEN", ""))
         ollama_base_url: str = Field(default_factory=lambda: os.getenv("OLLAMA_BASE_URL", "http://ollama:11434"))
         timeout_seconds: float = 0.5
         stale_seconds: float = 900.0

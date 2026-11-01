@@ -1,4 +1,4 @@
-"""Ollama- und Linux-Sensorquellen fuer otop."""
+"""Ollama- und Linux-Sensorquellen fuer llmtop."""
 import csv
 import glob
 import io

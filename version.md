@@ -1,8 +1,8 @@
-# Versionsgeschichte — otop
+# Versionsgeschichte — llmtop
 
 ## Schema
 
-`VERSION = "X.Y.Z"` in `otop.py` ist die maßgebliche Versionsquelle. Bei einem
+`VERSION = "X.Y.Z"` in `llmtop.py` ist die maßgebliche Versionsquelle. Bei einem
 Release werden diese Datei, `README.md` und `status.md` auf denselben Stand
 gebracht.
 
@@ -11,6 +11,15 @@ gebracht.
 - **Major**: inkompatible Bedien- oder Schnittstellenänderung.
 
 ## Changelog
+
+### 2.0.0 — 01.11.2026
+
+- Projekt hart von **otop** zu **llmtop** umbenannt: Startdatei, Module,
+  Tests, Open-WebUI-Adapter, Konfigurationspräfix und State-Pfad migriert.
+- `OTOP_*` und `$XDG_STATE_HOME/otop/` werden nicht mehr gelesen.
+- Neues Mini-Pixel-Icon `▞` in TUI-Kopfzeile und `--once` ergänzt.
+- Open-WebUI-Filter-ID lautet nun `llmtop_run_metrics` und wird separat neu
+  installiert.
 
 ### 1.10.12 — 01.11.2026
 
@@ -105,10 +114,10 @@ gebracht.
 
 ### 1.8.5 — 01.11.2026
 
-- `otop.py` auf Programmeinstieg, CLI und Snapshot-Orchestrierung reduziert.
-- Datenerfassung in `otop_sources.py`, Run-Metriken, History und Collector in
-  `otop_metrics.py` sowie curses-Rendering und Hintergrundsampler in
-  `otop_tui.py` getrennt.
+- `llmtop.py` auf Programmeinstieg, CLI und Snapshot-Orchestrierung reduziert.
+- Datenerfassung in `llmtop_sources.py`, Run-Metriken, History und Collector in
+  `llmtop_metrics.py` sowie curses-Rendering und Hintergrundsampler in
+  `llmtop_tui.py` getrennt.
 - Langsame Erfassung läuft außerhalb des curses-Hauptthreads; die bestehende
   Schema-2-Quelle `pi` ist für einen späteren optionalen Pi-Adapter getestet.
 
@@ -217,7 +226,7 @@ gebracht.
 ### 1.4.1 — 31.10.2026
 
 - Ollama-Bereich in „Aktueller Run“ und „Geladene Modelle“ geteilt.
-- Optionalen JSONL-Run-Eingang über `OTOP_RUN_FILE` ergänzt.
+- Optionalen JSONL-Run-Eingang über `LLMTOP_RUN_FILE` ergänzt.
 - Kontextbalken, Prompt-/Ausgabe-/Gesamttoken und Ausgabe-Rate ergänzt.
 - Nicht instrumentierte oder veraltete Runs werden eindeutig angezeigt.
 
@@ -226,8 +235,8 @@ gebracht.
 - Lokale, begrenzte JSONL-History mit UTC-Zeitstempeln, atomischem Schreiben
   und tolerierter Beschädigung einzelner Zeilen ergänzt.
 - Snapshot-Schema für Ollama-, System-, GPU- und Fehlerdaten eingeführt.
-- History-Pfad über `OTOP_HISTORY_FILE` beziehungsweise `XDG_STATE_HOME`
-  konfigurierbar; Standardpfad ist `~/.local/state/otop/history.jsonl`.
+- History-Pfad über `LLMTOP_HISTORY_FILE` beziehungsweise `XDG_STATE_HOME`
+  konfigurierbar; Standardpfad ist `~/.local/state/llmtop/history.jsonl`.
 
 ### 1.3.5 — 31.10.2026
 
@@ -313,7 +322,7 @@ gebracht.
 
 ## Release-Checkliste
 
-1. `python3 -m py_compile otop.py` ausführen.
-2. `python3 otop.py --version`, `--once` und `--once --no-nvidia` prüfen.
+1. `python3 -m py_compile llmtop.py` ausführen.
+2. `python3 llmtop.py --version`, `--once` und `--once --no-nvidia` prüfen.
 3. TUI in einem echten Terminal sowie Fehlerfälle mit Mock-Ollama prüfen.
 4. Dokumentation und `VERSION` abgleichen.

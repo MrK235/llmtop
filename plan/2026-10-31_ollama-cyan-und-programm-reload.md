@@ -6,11 +6,11 @@
    öffnende und schließende Klammer des geteilten Speicherbalkens cyan
    dargestellt. Der GPU-Anteil bleibt cyan, der CPU-Anteil weiterhin gedimmt.
 2. Die Taste **`r` / `R`** aktualisiert nicht mehr nur Messwerte, sondern
-   startet `otop` mit denselben Kommandozeilenargumenten neu.
+   startet `llmtop` mit denselben Kommandozeilenargumenten neu.
 
 ## Umsetzung
 
-1. **Ollama-Farben in `otop.py`**
+1. **Ollama-Farben in `llmtop.py`**
    - `model_card()` für den Modellnamen das vorhandene Cyan-Attribut
      `colors["gpu"]` verwenden.
    - `Speicher ` und beide Balkenklammern `[` / `]` mit demselben

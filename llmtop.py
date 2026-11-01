@@ -1,31 +1,22 @@
 #!/usr/bin/env python3
-"""otop - Ollama Terminal Monitor."""
+"""llmtop - LLM Terminal Monitor für Ollama."""
 import argparse
 import os
 import sys
 import urllib.error
 
-VERSION = "1.10.12"  # Single Source of Truth; History in version.md
+VERSION = "2.0.0"  # Single Source of Truth; History in version.md
+PIXEL_ICON = "▞"  # Kompaktes 2×2-Pixelmuster fuer die TUI-Kopfzeile.
 DEFAULT_HOST = "http://localhost:11434"
-
-
-def __getattr__(name):
-    """Erhaelt fruehere Python-Imports waehrend der Modulaufteilung kompatibel."""
-    import otop_metrics
-    import otop_sources
-    for module in (otop_metrics, otop_sources):
-        if hasattr(module, name):
-            return getattr(module, name)
-    raise AttributeError(name)
 
 
 def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
     """Erstellt einen einmaligen, vollstaendigen Snapshot ohne curses."""
-    from otop_metrics import (backfill_context_limits, collector_config, context_text,
+    from llmtop_metrics import (backfill_context_limits, collector_config, context_text,
                               format_run_line, load_run_events, load_run_history,
                               model_for_run, run_metric_detail, snapshot_record,
                               source_label, token_rate, write_history)
-    from otop_sources import (GPU_POWER_BOOST_W, bar, collect_gpus, collect_ollama,
+    from llmtop_sources import (GPU_POWER_BOOST_W, bar, collect_gpus, collect_ollama,
                               cpu_percent, cpu_temperature, get_ram_pct, loadavg,
                               model_lines, read_cpu_totals)
     lines = []
@@ -34,7 +25,7 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
     run = active_runs[0] if active_runs else None
     runs = load_run_history(limit=10)
     backfill_context_limits(runs, st.get("models", []))
-    lines.append(f"otop {VERSION}  Ollama {st['version'] if st['ok'] else 'nicht erreichbar'}  {host}")
+    lines.append(f"{PIXEL_ICON} llmtop {VERSION}  Ollama {st['version'] if st['ok'] else 'nicht erreichbar'}  {host}")
     token, _collector_url = collector_config()
     lines.append("Collector: " + ("konfiguriert" if token else "nicht konfiguriert"))
     if st["error"]:
@@ -86,7 +77,7 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
         lines.append("Aktuelle Runs: keine instrumentierten Requests")
     lines.append(f"History-Snapshots {'aktiv' if history_ok else 'nicht verfügbar'}")
     for item in runs:
-        finished = __import__('otop_metrics')._parse_time(item.get("finished_at"))
+        finished = __import__('llmtop_metrics')._parse_time(item.get("finished_at"))
         when = finished.strftime("%H:%M") if finished else "?"
         lines.append(format_run_line(item, f"Run-History {when}  {source_label(item.get('source'))}  "
                                      f"{item['model']}  {item['status']}  ",
@@ -95,8 +86,8 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog="otop", description="Ollama Terminal Monitor")
-    ap.add_argument("--version", action="version", version=f"otop {VERSION}")
+    ap = argparse.ArgumentParser(prog="llmtop", description="LLM Terminal Monitor für Ollama")
+    ap.add_argument("--version", action="version", version=f"llmtop {VERSION}")
     ap.add_argument("--host", default=os.environ.get("OLLAMA_HOST", DEFAULT_HOST))
     ap.add_argument("--interval", type=float, default=0.5, help="Refresh-Sekunden (TUI)")
     request_group = ap.add_mutually_exclusive_group()
@@ -110,9 +101,9 @@ def main(argv=None):
     ap.add_argument("--once", action="store_true", help="ein Einzel-Snapshot, kein Vollbild")
     ap.add_argument("--no-nvidia", action="store_true", help="nvidia-smi nicht verwenden")
     args = ap.parse_args(argv)
-    from otop_sources import normalize_host
+    from llmtop_sources import normalize_host
     host = normalize_host(args.host)
-    from otop_metrics import (emit_run_event, install_open_webui_adapter, read_request_payload,
+    from llmtop_metrics import (emit_run_event, install_open_webui_adapter, read_request_payload,
                               run_collector, run_ollama_request)
     if args.install_open_webui_adapter:
         try:
@@ -149,8 +140,8 @@ def main(argv=None):
     if not sys.stdout.isatty():
         sys.stderr.write("kein Terminal gefunden; bitte --once verwenden\n")
         return 1
-    from otop_tui import _run_tui
-    return _run_tui(host, max(0.2, args.interval), not args.no_nvidia, VERSION)
+    from llmtop_tui import _run_tui
+    return _run_tui(host, max(0.2, args.interval), not args.no_nvidia, VERSION, PIXEL_ICON)
 
 
 if __name__ == "__main__":

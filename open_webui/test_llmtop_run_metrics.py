@@ -3,8 +3,8 @@ import importlib.util
 import pathlib
 
 
-PATH = pathlib.Path(__file__).with_name("otop_run_metrics.py")
-SPEC = importlib.util.spec_from_file_location("otop_filter", PATH)
+PATH = pathlib.Path(__file__).with_name("llmtop_run_metrics.py")
+SPEC = importlib.util.spec_from_file_location("llmtop_filter", PATH)
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 

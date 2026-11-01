@@ -66,7 +66,7 @@ Quelle, Tokens, Rate und Dauer. Die Mindestgröße 40×18 bleibt unverändert.
 
 ## Umsetzung
 
-### 1. History-Lesen und Sortierung in `otop.py`
+### 1. History-Lesen und Sortierung in `llmtop.py`
 
 - `load_run_history()` für die interaktive Ansicht bis zu 100 finale,
   deduplizierte Einträge laden lassen; die Speicherung bleibt unverändert auf
@@ -102,9 +102,9 @@ Quelle, Tokens, Rate und Dauer. Die Mindestgröße 40×18 bleibt unverändert.
   Scrollen, Sortierwechsel, Fußzeile und Hilfe dürfen sich nicht überzeichnen.
 - `README.md` (History-Anzeige und Tasten), `status.md` und `version.md`
   aktualisieren; `VERSION` als Minor-Release synchronisieren.
-- Vorgeschriebene Prüfungen ausführen: `python3 -m py_compile otop.py`,
-  `python3 otop.py --once`, `python3 otop.py --once --no-nvidia`,
-  `python3 otop.py --version`, gezielter Diff und `git diff --check`.
+- Vorgeschriebene Prüfungen ausführen: `python3 -m py_compile llmtop.py`,
+  `python3 llmtop.py --once`, `python3 llmtop.py --once --no-nvidia`,
+  `python3 llmtop.py --version`, gezielter Diff und `git diff --check`.
 
 ## Abnahme
 

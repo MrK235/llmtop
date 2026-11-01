@@ -1,8 +1,8 @@
-# Plan: Open-WebUI-Adapter vollständig über otop installieren
+# Plan: Open-WebUI-Adapter vollständig über llmtop installieren
 
 ## Ziel
 
-`otop` installiert und aktualisiert den Open-WebUI-Filter selbst über die vorhandene Open-WebUI-API. Nach einmaligem Start von `otop` sind weder Import noch Valves noch Modellzuordnung in der Open-WebUI-Oberfläche erforderlich.
+`llmtop` installiert und aktualisiert den Open-WebUI-Filter selbst über die vorhandene Open-WebUI-API. Nach einmaligem Start von `llmtop` sind weder Import noch Valves noch Modellzuordnung in der Open-WebUI-Oberfläche erforderlich.
 
 ## Befund
 
@@ -16,23 +16,23 @@
 
 ## Korrektur
 
-### 1. Konfiguration ausschließlich in otop
+### 1. Konfiguration ausschließlich in llmtop
 
-`otop` verwendet eine lokale `.env` im Projekt oder explizite Umgebungsvariablen:
+`llmtop` verwendet eine lokale `.env` im Projekt oder explizite Umgebungsvariablen:
 
 ```dotenv
-OTOP_COLLECTOR_TOKEN=<bestehender-langer-token>
+LLMTOP_COLLECTOR_TOKEN=<bestehender-langer-token>
 OPEN_WEBUI_URL=http://127.0.0.1:3000
 OPEN_WEBUI_API_KEY=<Admin-API-Key-aus-Open-WebUI>
 ```
 
-- Der Wert wird ausschließlich aus der otop-Umgebung gelesen und nie ausgegeben, geloggt oder in die Function-Datei geschrieben.
+- Der Wert wird ausschließlich aus der llmtop-Umgebung gelesen und nie ausgegeben, geloggt oder in die Function-Datei geschrieben.
 - `.env.example` erhält nur die Variablennamen und Platzhalter.
 - Der benötigte Key ist ein API-Key eines Open-WebUI-Administrators. Falls noch keiner existiert, muss er **einmalig** über Open WebUI erzeugt werden; das ist eine Berechtigungsgrenze der Open-WebUI-API, keine zusätzliche Laufzeitkonfiguration.
 
 ### 2. Privater Collector-Zugang ohne Open-WebUI-Konfiguration
 
-`otop --collector` startet zusätzlich zum Loopback-Listener einen Listener auf der privaten Docker-Gateway-Adresse des Open-WebUI-Netzes.
+`llmtop --collector` startet zusätzlich zum Loopback-Listener einen Listener auf der privaten Docker-Gateway-Adresse des Open-WebUI-Netzes.
 
 - Die Gateway-Adresse wird für den bekannten Container `open-webui` über `docker inspect` ermittelt, nicht fest auf `172.18.0.1` kodiert.
 - Der Listener bleibt auf genau diese private Gateway-IP begrenzt; kein `0.0.0.0`, keine Docker-Portfreigabe, keine Compose-Änderung.
@@ -41,13 +41,13 @@ OPEN_WEBUI_API_KEY=<Admin-API-Key-aus-Open-WebUI>
 
 ### 3. API-gesteuerte Installation
 
-Ein neuer expliziter otop-Modus, beispielsweise `--install-open-webui-adapter`, führt diese Schritte idempotent aus:
+Ein neuer expliziter llmtop-Modus, beispielsweise `--install-open-webui-adapter`, führt diese Schritte idempotent aus:
 
 1. `.env` laden, URL und Admin-API-Key prüfen.
-2. `GET /api/v1/functions/id/otop_run_metrics` mit `Authorization: Bearer ...` prüfen.
-3. Fehlt die Function: Filterquelle aus `open_webui/otop_run_metrics.py` mit `POST /api/v1/functions/create` anlegen.
-4. Existiert sie: über `POST /api/v1/functions/id/otop_run_metrics/update` aktualisieren.
-5. Valves über `POST /api/v1/functions/id/otop_run_metrics/valves/update` setzen:
+2. `GET /api/v1/functions/id/llmtop_run_metrics` mit `Authorization: Bearer ...` prüfen.
+3. Fehlt die Function: Filterquelle aus `open_webui/llmtop_run_metrics.py` mit `POST /api/v1/functions/create` anlegen.
+4. Existiert sie: über `POST /api/v1/functions/id/llmtop_run_metrics/update` aktualisieren.
+5. Valves über `POST /api/v1/functions/id/llmtop_run_metrics/valves/update` setzen:
    - ermittelte private Collector-URL,
    - Collector-Token,
    - Ollama-Service-URL aus Open-WebUI-Konfiguration, sofern über die API verfügbar, sonst `http://ollama:11434`.
@@ -75,4 +75,4 @@ Der bisherige Filter bleibt datensparsam, nicht abschaltbar und fehlertolerant.
 
 ## Abnahme
 
-Nach `python3 otop.py --collector` und `python3 otop.py --install-open-webui-adapter` ist der Filter über die Open-WebUI-API installiert, konfiguriert, aktiv und global. Ein Open-WebUI-Ollama-Chat wird ohne weitere Aktion in Open WebUI als Quelle `Open WebUI` in otop angezeigt.
+Nach `python3 llmtop.py --collector` und `python3 llmtop.py --install-open-webui-adapter` ist der Filter über die Open-WebUI-API installiert, konfiguriert, aktiv und global. Ein Open-WebUI-Ollama-Chat wird ohne weitere Aktion in Open WebUI als Quelle `Open WebUI` in llmtop angezeigt.

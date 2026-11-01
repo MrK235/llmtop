@@ -1,21 +1,21 @@
-# otop — Ollama Terminal Monitor mit GPU-, RAM- und VRAM-Sensoren
+# llmtop — LLM Terminal Monitor für Ollama mit GPU-, RAM- und VRAM-Sensoren
 
-**Version 1.10.12 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
+**Version 2.0.0 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
 die über die Ollama-API das **geladene Modell** sowie **CPU-/RAM/GPU-Auslastung**
 anzeigt. Versionsgeschichte und Versionsschema: `version.md`.
 
-Die Version wird angezeigt: in der TUI-Kopfzeile (`otop 1.10.12 • Ollama …`), in der
-ersten Zeile von `--once`, und über `--version`. Maßgebliche Zahl ist `VERSION`
-in `otop.py`.
+Die Version wird angezeigt: in der TUI-Kopfzeile (`▞ llmtop 2.0.0 • Ollama …`), in
+der ersten Zeile von `--once`, und über `--version`. Das Icon `▞` ist ein
+kompaktes 2×2-Pixelmuster. Maßgebliche Zahl ist `VERSION` in `llmtop.py`.
 
 ## Dateien
 
 | Datei | Inhalt |
 |-------|--------|
-| `otop.py` | Programmeinstieg, CLI und Snapshot-Modus |
-| `otop_sources.py` | Ollama-, CPU-, RAM- und GPU-Datenerfassung |
-| `otop_metrics.py` | Run-Schema, JSONL-Historie, Collector und Open-WebUI-Integration |
-| `otop_tui.py` | curses-Rendering und TUI-Hintergrundsampler |
+| `llmtop.py` | Programmeinstieg, CLI und Snapshot-Modus |
+| `llmtop_sources.py` | Ollama-, CPU-, RAM- und GPU-Datenerfassung |
+| `llmtop_metrics.py` | Run-Schema, JSONL-Historie, Collector und Open-WebUI-Integration |
+| `llmtop_tui.py` | curses-Rendering und TUI-Hintergrundsampler |
 | `README.md` | diese Anleitung |
 | `status.md` | Projektstand, bekannte Grenzen und Prüfhinweise |
 | `version.md` | Versionsschema, Versionsanzeige, Changelog |
@@ -30,24 +30,33 @@ Pläne werden gemeinsam versioniert. Vor einem Commit: Tests aus `status.md`
 ausführen, `VERSION` sowie `README.md`, `status.md` und `version.md` abgleichen.
 Tags verwenden das Format `vX.Y.Z`.
 
+## Umstieg 2.0
+
+Dies ist ein harter Namenswechsel: Der Start erfolgt ausschließlich über
+`python3 llmtop.py`; die früheren `otop.py`-Dateien, `OTOP_*`-Variablen und
+`$XDG_STATE_HOME/otop/` werden nicht mehr verwendet. Die neuen Pfade und
+Variablen beginnen mit `llmtop` beziehungsweise `LLMTOP_`. Nach dem Umstieg
+muss der Open-WebUI-Adapter einmal mit
+`python3 llmtop.py --install-open-webui-adapter` neu installiert werden.
+
 ## Start
 
 ```bash
-python3 otop.py                      # Vollbild-TUI (curses), Refresh alle 0,5 s
-python3 otop.py --interval 1         # TUI mit 1 s Refresh
-python3 otop.py --once               # ein Einzel-Snapshot (Skripte / kein Terminal)
-python3 otop.py --host http://127.0.0.1:11434
-python3 otop.py --chat '{"model":"qwen3.5:4b","messages":[{"role":"user","content":"Hallo"}]}'
-python3 otop.py --collector          # Loopback und privates Open-WebUI-Docker-Gateway
-python3 otop.py --install-open-webui-adapter  # Filter per Open-WebUI-API installieren
-python3 otop.py --emit event.json    # Schema-2-Testevent an den Collector senden
-python3 otop.py --no-nvidia          # nvidia-smi überspringen (sysfs-Pfad)
-python3 otop.py --version            # Versionsnummer, danach Exit 0 (kein TUI)
+python3 llmtop.py                      # Vollbild-TUI (curses), Refresh alle 0,5 s
+python3 llmtop.py --interval 1         # TUI mit 1 s Refresh
+python3 llmtop.py --once               # ein Einzel-Snapshot (Skripte / kein Terminal)
+python3 llmtop.py --host http://127.0.0.1:11434
+python3 llmtop.py --chat '{"model":"qwen3.5:4b","messages":[{"role":"user","content":"Hallo"}]}'
+python3 llmtop.py --collector          # Loopback und privates Open-WebUI-Docker-Gateway
+python3 llmtop.py --install-open-webui-adapter  # Filter per Open-WebUI-API installieren
+python3 llmtop.py --emit event.json    # Schema-2-Testevent an den Collector senden
+python3 llmtop.py --no-nvidia          # nvidia-smi überspringen (sysfs-Pfad)
+python3 llmtop.py --version            # Versionsnummer, danach Exit 0 (kein TUI)
 ```
 
 `$OLLAMA_HOST` wird als Default übernommen; `--host` ohne Protokoll wird zu
 `http://<host>`. Für einen optionalen, ausschließlich lesenden Open-WebUI-
-Datenbank-Fallback kann `OTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
+Datenbank-Fallback kann `LLMTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 `webui.db` gesetzt werden. Ohne stabile Zuordnung werden keine Daten ergänzt.
 
 | Option | Verhalten |
@@ -99,7 +108,8 @@ Sekundärinfos gedimmt. Im Ollama-Speicherbalken bedeuten die Farben explizit
 den Offload-Grad der GPU/VRAM-Anzeige: Grün oberhalb 55 %, Gelb bei 45–55 %
 und Rot unterhalb 45 % GPU-Anteil. CPU/RAM bleibt gedimmt grau. Beide Anteile
 nutzen `#` und zeigen zusätzlich Textwerte. Eine
-Leerzeile trennt jeweils System, GPU, Ollama und History. **History** zeigt
+Leerzeilen trennen System, GPU, aktuelle Runs, geladene Modelle und History.
+**History** zeigt
 eine scrollbare Tabelle mit bis zu 100 abgeschlossenen instrumentierten Runs.
 Sie kann nach Abschlusszeit, Quelle, Modell, Status, Tokens, Kontextverbrauch,
 Ausgaberate und Dauer sortiert werden. Die aktive Sortierspalte ist im
@@ -110,19 +120,19 @@ Kontext wird nach dem prozentualen Verbrauch sortiert, nicht nach der absoluten
 Tokengröße. Die Kontextspalte zeigt zuerst den Prozentwert und danach genutzte
 Token sowie das Limit; fehlende Providerwerte bleiben `n/a`. Die Daten bleiben
 als begrenzte JSONL-Datei gespeichert; eine Datenbank ist bei 100 Einträgen
-nicht nötig. Zusätzlich speichert otop lokale, begrenzte System-Snapshots. Der
-Snapshot-Pfad kann über `OTOP_HISTORY_FILE`, die Run-Historie über
-`OTOP_RUN_HISTORY_FILE` oder `XDG_STATE_HOME` angepasst werden.
+nicht nötig. Zusätzlich speichert llmtop lokale, begrenzte System-Snapshots. Der
+Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
+`LLMTOP_RUN_HISTORY_FILE` oder `XDG_STATE_HOME` angepasst werden.
 
 ## Angezeigte Werte
 
-* **Kopfzeile**: `otop <VERSION>`, Ollama-Version und Erreichbarkeit
+* **Kopfzeile**: `llmtop <VERSION>`, Ollama-Version und Erreichbarkeit
   (`/api/version`) sowie **Open-WebUI Collector**-Status (`aktiv` / `nicht
   aktiv`). Die Namen sind gedimmt grau; verbundene/aktive Stati sind Grün und
   OFFLINE/nicht aktive Stati Rot. Bei ausreichender Breite steht zusätzlich das
   Refresh-Intervall dort; bei 40 Spalten werden beide Verbindungsstati als
   `Ollama:OK/OFF` und `OWC:OK/OFF` gezielt verdichtet.
-* **Aktuelle Runs**: bis zu drei aktive Schema-2-Runs aus `OTOP_RUN_FILE`, jeweils mit Quelle (`Pi`, `Open WebUI`, `Ollama CLI`), Status, Modell und verfügbaren Token-/Dauerwerten. Nach dem Abschluss bleibt der letzte Run mit den finalen Token- und Zeitwerten sichtbar, bis ein neuer Run startet. Eine Open-WebUI-Chat-Anfrage bleibt auch bei internen Tool- oder Fortsetzungsrunden genau ein aktueller Run. Verwaiste nicht-finale Live-Einträge werden nach 90 Sekunden ohne Lebenszeichen entfernt und nicht als aktuelle Runs angezeigt. Lange Streams senden regelmäßig Lebenszeichen. Schema-1-Daten bleiben als `Legacy` lesbar. Status, Modell, Kontextlimit und grafischer Kontextverbrauch (Prompt- plus Ausgabetoken),
+* **Aktuelle Runs**: bis zu drei aktive Schema-2-Runs aus `LLMTOP_RUN_FILE`, jeweils mit Quelle (`Pi`, `Open WebUI`, `Ollama CLI`), Status, Modell und verfügbaren Token-/Dauerwerten. Nach dem Abschluss bleibt der letzte Run mit den finalen Token- und Zeitwerten sichtbar, bis ein neuer Run startet. Eine Open-WebUI-Chat-Anfrage bleibt auch bei internen Tool- oder Fortsetzungsrunden genau ein aktueller Run. Verwaiste nicht-finale Live-Einträge werden nach 90 Sekunden ohne Lebenszeichen entfernt und nicht als aktuelle Runs angezeigt. Lange Streams senden regelmäßig Lebenszeichen. Schema-1-Daten bleiben als `Legacy` lesbar. Status, Modell, Kontextlimit und grafischer Kontextverbrauch (Prompt- plus Ausgabetoken),
   Prompt-/Ausgabe-/Gesamttoken und Ausgabe-Rate. `--chat` und `--generate`
   instrumentieren eigene direkte Ollama-Aufrufe ohne Reverse Proxy. Während
   des Streamings liefert Ollama keine Tokenwerte; bis zum Abschluss stehen sie
@@ -160,7 +170,7 @@ Snapshot-Pfad kann über `OTOP_HISTORY_FILE`, die Run-Historie über
 
 ## Open-WebUI-Adapter
 
-Der Filter liegt in `open_webui/otop_run_metrics.py` und wird ausschließlich über die Open-WebUI-API installiert. Die lokale `.env` benötigt zusätzlich zu `OTOP_COLLECTOR_TOKEN` einen Admin-API-Key:
+Der Filter liegt in `open_webui/llmtop_run_metrics.py` und wird ausschließlich über die Open-WebUI-API installiert. Die lokale `.env` benötigt zusätzlich zu `LLMTOP_COLLECTOR_TOKEN` einen Admin-API-Key:
 
 ```dotenv
 OPEN_WEBUI_URL=http://127.0.0.1:3000
@@ -168,11 +178,11 @@ OPEN_WEBUI_API_KEY=<Open-WebUI-Admin-API-Key>
 ```
 
 Danach genügt der normale TUI-Start; der Collector wird bei konfiguriertem
-`OTOP_COLLECTOR_TOKEN` automatisch im Hintergrund gestartet:
+`LLMTOP_COLLECTOR_TOKEN` automatisch im Hintergrund gestartet:
 
 ```bash
-python3 otop.py
-python3 otop.py --install-open-webui-adapter
+python3 llmtop.py
+python3 llmtop.py --install-open-webui-adapter
 ```
 
 `--collector` bleibt für einen separat laufenden, blockierenden Dienstmodus
@@ -187,13 +197,13 @@ Der Installationsbefehl erkennt die private Docker-Gateway-Adresse, setzt die Fi
   geräte-global und nicht exklusiv Ollama zurechenbar.
 * Ollama läuft im Docker-Container; die GPU-Messung erfolgt am Host (NVIDIA-Binary
   `nvidia-smi` bzw. sysfs), nicht im Container.
-* Der Collector lauscht standardmäßig auf `127.0.0.1:11435` und zusätzlich auf dem erkannten privaten Docker-Gateway von `open-webui`. Er benötigt `OTOP_COLLECTOR_TOKEN`; `.env.example` zeigt die lokalen Variablennamen.
+* Der Collector lauscht standardmäßig auf `127.0.0.1:11435` und zusätzlich auf dem erkannten privaten Docker-Gateway von `open-webui`. Er benötigt `LLMTOP_COLLECTOR_TOKEN`; `.env.example` zeigt die lokalen Variablennamen.
 * Run-Historien speichern nur IDs, Quelle, Modell, Status, Zeit- und Tokenzähler
   sowie optional Kontexttoken und Kontextlimit; keine Prompts oder Modellantworten.
   Das Kontextlimit wird bevorzugt aus dem Run (`options.num_ctx`) übernommen und
   ersatzweise aus dem aktuell geladenen Modell in `/api/ps` ergänzt. Open-WebUI
   liefert bei Ollama-Streaming echte Usage-Werte häufig erst im Abschluss;
-  währenddessen zeigt otop deshalb einen eindeutigen Wartezustand statt Schätzungen.
+  währenddessen zeigt llmtop deshalb einen eindeutigen Wartezustand statt Schätzungen.
 * CPU-% ist ein Differenzwert über ein Refresh-Intervall — der erste Frame zeigt
   „Messung“.
 * Ist `nvidia-smi` erfolgreich, werden sysfs-GPUs nicht zusätzlich gezeigt.

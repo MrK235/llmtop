@@ -2,12 +2,12 @@
 
 ## Ziel
 
-Die 1.757 Zeilen große `otop.py` soll übersichtlicher werden, ohne daraus ein
+Die 1.757 Zeilen große `llmtop.py` soll übersichtlicher werden, ohne daraus ein
 komplexes Paket oder Framework zu machen. Bestehende CLI-Aufrufe, Exit-Codes,
 Tasten, Datenformate und Anzeigen bleiben erhalten.
 
 Die Aufteilung soll außerdem den nächsten Schritt vorbereiten: Pi soll seine
-Run-Metriken über den bereits vorhandenen Collector an `otop` melden können.
+Run-Metriken über den bereits vorhandenen Collector an `llmtop` melden können.
 Dafür wird kein Plugin-System benötigt. Das bestehende Schema-2-Ereignisformat
 und `POST /v1/runs` bleiben die gemeinsame Schnittstelle für Pi, Open WebUI und
 den direkten Ollama-Client.
@@ -31,16 +31,16 @@ und verzögerte Imports, nicht durch möglichst viele Dateien.
 ## Vereinfachte Zielstruktur
 
 ```text
-otop.py                 # VERSION, CLI, Moduswahl, Snapshot-Orchestrierung
-otop_sources.py         # Ollama-Abfragen sowie CPU-, RAM- und GPU-Sensoren
-otop_metrics.py         # Run-Schema, History, Collector und Metrik-Hilfen
-otop_tui.py             # curses-Rendering, Eingaben und TUI-Ablauf
+llmtop.py                 # VERSION, CLI, Moduswahl, Snapshot-Orchestrierung
+llmtop_sources.py         # Ollama-Abfragen sowie CPU-, RAM- und GPU-Sensoren
+llmtop_metrics.py         # Run-Schema, History, Collector und Metrik-Hilfen
+llmtop_tui.py             # curses-Rendering, Eingaben und TUI-Ablauf
 open_webui/
-    otop_run_metrics.py # bestehender Open-WebUI-Adapter
+    llmtop_run_metrics.py # bestehender Open-WebUI-Adapter
 
 # Im nächsten Schritt, nicht Teil dieser Umstrukturierung:
 pi/
-    otop_run_metrics.py # optionaler Pi-Adapter für dasselbe Schema 2
+    llmtop_run_metrics.py # optionaler Pi-Adapter für dasselbe Schema 2
 ```
 
 Es werden nur drei neue Kernmodule eingeführt. Kein `src/`-Layout, kein
@@ -48,12 +48,12 @@ installierbares Paket, keine abstrakten Basisklassen und keine dynamische
 Plugin-Erkennung. Der Start bleibt:
 
 ```bash
-python3 otop.py
+python3 llmtop.py
 ```
 
 ## Zuständigkeiten
 
-### `otop.py`
+### `llmtop.py`
 
 - einzige Versionsquelle `VERSION`;
 - ArgumentParser und unveränderte CLI-Optionen;
@@ -62,10 +62,10 @@ python3 otop.py
 - einfacher Hintergrund-Sampler für die TUI;
 - Lazy Imports: schwere Module erst nach Auswahl des CLI-Modus laden.
 
-`otop.py` bleibt damit der gut lesbare Programmeinstieg und enthält weiterhin
+`llmtop.py` bleibt damit der gut lesbare Programmeinstieg und enthält weiterhin
 die übergeordnete Ablaufsteuerung.
 
-### `otop_sources.py`
+### `llmtop_sources.py`
 
 - `normalize_host`, Ollama `/api/version` und `/api/ps`;
 - direkter `/api/chat`- und `/api/generate`-Client;
@@ -73,7 +73,7 @@ die übergeordnete Ablaufsteuerung.
 - NVIDIA- und sysfs-GPU-Erfassung;
 - ausschließlich Datenerfassung, keine curses-Ausgabe und kein Collector.
 
-### `otop_metrics.py`
+### `llmtop_metrics.py`
 
 - Schema-2-Validierung und Normalisierung;
 - aktive Runs, Run-History und System-Snapshot-History;
@@ -85,7 +85,7 @@ die übergeordnete Ablaufsteuerung.
 Dieses Modul ist die stabile Grenze für Pi. Es verarbeitet ausschließlich das
 gemeinsame Ereignisformat und kennt keine Pi-interne API.
 
-### `otop_tui.py`
+### `llmtop_tui.py`
 
 - Balken- und Textformatierung;
 - vollständiges curses-Rendering;
@@ -126,9 +126,9 @@ bereits etablierte Ereignisschema sind die Adapter-Schnittstelle.
    - NVIDIA-CSV und sysfs-Fallback;
    - Schema-2-Events für `pi`, `open-webui` und `ollama-cli`;
    - History-Retention, Deduplizierung und parallele Collector-Updates.
-2. Sensor- und Ollama-Funktionen nach `otop_sources.py` verschieben.
-3. Run-, History- und Collector-Funktionen nach `otop_metrics.py` verschieben.
-4. `otop.py` importiert die verschobenen Funktionen zunächst direkt, damit das
+2. Sensor- und Ollama-Funktionen nach `llmtop_sources.py` verschieben.
+3. Run-, History- und Collector-Funktionen nach `llmtop_metrics.py` verschieben.
+4. `llmtop.py` importiert die verschobenen Funktionen zunächst direkt, damit das
    Verhalten unverändert bleibt.
 5. Nach jeder Verschiebung Syntaxcheck und betroffene Tests ausführen.
 
@@ -137,8 +137,8 @@ nur Code verschoben, noch kein Ablauf geändert.
 
 ### 2. TUI trennen und blockierende Abfragen entkoppeln
 
-1. Rendering und Tastaturbehandlung nach `otop_tui.py` verschieben.
-2. In `otop.py` einen einzelnen Hintergrund-Thread für die Datenerfassung
+1. Rendering und Tastaturbehandlung nach `llmtop_tui.py` verschieben.
+2. In `llmtop.py` einen einzelnen Hintergrund-Thread für die Datenerfassung
    einführen. Er erstellt pro Intervall einen vollständigen Snapshot.
 3. Die TUI liest nur den zuletzt vollständig veröffentlichten Snapshot. curses
    bleibt vollständig im Hauptthread.
@@ -155,7 +155,7 @@ die TUI weiterhin auf `q`, Hilfe, Sortierung und Resize.
 
 ### 3. Einstieg verschlanken und Pi-Schnittstelle absichern
 
-1. In `otop.py` schwere Module erst im tatsächlich gewählten Modus importieren.
+1. In `llmtop.py` schwere Module erst im tatsächlich gewählten Modus importieren.
    `--version` darf weder curses, sqlite3, HTTP-Server noch Sensorcode laden.
 2. Einen Collector-Test mit Quelle `pi` ergänzen, der `started`, `updated` und
    `completed` prüft. Dabei werden keine Pi-Bibliotheken benötigt.
@@ -185,9 +185,9 @@ oder Felder vorweggenommen.
 
 Unverändert funktionieren:
 
-- `python3 otop.py --version`
-- `python3 otop.py --once`
-- `python3 otop.py --once --no-nvidia`
+- `python3 llmtop.py --version`
+- `python3 llmtop.py --once`
+- `python3 llmtop.py --once --no-nvidia`
 - TUI inklusive aller Tasten und 40×18-Mindestlayout
 - `--chat`, `--generate`, `--collector`, `--emit`
 - `--install-open-webui-adapter`
@@ -204,7 +204,7 @@ Zusätzlich gilt:
 ## Empfohlener erster Umsetzungsschritt
 
 Zuerst nur Schritt 1 umsetzen: Tests für die bestehenden Grenzen ergänzen und
-anschließend `otop_sources.py` sowie `otop_metrics.py` extrahieren. Die TUI und
+anschließend `llmtop_sources.py` sowie `llmtop_metrics.py` extrahieren. Die TUI und
 die Nebenläufigkeit bleiben dabei zunächst unverändert. So entsteht ein kleiner,
 prüfbarer Umbau und gleichzeitig die stabile Grundlage für den späteren
 Pi-Adapter.

@@ -79,17 +79,17 @@ Generierung wird kein falscher Live-Wert angezeigt.
 
 ### 2. Finale API- und Datenbank-Fallbacks ergänzen
 
-- Einen kleinen, optionalen `OpenWebUIFinalMetricsReader` in `otop.py`
+- Einen kleinen, optionalen `OpenWebUIFinalMetricsReader` in `llmtop.py`
   ergänzen, der nur bei einem unvollständigen finalen Open-WebUI-Run aktiv wird.
 - **API-Pfad:** Vorhandene Chat-/Nachrichten-Endpunkte nur nutzen, wenn eine
   stabile Chat- oder Message-ID aus Filter-Metadaten verfügbar ist. Ausschließlich
   `usage`, Modell, Zeit und IDs lesen; keine Inhalte übernehmen.
 - **Datenbank-Pfad:** Optionaler, explizit konfigurierter Nur-Lese-Pfad
-  `OTOP_OPEN_WEBUI_DB` zum SQLite-Volume. Abfrage ausschließlich gegen
+  `LLMTOP_OPEN_WEBUI_DB` zum SQLite-Volume. Abfrage ausschließlich gegen
   `chat_message` nach passender Message-ID und/oder sicherer Zeit-/Modell-
   Korrelation innerhalb eines engen Zeitfensters.
 - Keine Docker-Exec-Aufrufe und keine Mount- oder Compose-Änderungen durch
-  `otop`; der Pfad wird vom Betreiber explizit bereitgestellt.
+  `llmtop`; der Pfad wird vom Betreiber explizit bereitgestellt.
 - Der Abgleich läuft begrenzt im Hintergrund (z. B. wenige Wiederholungen nach
   Abschluss), aktualisiert nur fehlende Felder und kann niemals einen bestehenden
   echten Wert überschreiben.

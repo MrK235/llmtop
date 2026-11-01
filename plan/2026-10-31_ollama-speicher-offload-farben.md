@@ -39,7 +39,7 @@ Farblogik ändert sich.
 
 ## Umsetzung
 
-1. **Offload-Farbrolle zentral ergänzen (`otop.py`)**
+1. **Offload-Farbrolle zentral ergänzen (`llmtop.py`)**
    - Die globalen Rollen `offload_good` (Grün), `offload_mixed` (Gelb) und
      `offload_cpu` (Rot) aus den vorhandenen Statusfarben ableiten; keine
      zusätzliche Abhängigkeit oder Palette notwendig.

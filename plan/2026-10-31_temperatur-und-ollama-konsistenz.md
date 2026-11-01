@@ -55,7 +55,7 @@ GPU- und CPU-Anteil sowie Sekundärinformation.
 
 ## Umsetzung
 
-1. **Temperaturzeilen einordnen (`otop.py`)**
+1. **Temperaturzeilen einordnen (`llmtop.py`)**
    - Die separate lokale Zeichenhilfe `temperature()` entfernen.
    - `sensor()` um optionale, segmentweise gerenderte Zusatzinformation
      erweitern (Text plus Attribut), damit `Temp X °C` am Ende der CPU- und
@@ -66,7 +66,7 @@ GPU- und CPU-Anteil sowie Sekundärinformation.
    - Die Temperaturerfassung und die farbigen Schwellenwerte bleiben
      unverändert.
 
-2. **Ollama-Modellkarte vereinheitlichen (`otop.py`)**
+2. **Ollama-Modellkarte vereinheitlichen (`llmtop.py`)**
    - Farbrollen in `_init_colors()` trennen: Bereichstitel, Modellname und
      GPU-Anteil erhalten unterschiedliche Attribute.
    - Geteilten Speicherbalken und Textwerte aus derselben Berechnung speisen.

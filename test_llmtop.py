@@ -4,18 +4,18 @@ import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
-import otop_metrics as otop
-import otop_tui
+import llmtop_metrics as llmtop
+import llmtop_tui
 
 
 def test_run_metric_detail():
-    assert otop.run_metric_detail({}) == 'Tokens: warten auf Provider · Tok/s: n/a'
-    text = otop.run_metric_detail({'prompt_tokens': 1000, 'output_tokens': 250,
+    assert llmtop.run_metric_detail({}) == 'Tokens: warten auf Provider · Tok/s: n/a'
+    text = llmtop.run_metric_detail({'prompt_tokens': 1000, 'output_tokens': 250,
                                    'eval_duration_s': 5})
     assert text == 'Tokens: 1.2k (Prompt 1.0k, Ausgabe 250) · 50.0 Tok/s'
-    text = otop.run_metric_detail({'prompt_tokens': 10, 'output_tokens': 3})
+    text = llmtop.run_metric_detail({'prompt_tokens': 10, 'output_tokens': 3})
     assert text == 'Tokens: 13 (Prompt 10, Ausgabe 3) · Tok/s: n/a'
-    assert 'Prompt n/a' in otop.run_metric_detail({'output_tokens': 3})
+    assert 'Prompt n/a' in llmtop.run_metric_detail({'output_tokens': 3})
 
 
 def test_run_history_defaults_to_hundred():
@@ -31,7 +31,7 @@ def test_run_history_defaults_to_hundred():
                 'prompt_tokens': index, 'output_tokens': 1,
             })
         path.write_text(''.join(json.dumps(record) + '\n' for record in records))
-        result = otop.load_run_history(path)
+        result = llmtop.load_run_history(path)
         assert len(result) == 100
 
 
@@ -46,24 +46,24 @@ def test_history_sorting_and_context_cells():
         {'run_id': 'c', 'source': 'ollama-cli', 'model': 'gamma', 'status': 'completed',
          'finished_at': '2026-10-31T18:03:00Z'},
     ]
-    for column in otop.HISTORY_COLUMNS:
-        ordered = otop.sort_run_history(runs, column)
+    for column in llmtop.HISTORY_COLUMNS:
+        ordered = llmtop.sort_run_history(runs, column)
         assert len(ordered) == 3
-    assert otop.sort_run_history(runs, 'tokens')[-1]['run_id'] == 'c'
-    assert otop.sort_run_history(runs, 'kontext')[-1]['run_id'] == 'c'
+    assert llmtop.sort_run_history(runs, 'tokens')[-1]['run_id'] == 'c'
+    assert llmtop.sort_run_history(runs, 'kontext')[-1]['run_id'] == 'c'
     percentage_runs = [
         dict(runs[0], run_id='large', context_tokens=1000, context_limit=10000),
         dict(runs[0], run_id='small', context_tokens=500, context_limit=1000),
     ]
-    assert [item['run_id'] for item in otop.sort_run_history(
+    assert [item['run_id'] for item in llmtop.sort_run_history(
         percentage_runs, 'kontext')] == ['small', 'large']
-    assert [item['run_id'] for item in otop.sort_run_history(runs, 'modell', False)] == ['b', 'a', 'c']
-    assert otop.history_header_label('kontext', 'kontext', True) == 'Kontext▾'
-    assert otop.history_header_label('kontext', 'kontext', False) == 'Kontext▴'
-    assert otop.history_header_label('modell', 'kontext', True) == 'Modell'
-    assert otop.history_context_cell(runs[0]) == '15% 150/1.0k'
-    assert otop.history_context_cell(dict(runs[0], context_limit=None)) == 'n/a 150/n/a'
-    assert otop.history_context_cell(runs[2]) == 'n/a'
+    assert [item['run_id'] for item in llmtop.sort_run_history(runs, 'modell', False)] == ['b', 'a', 'c']
+    assert llmtop.history_header_label('kontext', 'kontext', True) == 'Kontext▾'
+    assert llmtop.history_header_label('kontext', 'kontext', False) == 'Kontext▴'
+    assert llmtop.history_header_label('modell', 'kontext', True) == 'Modell'
+    assert llmtop.history_context_cell(runs[0]) == '15% 150/1.0k'
+    assert llmtop.history_context_cell(dict(runs[0], context_limit=None)) == 'n/a 150/n/a'
+    assert llmtop.history_context_cell(runs[2]) == 'n/a'
 
 
 def test_live_run_keeps_active_run_until_final():
@@ -75,20 +75,20 @@ def test_live_run_keeps_active_run_until_final():
             'source': 'open-webui', 'model': 'model',
             'started_at': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
         }
-        assert otop.write_live_run(run, live)
-        assert len(list(otop.load_run_events(live))) == 1
+        assert llmtop.write_live_run(run, live)
+        assert len(list(llmtop.load_run_events(live))) == 1
         final = dict(run, event='completed', finished_at='2026-10-31T18:01:00Z',
                      prompt_tokens=4, output_tokens=6)
-        assert otop.append_run_history(final, history)
-        assert otop.write_live_run(final, live)
-        displayed = otop.load_run_events(live)
+        assert llmtop.append_run_history(final, history)
+        assert llmtop.write_live_run(final, live)
+        displayed = llmtop.load_run_events(live)
         assert len(displayed) == 1
         assert displayed[0]["status"] == "completed"
         assert displayed[0]["prompt_tokens"] == 4
         next_run = dict(run, run_id="next", status="running")
-        assert otop.write_live_run(next_run, live)
-        assert [item["run_id"] for item in otop.load_run_events(live)] == ["next"]
-        assert len(otop.load_run_history(history)) == 1
+        assert llmtop.write_live_run(next_run, live)
+        assert [item["run_id"] for item in llmtop.load_run_events(live)] == ["next"]
+        assert len(llmtop.load_run_history(history)) == 1
 
 
 def test_stale_live_runs_are_pruned():
@@ -99,8 +99,8 @@ def test_stale_live_runs_are_pruned():
             'status': 'running', 'started_at': '2020-01-01T00:00:00Z',
             'updated_at': '2020-01-01T00:00:00Z',
         }
-        assert otop.write_live_run(run, live)
-        assert otop.load_run_events(live, max_age=1) == []
+        assert llmtop.write_live_run(run, live)
+        assert llmtop.load_run_events(live, max_age=1) == []
         assert live.read_text() == ''
 
 
@@ -114,16 +114,16 @@ def test_parallel_live_updates_do_not_resurrect_runs():
                    'model': 'model', 'status': 'running',
                    'started_at': '2026-10-31T18:00:00Z'}
             barrier.wait()
-            assert otop.write_live_run(run, live)
+            assert llmtop.write_live_run(run, live)
             run.update(event='completed', finished_at='2026-10-31T18:01:00Z')
-            assert otop.write_live_run(run, live)
+            assert llmtop.write_live_run(run, live)
 
         threads = [threading.Thread(target=worker, args=(index,)) for index in range(12)]
         for thread in threads:
             thread.start()
         for thread in threads:
             thread.join()
-        displayed = otop.load_run_events(live, max_age=10 ** 9)
+        displayed = llmtop.load_run_events(live, max_age=10 ** 9)
         assert len(displayed) == 1
         assert displayed[0]["status"] == "completed"
 
@@ -131,36 +131,36 @@ def test_parallel_live_updates_do_not_resurrect_runs():
 def test_pi_events_use_existing_collector_schema():
     import os
     with tempfile.TemporaryDirectory() as directory:
-        old_live = os.environ.get('OTOP_RUN_FILE')
-        old_history = os.environ.get('OTOP_RUN_HISTORY_FILE')
-        os.environ['OTOP_RUN_FILE'] = str(Path(directory) / 'run.jsonl')
-        os.environ['OTOP_RUN_HISTORY_FILE'] = str(Path(directory) / 'runs.jsonl')
+        old_live = os.environ.get('LLMTOP_RUN_FILE')
+        old_history = os.environ.get('LLMTOP_RUN_HISTORY_FILE')
+        os.environ['LLMTOP_RUN_FILE'] = str(Path(directory) / 'run.jsonl')
+        os.environ['LLMTOP_RUN_HISTORY_FILE'] = str(Path(directory) / 'runs.jsonl')
         try:
             started = {'schema': 2, 'event': 'started', 'run_id': 'pi-run',
                        'source': 'pi', 'model': 'model', 'context_limit': 4096,
                        'started_at': '2026-11-01T12:00:00Z'}
-            assert otop.process_run_event(started)
-            assert otop.load_run_events(max_age=10 ** 9)[0]['source'] == 'pi'
+            assert llmtop.process_run_event(started)
+            assert llmtop.load_run_events(max_age=10 ** 9)[0]['source'] == 'pi'
             completed = dict(started, event='completed', finished_at='2026-11-01T12:00:01Z',
                              prompt_tokens=2, output_tokens=3)
-            assert otop.process_run_event(completed)
-            displayed = otop.load_run_events(max_age=10 ** 9)
+            assert llmtop.process_run_event(completed)
+            displayed = llmtop.load_run_events(max_age=10 ** 9)
             assert displayed[0]['status'] == 'completed'
             assert displayed[0]['prompt_tokens'] == 2
-            assert otop.load_run_history()[0]['source'] == 'pi'
-            assert otop.load_run_history()[0]['context_limit'] == 4096
+            assert llmtop.load_run_history()[0]['source'] == 'pi'
+            assert llmtop.load_run_history()[0]['context_limit'] == 4096
             next_run = dict(started, run_id='pi-next', started_at='2026-11-01T12:00:02Z')
-            assert otop.process_run_event(next_run)
-            assert [item['run_id'] for item in otop.load_run_events(max_age=10 ** 9)] == ['pi-next']
+            assert llmtop.process_run_event(next_run)
+            assert [item['run_id'] for item in llmtop.load_run_events(max_age=10 ** 9)] == ['pi-next']
         finally:
             if old_live is None:
-                os.environ.pop('OTOP_RUN_FILE', None)
+                os.environ.pop('LLMTOP_RUN_FILE', None)
             else:
-                os.environ['OTOP_RUN_FILE'] = old_live
+                os.environ['LLMTOP_RUN_FILE'] = old_live
             if old_history is None:
-                os.environ.pop('OTOP_RUN_HISTORY_FILE', None)
+                os.environ.pop('LLMTOP_RUN_HISTORY_FILE', None)
             else:
-                os.environ['OTOP_RUN_HISTORY_FILE'] = old_history
+                os.environ['LLMTOP_RUN_HISTORY_FILE'] = old_history
 
 
 def test_tui_draws_loaded_model():
@@ -215,7 +215,8 @@ def test_tui_draws_loaded_model():
                  "details": {"parameter_size": "1B", "quantization_level": "Q4"},
              }]}}
     screen = Screen()
-    otop_tui._draw(screen, state, "http://localhost:11434", 2.0)
+    llmtop_tui._draw(screen, state, "http://localhost:11434", 2.0)
+    assert any(text.startswith("▞ llmtop ") for text in screen.text)
     assert ("Ollama", 17) in screen.calls
     assert ("verbunden", 18) in screen.calls
     assert ("Open-WebUI Collector", 17) in screen.calls
@@ -230,9 +231,9 @@ def test_tui_draws_loaded_model():
     assert any("\t" in text for text in screen.text)
     assert any(text.startswith("Pi\tmodel\trunning\t") for text in screen.text)
     assert ("100.0 Tok/s", 13) in screen.calls
-    assert otop_tui._rate_color(colors, 9) == 15
-    assert otop_tui._rate_color(colors, 10) == 14
-    assert otop_tui._rate_color(colors, 50) == 13
+    assert llmtop_tui._rate_color(colors, 9) == 15
+    assert llmtop_tui._rate_color(colors, 10) == 14
+    assert llmtop_tui._rate_color(colors, 50) == 13
     assert ("model", 12) in screen.calls
     context_index = screen.calls.index(("Kontext".ljust(9), 11))
     assert screen.calls[context_index + 2][0] == "20.0 %".rjust(7)

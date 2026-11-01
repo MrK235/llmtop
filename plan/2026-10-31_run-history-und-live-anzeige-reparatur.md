@@ -5,7 +5,7 @@
 Die drei Symptome haben getrennte, belegte Ursachen:
 
 1. **TUI-Historie:** `_draw()` zeichnet im normalen und kompakten Layout ausschließlich `run_history[0]`. `--once` lädt außerdem standardmäßig nur fünf Einträge. Die Datei `runs.jsonl` speichert dagegen bis zu 100 Runs; aktuell enthält sie 42 Einträge.
-2. **Falsche Abschlüsse:** Die aktive, global installierte Open-WebUI-Funktion ist **1.3.1**, die Projektdatei `open_webui/otop_run_metrics.py` jedoch **1.1.0** (abweichende SHA-256). Die installierte Fassung startet einen Disconnect-Watcher und sendet bei `request.is_disconnected()` nach rund 0,5 s `cancelled`. Die vorhandenen 30 jüngsten Abbrüche haben genau diese Dauer und keine Usage-Werte.
+2. **Falsche Abschlüsse:** Die aktive, global installierte Open-WebUI-Funktion ist **1.3.1**, die Projektdatei `open_webui/llmtop_run_metrics.py` jedoch **1.1.0** (abweichende SHA-256). Die installierte Fassung startet einen Disconnect-Watcher und sendet bei `request.is_disconnected()` nach rund 0,5 s `cancelled`. Die vorhandenen 30 jüngsten Abbrüche haben genau diese Dauer und keine Usage-Werte.
 3. **Kurz sichtbarer Live-Run / `n/a`:** Der `cancelled`-Event wird im Collector sofort finalisiert und mittels `write_live_run()` aus `run.jsonl` entfernt. Deshalb verschwindet der Run nach einem Frame. Die finale Token- und Rate-Anzeige erhält somit nie die erwarteten Providerwerte.
 
 Die vorhandenen, bereits gespeicherten `cancelled`-Einträge werden nicht verändert: Ohne autoritative Abschlussdaten lassen sie sich nicht nachträglich korrekt als erfolgreich umdeklarieren.

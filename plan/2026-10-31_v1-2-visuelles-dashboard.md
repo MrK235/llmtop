@@ -15,7 +15,7 @@ darunter vier vertikal angeordnete, klar getrennte Bereiche mit einheitlichem
 linken Rand und ruhiger Informationshierarchie:
 
 ```text
- otop 1.2.0  •  Ollama 0.x  •  verbunden                 [Intervall 2.0 s]
+ llmtop 1.2.0  •  Ollama 0.x  •  verbunden                 [Intervall 2.0 s]
  ── System ─────────────────────────────────────────────────────────────────
  CPU   [████████░░░░░░░░░░░░]  42.1 %    Load 1.24    24 Kerne
  RAM   [██████░░░░░░░░░░░░░░]  28.7 %    21.7 / 30.5 GiB frei
@@ -36,7 +36,7 @@ bestehende Mindestgröße 40×8 bleibt erhalten.
 
 ## Umsetzungsschritte
 
-1. **TUI-Struktur in `otop.py` ordnen**
+1. **TUI-Struktur in `llmtop.py` ordnen**
    - `_draw()` erhält kleine lokale Hilfsfunktionen zum Zeichnen einer
      Abschnittsüberschrift und einer Sensorzeile; keine neue Modulstruktur.
    - Reihenfolge stets: Kopfzeile → System → GPU → Ollama → History → Fußzeile.
@@ -78,13 +78,13 @@ bestehende Mindestgröße 40×8 bleibt erhalten.
      werden nicht als neu dokumentiert.
 
 ## Betroffene Dateien
-- `otop.py`
+- `llmtop.py`
 - `README.md`
 - `status.md`
 - `version.md`
 
 ## Prüfung
-1. `python3 -m py_compile otop.py`, `--version` und `--once`: unveränderte
+1. `python3 -m py_compile llmtop.py`, `--version` und `--once`: unveränderte
    Einzel-Snapshot-Funktion sicherstellen.
 2. Pseudo-TTY mit 80×24 und 40×8: Reihenfolge und alle Bereichsüberschriften,
    einheitliche Balkenbreite, Hilfe-Overlay und fehlertolerantes Rendering

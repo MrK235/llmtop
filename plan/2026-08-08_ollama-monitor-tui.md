@@ -1,7 +1,7 @@
-# otop — Ollama-Terminal-Monitor (Kurzplan)
+# llmtop — Ollama-Terminal-Monitor (Kurzplan)
 
 ## Ziel
-Eine einzelne Python-Datei (`otop.py`), reine Standardbibliothek, startet eine
+Eine einzelne Python-Datei (`llmtop.py`), reine Standardbibliothek, startet eine
 Terminal-Anwendung (TUI), die zeigt:
 1. das aktuell in Ollama **geladene Modell** (über die Ollama-API),
 2. **CPU-Auslastung**,
@@ -32,7 +32,7 @@ Weitere Dateien: nur `README.md` und `status.md`. Keine weiteren Dateien.
 ## TUI (curses, Stdlib)
 Aktualisierung alle 2 s, nicht-blockierender Input, Resize-Handling:
 ```
- otop · Ollama 0.40.6 · http://localhost:11434 · verbunden · Last: 1.8
+ llmtop · Ollama 0.40.6 · http://localhost:11434 · verbunden · Last: 1.8
  Geladene Modelle (/api/ps)
    qwen3.5:4b   4.2B Q4_K_M   ctx 32768   unload in 3:12   runner llamacpp
    Speicher: 341 MB VRAM / 3.9 GB gesamt  → 9 % GPU, 91 % CPU
@@ -49,12 +49,12 @@ Keine weiteren Funktionen (kein Modell-Laden/-entladen, kein Ranking, kein Loggi
 `--no-nvidia` (Nvidia-Abfrage überspringen). Nur diese Optionen.
 
 ## Dateien
-- `otop.py` — komplette Anwendung (ca. 250–300 Zeilen).
+- `llmtop.py` — komplette Anwendung (ca. 250–300 Zeilen).
 - `README.md` — Start, Optionen, Datenquellen, Tasten, bekannte Grenzen (GPU-Auslastung = Geräte-global, nicht ollama-exklusiv; Container-GPU-Metrik nur via Host).
 - `status.md` — Verlaufsprotokoll: Schritte, Testergebnisse, offene Punkte.
 
 ## Testvorgehen
-1. `python3 otop.py --once` → prüft API-Daten und Systemwerte gegen live Ollama.
+1. `python3 llmtop.py --once` → prüft API-Daten und Systemwerte gegen live Ollama.
 2. Direct-Module-Test: CPU-Diff, GPU-Quellen (nvidia-smi + sysfs) einzeln aufrufen.
 3. TUI-Rendering in einer Pseudo-TTY testen (`pty`/`script -q -c`), 2–3 Frames einfangen,
    auf Ausnahmen prüfen (curses, Resize, Verbindungsabbruch).
@@ -68,7 +68,7 @@ Keine weiteren Funktionen (kein Modell-Laden/-entladen, kein Ranking, kein Loggi
 3. TUI-Bibliothek: **curses** (Stdlib) ok, oder lieber Plain-ANSI ohne Vollbild?
 
 ## Reihenfolge der Umsetzung
-1. `otop.py` mit Datenerfassung + `--once`.
+1. `llmtop.py` mit Datenerfassung + `--once`.
 2. Live-Test `--once`, Fehler beheben.
 3. TUI-Teil, Test in Pseudo-TTY.
 4. `README.md` + `status.md` schreiben und Status eintragen.

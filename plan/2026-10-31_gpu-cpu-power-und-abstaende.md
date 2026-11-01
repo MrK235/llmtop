@@ -26,7 +26,7 @@ Leerzeilen, damit die TUI klarer gegliedert ist.
 
 ## Umsetzung
 
-1. **GPU-Boost-Skala in `otop.py`**
+1. **GPU-Boost-Skala in `llmtop.py`**
    - Eine klar benannte Konstante für die lokale GPU-Boost-Obergrenze von 115 W
      ergänzen.
    - Den GPU-Power-Prozentwert gegen mindestens 115 W berechnen. Meldet die

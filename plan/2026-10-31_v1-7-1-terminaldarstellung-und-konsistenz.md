@@ -1,4 +1,4 @@
-# Plan: otop 1.7.1 – terminalfeste Darstellung und Datenkonsistenz
+# Plan: llmtop 1.7.1 – terminalfeste Darstellung und Datenkonsistenz
 
 ## Ziel
 
@@ -8,7 +8,7 @@ Version 1.7.1 ist ein Patch-Release. Sie beseitigt nachweisbare Darstellungsfehl
 
 - Arbeitsbaum und Repository sind noch unversioniert (keine Commits, keine Tags); alle vorhandenen Dateien sind als `??` gelistet.
 - `VERSION`, `README.md`, `status.md` und `version.md` nennen überwiegend 1.7.0. `README.md` nennt in der Beschreibung der TUI-Kopfzeile noch 1.6.1; `status.md` protokolliert für den Versionsaufruf ebenfalls fälschlich 1.6.1.
-- Syntaxcheck, `--version`, `--once`, `--once --no-nvidia` und der vorhandene Test `test_otop.py` waren erfolgreich. Der Live-Snapshot liefert plausible Hostwerte; die sysfs-Variante zeigt erwartungsgemäß die AMD-iGPU statt der per `nvidia-smi` erfassten NVIDIA-GPU.
+- Syntaxcheck, `--version`, `--once`, `--once --no-nvidia` und der vorhandene Test `test_llmtop.py` waren erfolgreich. Der Live-Snapshot liefert plausible Hostwerte; die sysfs-Variante zeigt erwartungsgemäß die AMD-iGPU statt der per `nvidia-smi` erfassten NVIDIA-GPU.
 - Ein Pseudo-TTY bei 80×24 zeigt die Werte vollständig und ohne Überlappung.
 - Ein Pseudo-TTY bei der zugesagten Mindestgröße 40×18 zeigt jedoch einen fehlerhaften Bildschirm: Die fest unten platzierte History wird über bereits gezeichnete Modellzeilen gelegt. Dadurch entsteht beispielsweise eine Mischzeile aus Modellname, `System-Snapshots` und Rest von `unload in …`.
 - Bei 40 Spalten wird zusätzlich der Intervalltext in die Kopfzeile geschrieben, bevor diese endet; dadurch ist die Kopfzeile inhaltlich abgeschnitten statt gezielt verdichtet.
@@ -39,10 +39,10 @@ Version 1.7.1 ist ein Patch-Release. Sie beseitigt nachweisbare Darstellungsfehl
 
 | Fall | Erwartung |
 |---|---|
-| `python3 -m py_compile otop.py` | fehlerfrei |
-| `python3 otop.py --version` | `otop 1.7.1`, Exit 0 |
-| `python3 otop.py --once` | CPU und RAM zusammen im Systemblock; keine Ausnahme |
-| `python3 otop.py --once --no-nvidia` | fehlerfrei über den sysfs-Pfad |
+| `python3 -m py_compile llmtop.py` | fehlerfrei |
+| `python3 llmtop.py --version` | `llmtop 1.7.1`, Exit 0 |
+| `python3 llmtop.py --once` | CPU und RAM zusammen im Systemblock; keine Ausnahme |
+| `python3 llmtop.py --once --no-nvidia` | fehlerfrei über den sysfs-Pfad |
 | vorhandener Test in temporärem Verzeichnis | Run-Metrikformatierung weiterhin korrekt |
 | Pseudo-TTY 80×24 | vollständige reguläre Ansicht ohne Regression |
 | Pseudo-TTY 40×18 mit mindestens zwei geladenen Modellen | keine gemischten oder überzeichneten Zeilen; Footer und History bleiben lesbar |

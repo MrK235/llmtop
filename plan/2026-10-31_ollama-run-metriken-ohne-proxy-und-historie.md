@@ -2,7 +2,7 @@
 
 ## Ziel
 
-`otop` soll den **aktuellen** Ollama-Run mit belastbaren Token- und Zeitmetriken
+`llmtop` soll den **aktuellen** Ollama-Run mit belastbaren Token- und Zeitmetriken
 anzeigen und abgeschlossene Runs als einzelne Einträge in der TUI-Historie
 auflisten. Die Ollama-API wird dabei weiterhin direkt angesprochen; es gibt
 keinen Reverse Proxy und keinen Eingriff in den Datenstrom anderer Clients.
@@ -17,7 +17,7 @@ keinen Reverse Proxy und keinen Eingriff in den Datenstrom anderer Clients.
   diese Felder im `done:true`-Objekt; die sechs vorherigen Streaming-Objekte
   enthielten nur `model`, `created_at`, `message` und `done`. Während eines
   Streamings sind Tokenzähler und Zeiten daher nicht verfügbar.
-- Der bestehende Eingang `OTOP_RUN_FILE` liefert zwar den aktuellen Zustand,
+- Der bestehende Eingang `LLMTOP_RUN_FILE` liefert zwar den aktuellen Zustand,
   aber die bestehende Snapshot-History schreibt ihn bei jedem Refresh erneut.
   Sie ist deshalb keine Historie einzelner Runs.
 
@@ -26,7 +26,7 @@ direkten Ollama-Aufruf mit einem kleinen optionalen Adapter (Bibliothek oder
 Client-Wrapper). Der Adapter schreibt ausschließlich lokal Run-Ereignisse;
 er akzeptiert keine HTTP-Anfragen anderer Clients und leitet keinen fremden
 Datenstrom weiter. Damit entsteht weder ein lokaler HTTP-Server noch ein
-Reverse Proxy. Clients ohne Adapter bleiben nutzbar; `otop` zeigt dann
+Reverse Proxy. Clients ohne Adapter bleiben nutzbar; `llmtop` zeigt dann
 weiterhin „nicht instrumentiert“.
 
 ## Datenhaltung und Schnittstelle
@@ -34,13 +34,13 @@ weiterhin „nicht instrumentiert“.
 Zwei getrennte lokale JSONL-Dateien verhindern Duplikate und vereinfachen die
 Aufbewahrung:
 
-- **Live-Zustand**: `OTOP_RUN_FILE` (wie bisher, Standard neben der History).
+- **Live-Zustand**: `LLMTOP_RUN_FILE` (wie bisher, Standard neben der History).
   Der Adapter aktualisiert pro aktivem Run einen Zustand mit `status=running`.
-  `otop` liest daraus den jüngsten frischen Zustand.
-- **Run-Historie**: neuer, konfigurierbarer Pfad `OTOP_RUN_HISTORY_FILE`,
-  Standard `$XDG_STATE_HOME/otop/runs.jsonl`. Der Adapter schreibt beim
+  `llmtop` liest daraus den jüngsten frischen Zustand.
+- **Run-Historie**: neuer, konfigurierbarer Pfad `LLMTOP_RUN_HISTORY_FILE`,
+  Standard `$XDG_STATE_HOME/llmtop/runs.jsonl`. Der Adapter schreibt beim
   Abschluss oder Fehler exakt einen finalen Datensatz pro `run_id`.
-  `otop` liest diese Datei nur; periodische System-Snapshots werden dort nie
+  `llmtop` liest diese Datei nur; periodische System-Snapshots werden dort nie
   abgelegt.
 - Die vorhandene `history.jsonl` bleibt eine begrenzte System-Snapshotreihe
   und enthält höchstens eine Referenz (`run_id`) auf den aktuellen Run. Damit
@@ -118,11 +118,11 @@ History – letzte 5 Runs
 
 ## Umsetzung in drei Schritten
 
-### 1. Run-Schema und persistente Historie in `otop.py`
+### 1. Run-Schema und persistente Historie in `llmtop.py`
 
 - Validierungs- und Normalisierungsfunktionen für Live- und finale
   Run-Ereignisse ergänzen.
-- `load_run_event()` kompatibel zum vorhandenen `OTOP_RUN_FILE` halten.
+- `load_run_event()` kompatibel zum vorhandenen `LLMTOP_RUN_FILE` halten.
 - Leser für `runs.jsonl` implementieren: defekte Zeilen überspringen,
   finale Zustände validieren, nach `finished_at` sortieren und per `run_id`
   deduplizieren.
@@ -133,7 +133,7 @@ History – letzte 5 Runs
 ### 2. Direkter Client-Adapter ohne Proxy
 
 - Einen kleinen, dokumentierten Adapter mit Python-Standardbibliothek in
-  `otop.py` oder nur bei Bedarf als zweite Python-Datei ergänzen; die
+  `llmtop.py` oder nur bei Bedarf als zweite Python-Datei ergänzen; die
   bestehende Ein-Datei-Entscheidung hat Vorrang, solange die CLI übersichtlich
   bleibt.
 - Der Adapter wird im aufrufenden Client ausgeführt und instrumentiert dessen
@@ -146,7 +146,7 @@ History – letzte 5 Runs
   `done:true`-Objekt wird ein einziges Abschlussereignis erzeugt; dabei werden
   Nanosekunden in Sekunden umgerechnet. Netzwerk-, Abbruch- und JSON-Fehler
   werden als finaler Fehlerstatus ohne erfundene Zähler gespeichert.
-- Der Adapter bleibt opt-in: Bestehende direkte Ollama-Clients und `otop`
+- Der Adapter bleibt opt-in: Bestehende direkte Ollama-Clients und `llmtop`
   funktionieren unverändert ohne ihn.
 
 ### 3. TUI, `--once`, Dokumentation und Tests
@@ -159,7 +159,7 @@ History – letzte 5 Runs
 - Gezielte Tests mit temporären JSONL-Dateien: fehlende/defekte Ereignisse,
   stale Live-Run, Duplikat-ID, abgeschlossener und fehlerhafter Run,
   Begrenzung sowie Darstellung bei geringer Terminalhöhe.
-- Danach `python3 -m py_compile otop.py`, `--version`, `--once` und ein
+- Danach `python3 -m py_compile llmtop.py`, `--version`, `--once` und ein
   Pseudo-TTY-Rendering ausführen. Einen direkten Test gegen laufendes Ollama
   nur durchführen, wenn die lokale Instanz verfügbar ist.
 
@@ -171,7 +171,7 @@ History – letzte 5 Runs
   berechnet Token/s nach Umrechnung von Nanosekunden korrekt aus
   `eval_count / eval_duration`.
 - Jeder beendete oder fehlgeschlagene Run erscheint höchstens einmal in der
-  Run-Historie, auch wenn `otop` mehrfach refresht oder neu gestartet wird.
+  Run-Historie, auch wenn `llmtop` mehrfach refresht oder neu gestartet wird.
 - Eine fehlende, alte oder beschädigte Ereignisdatei führt weder zu erfundenen
   Metriken noch zu einem TUI-Absturz.
 - Bestehende System-Snapshots, GPU-/Modellanzeige und nicht instrumentierte

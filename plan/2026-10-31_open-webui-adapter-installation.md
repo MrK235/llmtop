@@ -1,8 +1,8 @@
-# Plan: Open-WebUI-Adapter für otop-Runmetriken installieren
+# Plan: Open-WebUI-Adapter für llmtop-Runmetriken installieren
 
 ## Ziel
 
-Open WebUI soll jeden ausgehenden Ollama-Provider-Aufruf als eigenen Schema-2-Run an den vorhandenen `otop`-Collector melden. Der Adapter darf weder Prompts noch Antworten speichern oder übertragen und darf einen Chat bei Collector-Ausfall nicht beeinträchtigen.
+Open WebUI soll jeden ausgehenden Ollama-Provider-Aufruf als eigenen Schema-2-Run an den vorhandenen `llmtop`-Collector melden. Der Adapter darf weder Prompts noch Antworten speichern oder übertragen und darf einen Chat bei Collector-Ausfall nicht beeinträchtigen.
 
 ## Verifizierter Ist-Stand
 
@@ -15,14 +15,14 @@ Open WebUI soll jeden ausgehenden Ollama-Provider-Aufruf als eigenen Schema-2-Ru
   - `stream` erhält geparste Stream-Ereignisse.
   - `outlet` erhält die finale Nachrichtenliste einschließlich vorhandener `usage`- und `finish_reason`-Felder.
 - Die Funktionsdatenbank ist aktuell leer; es ist noch kein Filter installiert.
-- Der `otop`-Collector lauscht standardmäßig nur auf `127.0.0.1:11435`. Diese Adresse ist aus dem Container nicht erreichbar.
+- Der `llmtop`-Collector lauscht standardmäßig nur auf `127.0.0.1:11435`. Diese Adresse ist aus dem Container nicht erreichbar.
 - Der Collector unterstützt derzeit einen Bind-Parameter intern, zeigt ihn aber nicht als reguläre dokumentierte CLI-Option. Für Open WebUI muss er gezielt auf der privaten Docker-Gateway-Adresse `172.18.0.1` lauschen. Kein Bind auf `0.0.0.0` und keine Portveröffentlichung.
 
 ## Architekturentscheidung
 
 ### Adapterform
 
-Eine einzelne Open-WebUI-Filter-Function wird im Projekt als `open_webui/otop_run_metrics.py` gepflegt und anschließend über die Admin-Oberfläche importiert. Eine automatische Installation über die Admin-API wird nicht vorausgesetzt, weil dafür ein Admin-Token erforderlich wäre.
+Eine einzelne Open-WebUI-Filter-Function wird im Projekt als `open_webui/llmtop_run_metrics.py` gepflegt und anschließend über die Admin-Oberfläche importiert. Eine automatische Installation über die Admin-API wird nicht vorausgesetzt, weil dafür ein Admin-Token erforderlich wäre.
 
 Der Filter ist:
 
@@ -59,7 +59,7 @@ Es werden weder unbekannte Werte noch Textfelder protokolliert. Dauerwerte aus O
 
 ### 1. Collector privat für den Container erreichbar machen
 
-1. `otop.py` erhält dokumentierte Collector-Optionen für Bind-Adresse und Port oder entsprechende Umgebungsvariablen.
+1. `llmtop.py` erhält dokumentierte Collector-Optionen für Bind-Adresse und Port oder entsprechende Umgebungsvariablen.
 2. Zulässig ist für diese Installation ausschließlich `172.18.0.1:11435`; der Default bleibt `127.0.0.1:11435`.
 3. Den Collector mit vorhandenem Token starten und aus dem Container einen anonymen Test-POST senden:
    - ohne Token: HTTP 401,
@@ -68,7 +68,7 @@ Es werden weder unbekannte Werte noch Textfelder protokolliert. Dauerwerte aus O
 
 ### 2. Filter implementieren und lokal testen
 
-1. `open_webui/otop_run_metrics.py` mit Frontmatter, `Valves` und den Hooks `request`, `stream`, `outlet` anlegen.
+1. `open_webui/llmtop_run_metrics.py` mit Frontmatter, `Valves` und den Hooks `request`, `stream`, `outlet` anlegen.
 2. Valves:
    - `collector_url`, Default `http://172.18.0.1:11435`,
    - `collector_token`, leerer Secret-Wert,

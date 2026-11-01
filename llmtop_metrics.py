@@ -14,7 +14,7 @@ import uuid
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from otop_sources import normalize_host
+from llmtop_sources import normalize_host
 
 DEFAULT_COLLECTOR_URL = "http://127.0.0.1:11435"
 DEFAULT_HISTORY_LIMIT = 500
@@ -27,9 +27,9 @@ RUN_FILE_LOCK = threading.RLock()
 def history_path():
     """Liefert den konfigurierbaren JSONL-Pfad ohne Verzeichnis anzulegen."""
     return os.environ.get(
-        "OTOP_HISTORY_FILE",
+        "LLMTOP_HISTORY_FILE",
         os.path.join(os.environ.get("XDG_STATE_HOME", os.path.expanduser("~/.local/state")),
-                     "otop", "history.jsonl"),
+                     "llmtop", "history.jsonl"),
     )
 
 
@@ -46,12 +46,12 @@ def _parse_time(value):
 
 def run_path():
     return os.path.expanduser(os.environ.get(
-        "OTOP_RUN_FILE", os.path.join(os.path.dirname(history_path()), "run.jsonl")))
+        "LLMTOP_RUN_FILE", os.path.join(os.path.dirname(history_path()), "run.jsonl")))
 
 
 def run_history_path():
     return os.path.expanduser(os.environ.get(
-        "OTOP_RUN_HISTORY_FILE", os.path.join(os.path.dirname(history_path()), "runs.jsonl")))
+        "LLMTOP_RUN_HISTORY_FILE", os.path.join(os.path.dirname(history_path()), "runs.jsonl")))
 
 
 def load_dotenv(path=".env"):
@@ -140,7 +140,7 @@ def write_jsonl(records, path):
     directory = os.path.dirname(path) or "."
     try:
         os.makedirs(directory, mode=0o700, exist_ok=True)
-        fd, temporary = tempfile.mkstemp(prefix=".otop-", dir=directory, text=True)
+        fd, temporary = tempfile.mkstemp(prefix=".llmtop-", dir=directory, text=True)
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as fh:
                 for item in records:
@@ -454,7 +454,7 @@ def _usage_metrics(value):
 class OpenWebUIFinalMetricsReader:
     """Liest nur explizit konfigurierte finale Usage aus einer Open-WebUI-DB."""
     def __init__(self, path=None):
-        self.path = os.path.expanduser(path or os.environ.get("OTOP_OPEN_WEBUI_DB", ""))
+        self.path = os.path.expanduser(path or os.environ.get("LLMTOP_OPEN_WEBUI_DB", ""))
 
     def read(self, model, started_at=None, message_id=None):
         if not self.path or not os.path.isfile(self.path):
@@ -507,19 +507,19 @@ def process_run_event(event):
 
 def collector_config():
     load_dotenv()
-    return (os.environ.get("OTOP_COLLECTOR_TOKEN", ""),
-            os.environ.get("OTOP_COLLECTOR_URL", DEFAULT_COLLECTOR_URL))
+    return (os.environ.get("LLMTOP_COLLECTOR_TOKEN", ""),
+            os.environ.get("LLMTOP_COLLECTOR_URL", DEFAULT_COLLECTOR_URL))
 
 
 def collector_listen_address(bind=None, port=None):
     """Ermittelt die Listen-Adresse, ohne den sicheren Loopback-Default zu ändern."""
     load_dotenv()
-    bind = bind or os.environ.get("OTOP_COLLECTOR_BIND", "127.0.0.1")
-    raw_port = port if port is not None else os.environ.get("OTOP_COLLECTOR_PORT", "11435")
+    bind = bind or os.environ.get("LLMTOP_COLLECTOR_BIND", "127.0.0.1")
+    raw_port = port if port is not None else os.environ.get("LLMTOP_COLLECTOR_PORT", "11435")
     try:
         port = int(raw_port)
     except (TypeError, ValueError):
-        raise ValueError("OTOP_COLLECTOR_PORT muss eine Zahl sein")
+        raise ValueError("LLMTOP_COLLECTOR_PORT muss eine Zahl sein")
     if not 1 <= port <= 65535:
         raise ValueError("Collector-Port außerhalb 1..65535")
     return bind, port
@@ -527,7 +527,7 @@ def collector_listen_address(bind=None, port=None):
 
 def collector_handler(token):
     class Handler(BaseHTTPRequestHandler):
-        server_version = "otop-collector"
+        server_version = "llmtop-collector"
         sys_version = ""
 
         def log_message(self, _format, *_args):
@@ -587,7 +587,7 @@ class CollectorService:
         self.error = None
 
     def start(self):
-        if not self.token and os.environ.get("OTOP_COLLECTOR_INSECURE") != "1":
+        if not self.token and os.environ.get("LLMTOP_COLLECTOR_INSECURE") != "1":
             self.error = "nicht konfiguriert"
             return False
         addresses = [self.bind]
@@ -622,10 +622,10 @@ def run_collector(bind=None, port=None):
     service = CollectorService(bind, port)
     if not service.start():
         if service.error == "nicht konfiguriert":
-            raise ValueError("OTOP_COLLECTOR_TOKEN fehlt (.env oder Umgebung)")
+            raise ValueError("LLMTOP_COLLECTOR_TOKEN fehlt (.env oder Umgebung)")
         raise OSError(service.error)
     for address in service.addresses:
-        print(f"otop Collector lauscht auf http://{address}:{service.port}/v1/runs", flush=True)
+        print(f"llmtop Collector lauscht auf http://{address}:{service.port}/v1/runs", flush=True)
     try:
         while True:
             time.sleep(1)
@@ -643,7 +643,7 @@ def open_webui_config():
     if not key:
         raise ValueError("OPEN_WEBUI_API_KEY fehlt (.env oder Umgebung)")
     if not token:
-        raise ValueError("OTOP_COLLECTOR_TOKEN fehlt (.env oder Umgebung)")
+        raise ValueError("LLMTOP_COLLECTOR_TOKEN fehlt (.env oder Umgebung)")
     return url, key, token
 
 
@@ -666,7 +666,7 @@ def open_webui_api(url, key, method, path, payload=None):
 
 
 def filter_source_path():
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "open_webui", "otop_run_metrics.py")
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "open_webui", "llmtop_run_metrics.py")
 
 
 def install_open_webui_adapter():
@@ -677,7 +677,7 @@ def install_open_webui_adapter():
         raise ValueError("private Docker-Gateway-Adresse von open-webui nicht ermittelbar")
     with open(filter_source_path(), encoding="utf-8") as fh:
         content = fh.read()
-    function_id = "otop_run_metrics"
+    function_id = "llmtop_run_metrics"
     try:
         _status, function = open_webui_api(url, key, "GET", f"/api/v1/functions/id/{function_id}")
     except ValueError as exc:
@@ -686,13 +686,13 @@ def install_open_webui_adapter():
         function = None
     if function is None:
         _status, function = open_webui_api(url, key, "POST", "/api/v1/functions/create", {
-            "id": function_id, "name": "otop Run Metrics", "content": content,
-            "meta": {"description": "Datensparsame Ollama-Runmetriken für otop"}})
+            "id": function_id, "name": "llmtop Run Metrics", "content": content,
+            "meta": {"description": "Datensparsame Ollama-Runmetriken für llmtop"}})
         action = "installiert"
     else:
         _status, function = open_webui_api(url, key, "POST", f"/api/v1/functions/id/{function_id}/update", {
-            "id": function_id, "name": "otop Run Metrics", "content": content,
-            "meta": {"description": "Datensparsame Ollama-Runmetriken für otop"}})
+            "id": function_id, "name": "llmtop Run Metrics", "content": content,
+            "meta": {"description": "Datensparsame Ollama-Runmetriken für llmtop"}})
         action = "aktualisiert"
     port = collector_listen_address()[1]
     open_webui_api(url, key, "POST", f"/api/v1/functions/id/{function_id}/valves/update", {
@@ -707,7 +707,7 @@ def install_open_webui_adapter():
 def emit_run_event(path):
     token, url = collector_config()
     if not token:
-        raise ValueError("OTOP_COLLECTOR_TOKEN fehlt (.env oder Umgebung)")
+        raise ValueError("LLMTOP_COLLECTOR_TOKEN fehlt (.env oder Umgebung)")
     with (sys.stdin if path == "-" else open(path, encoding="utf-8")) as fh:
         event = json.load(fh)
     request = urllib.request.Request(
@@ -810,7 +810,7 @@ def snapshot_record(host, ollama, cpu, ram, gpus, gpu_error, run=None):
     """Erzeugt ein datensparsames, JSON-serialisierbares History-Ereignis."""
     return {
         "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-        "source": "otop",
+        "source": "llmtop",
         "host": host,
         "ollama_version": ollama.get("version"),
         "ollama_ok": bool(ollama.get("ok")),
