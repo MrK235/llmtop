@@ -470,7 +470,8 @@ def _draw(scr, st, host, interval):
                     [run for _source, _running, finished in groups for run in finished])
     columns = history_columns()
     total_run_rows = max(3, min(12, h - row - history_rows - 2))
-    visible_runs = max(1, total_run_rows - 1 - len(groups))
+    # Jeder Run benötigt eine Tabellenzeile plus eine Kontext-Balkenzeile.
+    visible_runs = max(1, (total_run_rows - 1 - len(groups)) // 2)
     max_run_offset = max(0, len(grouped_runs) - visible_runs)
     st["run_offset"] = min(max(0, st.get("run_offset", 0)), max_run_offset)
     visible = grouped_runs[st["run_offset"]:st["run_offset"] + visible_runs]
@@ -496,6 +497,19 @@ def _draw(scr, st, host, interval):
                     rate_x = sum(width + 1 for _name, width in columns[:rate_column])
                     rate_value = current_run_cell(run, "rate")[:columns[rate_column][1]].rjust(columns[rate_column][1])
                     _add(scr, row, rate_x, rate_value, _rate_color(colors, token_rate(run)))
+                row += 1
+                used, limit, pct = context_values(run, model_for_run(run, oll["models"]))
+                context_value = (f"{compact_tokens(used)} / {compact_tokens(limit)}"
+                                 if used is not None else "warten auf Provider")
+                context_pct = f"{pct:.1f} %" if pct is not None else "n/a"
+                x = 0
+                _add(scr, row, x, "Kontext".ljust(label_w), colors["context_label"])
+                x += label_w
+                meter = bar(pct, bar_w)
+                _add(scr, row, x, meter, _util_color(colors, pct))
+                x += len(meter) + 1
+                _add(scr, row, x, context_pct.rjust(7), _util_color(colors, pct))
+                _add(scr, row, x + 8, context_value, colors["secondary"])
                 row += 1
         if len(grouped_runs) > visible_runs:
             _add(scr, row, 0, f"Runs {st['run_offset'] + 1}-{min(len(grouped_runs), st['run_offset'] + visible_runs)} von {len(grouped_runs)}  ·  a/↑↓ scrollen",

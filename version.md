@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.1.19 — 01.11.2026
+
+- Zusätzliche Kontextzeile mit Fortschrittsbalken unter aktuellen Runs ergänzt.
+
 ### 2.1.18 — 01.11.2026
 
 - Kontextspalte in aktueller Run- und History-Tabelle ab 80 Terminalspalten wieder aktiviert.

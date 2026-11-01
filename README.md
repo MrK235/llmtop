@@ -1,6 +1,6 @@
 # llmtop — LLM Terminal Monitor für Ollama mit GPU-, RAM- und VRAM-Sensoren
 
-**Version 2.1.18 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
+**Version 2.1.19 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
 die über die Ollama-API das **geladene Modell** sowie **CPU-/RAM/GPU-Auslastung**
 anzeigt. Versionsgeschichte und Versionsschema: `version.md`.
 
@@ -121,7 +121,8 @@ und Rot unterhalb 45 % GPU-Anteil. CPU/RAM bleibt gedimmt grau. Beide Anteile
 nutzen `#` und zeigen zusätzlich Textwerte. Eine
 Leerzeilen trennen System, GPU, aktuelle Runs, geladene Modelle und History.
 **Aktuelle Runs** und **History** verwenden dieselben Spalten und Werte für
-Zeit, Quelle, Modell, Status, Tokens, Kontext, Tok/s und Dauer. **History** zeigt
+Zeit, Quelle, Modell, Status, Tokens, Kontext, Tok/s und Dauer. Unter jeder
+aktuellen Run-Zeile zeigt eine zusätzliche Zeile den grafischen Kontextfortschritt. **History** zeigt
 eine scrollbare Tabelle mit bis zu 100 abgeschlossenen instrumentierten Runs.
 Sie kann nach Abschlusszeit, Quelle, Modell, Status, Tokens, Kontextverbrauch,
 Ausgaberate und Dauer sortiert werden. Die aktive Sortierspalte ist im
