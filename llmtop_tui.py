@@ -69,7 +69,7 @@ def _offload_color(colors, gpu_pct):
 
 def _rate_color(colors, rate):
     """Hebt langsame und sehr schnelle Ausgaberaten eindeutig hervor."""
-    if rate is None:
+    if rate is None or rate <= 0:
         return colors["secondary"]
     if rate < 10:
         return colors["rate_error"]
@@ -473,8 +473,13 @@ def _draw(scr, st, host, interval):
                 columns = (source_label(run.get("source"), run.get("provider")), str(run.get("model", "?")),
                            run_status(run), details if show_details else short_context)
                 text = "\t".join(columns) + "\t"
-                _add(scr, row, 0, text, colors["secondary"])
-                rate_x = len(text.expandtabs(8))
+                # Tok/s und Alter sitzen fest rechts; der linke Bereich wird
+                # davor gekürzt, statt die Rate durch lange Kontextwerte zu
+                # überdecken.
+                right_text = rate_text + (f"   {age}" if age else "")
+                rate_x = max(1, w - len(right_text) - 2)
+                prefix = text.expandtabs(8)[:max(0, rate_x - 1)]
+                _add(scr, row, 0, prefix, colors["secondary"])
                 _add(scr, row, rate_x, rate_text, _rate_color(colors, token_rate(run)))
                 if age:
                     _add(scr, row, rate_x + len(rate_text) + 3, age, colors["secondary"])

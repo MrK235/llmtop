@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.1.12 — 01.11.2026
+
+- Tok/s und Laufalter in Run-Zeilen rechtsbündig und kollisionsfrei dargestellt.
+- `0,0 Tok/s` neutral grau dargestellt.
+
 ### 2.1.11 — 01.11.2026
 
 - Kontextverbrauch aktiver Runs in der kompakten TUI-Ansicht sichtbar gemacht.

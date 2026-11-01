@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.1.11** · Stand 01.11.2026 · Status: Pi-Live-Runs lesen, aktualisieren und zeigen den Session-Kontext auch kompakt.
+**Version 2.1.12** · Stand 01.11.2026 · Status: Pi-Live-Runs zeigen Kontext und Tok/s ohne Überlappung.
 
 ## Aktueller Stand
 
@@ -26,6 +26,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 2.1.12
+
+- Tok/s und Laufalter werden in Run-Zeilen rechtsbündig und kollisionsfrei dargestellt.
+- `0,0 Tok/s` wird als neutraler grauer Sekundärwert dargestellt.
 
 ## Neu in 2.1.11
 
