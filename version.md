@@ -12,6 +12,14 @@ gebracht.
 
 ## Changelog
 
+### 2.1.8 — 01.11.2026
+
+- Bereits gespeicherte Doppelmeldungen mit identischen Open-WebUI-Metriken in der History dedupliziert.
+
+### 2.1.7 — 01.11.2026
+
+- Veraltete globale `otop_run_metrics`-Adapter beim Open-WebUI-Setup deaktiviert, um doppelte Runs zu verhindern.
+
 ### 2.1.6 — 01.11.2026
 
 - Pi-Adapter überträgt Cache-Input, Kontextlimit, Gesamtdauer und Ausgaberate.

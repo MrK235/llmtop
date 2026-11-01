@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.1.6** · Stand 01.11.2026 · Status: Pi-Agentenläufe zeigen Token-, Kontext- und Laufzeitmetriken; Ergebnisse bleiben zehn Sekunden sichtbar.
+**Version 2.1.8** · Stand 01.11.2026 · Status: Open-WebUI meldet jeden Request nur noch einmal; alte Doppelmeldungen werden ausgeblendet.
 
 ## Aktueller Stand
 
@@ -26,6 +26,15 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 2.1.8
+
+- Bereits gespeicherte Doppelmeldungen mit identischen Open-WebUI-Metriken werden in der History dedupliziert.
+
+## Neu in 2.1.7
+
+- Veraltete globale `otop_run_metrics`-Adapter werden beim Adapter-Setup deaktiviert.
+- Dadurch werden Open-WebUI-Runs nicht mehr doppelt an den Collector gesendet.
 
 ## Neu in 2.1.6
 

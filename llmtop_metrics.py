@@ -26,6 +26,7 @@ ALLOWED_RUN_SOURCES = {"pi", "open-webui", "ollama-cli", "legacy"}
 FINAL_RUN_EVENTS = {"completed", "error", "cancelled"}
 RUN_FILE_LOCK = threading.RLock()
 OPEN_WEBUI_FUNCTION_ID = "llmtop_run_metrics"
+LEGACY_OPEN_WEBUI_FUNCTION_IDS = ("otop_run_metrics",)
 PI_ADAPTER_FILENAME = "llmtop_run_metrics.ts"
 
 
@@ -255,6 +256,23 @@ def load_run_events(path=None, max_age=DEFAULT_RUN_MAX_AGE,
         return ordered if limit is None else ordered[:max(0, int(limit))]
 
 
+def _deduplicate_adapter_runs(runs):
+    """Blendet Doppelmeldungen alter und neuer Open-WebUI-Adapter aus."""
+    result = []
+    for run in sorted(runs, key=lambda item: _parse_time(item.get("finished_at")) or datetime.min.replace(tzinfo=timezone.utc), reverse=True):
+        duplicate = next((prior for prior in result
+                          if prior.get("source") == run.get("source") == "open-webui"
+                          and prior.get("model") == run.get("model")
+                          and abs((_parse_time(prior.get("finished_at")) - _parse_time(run.get("finished_at"))).total_seconds()) <= 1.0
+                          and all(prior.get(key) == run.get(key) for key in
+                                  ("prompt_tokens", "output_tokens", "context_tokens", "total_duration_s", "eval_duration_s"))
+                          and (bool(prior.get("provider")) != bool(run.get("provider")))), None)
+        if duplicate:
+            continue
+        result.append(run)
+    return result
+
+
 def load_run_history(path=None, limit=DEFAULT_RUN_HISTORY_LIMIT):
     """Liest finale Runs, dedupliziert per Quelle und Run-ID."""
     runs = {}
@@ -265,7 +283,7 @@ def load_run_history(path=None, limit=DEFAULT_RUN_HISTORY_LIMIT):
             prior = runs.get(key)
             if not prior or _parse_time(run["finished_at"]) >= _parse_time(prior["finished_at"]):
                 runs[key] = run
-    return sorted(runs.values(), key=lambda item: _parse_time(item["finished_at"]), reverse=True)[:limit]
+    return _deduplicate_adapter_runs(list(runs.values()))[:limit]
 
 
 def append_run_history(run, path=None, limit=DEFAULT_RUN_HISTORY_LIMIT):
@@ -763,14 +781,34 @@ def open_webui_adapter_ready():
         return False
 
 
+def disable_legacy_open_webui_adapters(url, key):
+    """Deaktiviert frühere llmtop/otop-Adapter, die Runs doppelt melden."""
+    for function_id in LEGACY_OPEN_WEBUI_FUNCTION_IDS:
+        try:
+            _status, function = open_webui_api(
+                url, key, "GET", f"/api/v1/functions/id/{function_id}")
+        except ValueError as exc:
+            if "HTTP 401" in str(exc) or "HTTP 404" in str(exc):
+                continue
+            raise
+        if not isinstance(function, dict):
+            continue
+        if function.get("is_active"):
+            open_webui_api(url, key, "POST", f"/api/v1/functions/id/{function_id}/toggle")
+        if function.get("is_global"):
+            open_webui_api(url, key, "POST", f"/api/v1/functions/id/{function_id}/toggle/global")
+
+
 def ensure_open_webui_adapter():
-    """Installiert den Filter nur bei vorhandener lokaler Konfiguration.
+    """Installiert den Filter und deaktiviert alte Adapter bei lokaler Konfiguration.
 
     Diese Funktion ist für den asynchronen TUI-Start gedacht. Fehler bleiben
     absichtlich lokal: Ein nicht erreichbares Open WebUI beeinträchtigt weder
     den Monitor noch den Collector.
     """
     try:
+        url, key, _collector_token = open_webui_config()
+        disable_legacy_open_webui_adapters(url, key)
         if open_webui_adapter_ready():
             return "bereit"
         action, _function_id = install_open_webui_adapter()
@@ -782,6 +820,7 @@ def ensure_open_webui_adapter():
 def install_open_webui_adapter():
     """Installiert Filter, Valves und Aktivierung idempotent über die Admin-API."""
     url, key, collector_token = open_webui_config()
+    disable_legacy_open_webui_adapters(url, key)
     gateway = open_webui_gateway()
     if not gateway:
         raise ValueError("private Docker-Gateway-Adresse von open-webui nicht ermittelbar")
