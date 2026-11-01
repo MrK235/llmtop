@@ -286,23 +286,27 @@ def _draw(scr, st, host, interval):
         row += 1
         model_count = len(oll.get("models", []))
         active_runs = st.get("runs", [])
-        compact_runs = []
-        for source in ("pi", "open-webui"):
-            source_runs = [item for item in active_runs if item.get("source") == source]
-            if not source_runs:
-                continue
-            active = sum(item.get("status") not in ("completed", "error", "cancelled")
-                         for item in source_runs)
-            done = len(source_runs) - active
-            representative = next((item for item in source_runs
-                                   if item.get("status") not in ("completed", "error", "cancelled")),
-                                  source_runs[0])
-            compact_runs.append(f"{source_label(source, representative.get('provider'))} "
-                                f"aktiv {active} · erledigt {done}")
-        text = "  ·  ".join(compact_runs) or "Keine Pi-/WebUI-Runs"
-        _add(scr, row, 0, f"Modelle {model_count}  ·  {text}", colors["secondary"])
-        row += 1
-        draw_history_table(row, h - row - 2)
+        source_order = ("pi", "open-webui")
+        compact_groups = [(source, [item for item in active_runs if item.get("source") == source])
+                          for source in source_order]
+        compact_groups = [(source, items) for source, items in compact_groups if items]
+        if not compact_groups:
+            _add(scr, row, 0, f"Modelle {model_count}  ·  Keine Pi-/WebUI-Runs", colors["secondary"])
+            row += 1
+        else:
+            # In der Kompaktansicht erhält jede vorhandene Quelle exakt eine
+            # Kurzzeile; keine Quelle kann die andere aus dieser Ansicht drängen.
+            for source, items in compact_groups[:max(1, h - row - 2)]:
+                active = [item for item in items if item.get("status") not in ("completed", "error", "cancelled")]
+                finished = len(items) - len(active)
+                text = f"{source_label(source)}  aktiv {len(active)} · Ergebnis {finished}"
+                if len(items) == 1:
+                    item = items[0]
+                    text += f"  {item.get('model', '?')} · {run_status(item)}"
+                _add(scr, row, 0, text, colors["secondary"])
+                row += 1
+        if row < h - 2:
+            draw_history_table(row, h - row - 2)
         draw_footer("q quit  Tab/s sortieren  ↑↓ scrollen  h Hilfe")
         scr.refresh()
         return
@@ -410,50 +414,73 @@ def _draw(scr, st, host, interval):
             row = sensor(row, "Power", power_pct, power_value, power_detail)
 
     row += 1
-    grouped_runs = []
-    counts = []
-    for source, label in (("pi", "Pi"), ("open-webui", "WebUI")):
+    final_statuses = ("completed", "error", "cancelled")
+
+    def run_sort_key(run):
+        stamp = _parse_time(run.get("updated_at") or run.get("finished_at") or run.get("started_at"))
+        return (stamp or datetime.min.replace(tzinfo=datetime.now().astimezone().tzinfo),
+                str(run.get("source", "")), str(run.get("run_id", "")))
+
+    sources = ["pi", "open-webui"]
+    sources.extend(sorted({run.get("source", "legacy") for run in active_runs
+                           if run.get("source") not in sources}))
+    groups = []
+    for source in sources:
         source_runs = [run for run in active_runs if run.get("source") == source]
-        active = [run for run in source_runs if run.get("status") not in ("completed", "error", "cancelled")]
-        finished = [run for run in source_runs if run.get("status") in ("completed", "error", "cancelled")]
-        counts.append(f"{label} aktiv {len(active)}/erledigt {len(finished)}")
-        grouped_runs.extend(active + finished)
-    grouped_runs.extend(run for run in active_runs
-                        if run.get("source") not in ("pi", "open-webui"))
-    row = section(row, "Aktuelle Runs · " + " · ".join(counts))
-    # Pi bleibt vor WebUI priorisiert; ein dauerhafter WebUI-Abschluss kann
-    # damit weder Pi-Ergebnisse noch aktive Pi-Runs überdecken.
-    available_run_rows = max(2, min(8, h - row - 12))
-    visible_runs = max(1, available_run_rows // 2)
+        if not source_runs:
+            continue
+        running = sorted((run for run in source_runs if run.get("status") not in final_statuses), key=run_sort_key)
+        finished = sorted((run for run in source_runs if run.get("status") in final_statuses), key=run_sort_key)
+        groups.append((source, running, finished))
+    row = section(row, "Aktuelle Runs")
+    grouped_runs = ([run for _source, running, _finished in groups for run in running] +
+                    [run for _source, _running, finished in groups for run in finished])
+    available_run_rows = max(2, min(10, h - row - 12))
+    # Zuerst erhält jede Quelle eine sichtbare Zeile. Weitere Runs folgen in
+    # derselben statusneutralen Reihenfolge; aktiv vor Ergebnis ist die einzige
+    # Priorität innerhalb eines Quellenblocks.
+    visible_runs = max(1, available_run_rows - len(groups))
     max_run_offset = max(0, len(grouped_runs) - visible_runs)
     st["run_offset"] = min(max(0, st.get("run_offset", 0)), max_run_offset)
-    if grouped_runs:
-        for run in grouped_runs[st["run_offset"]:st["run_offset"] + visible_runs]:
-            age = (f"vor {run['age_seconds']:.1f}s" if run.get("age_seconds") is not None else "")
-            details, _separator, rate_text = run_metric_detail(run).rpartition(" · ")
-            columns = (source_label(run.get("source"), run.get("provider")), str(run.get("model", "?")),
-                       run_status(run), details)
-            text = "\t".join(columns) + "\t"
-            _add(scr, row, 0, text, colors["secondary"])
-            rate_x = len(text.expandtabs(8))
-            _add(scr, row, rate_x, rate_text, _rate_color(colors, token_rate(run)))
-            if age:
-                _add(scr, row, rate_x + len(rate_text) + 3, age, colors["secondary"])
+    visible = grouped_runs[st["run_offset"]:st["run_offset"] + visible_runs]
+    if visible:
+        visible_sources = [source for source, running, finished in groups
+                           if any(run in visible for run in running + finished)]
+        # Kontextdetails nur ergänzen, wenn nach allen Quellenzeilen Platz ist.
+        show_details = available_run_rows >= len(visible_sources) + 2 * len(visible)
+        for source in visible_sources:
+            source_visible = [run for run in visible if run.get("source") == source]
+            source_all = next((item for item in groups if item[0] == source), None)
+            running, finished = source_all[1], source_all[2]
+            _add(scr, row, 0, f"{source_label(source)} (aktiv {len(running)} · Ergebnis {len(finished)})",
+                 colors["structure"])
             row += 1
-            used, limit, pct = context_values(run, model_for_run(run, oll["models"]))
-            value = (f"{compact_tokens(used)} / {compact_tokens(limit)}"
-                     if used is not None else "warten auf Provider")
-            pct_text = f"{pct:.1f} %" if pct is not None else "n/a"
-            x = 0
-            _add(scr, row, x, "Kontext".ljust(label_w), colors["context_label"])
-            x += label_w
-            meter = bar(pct, bar_w)
-            _add(scr, row, x, meter, _util_color(colors, pct))
-            x += len(meter) + 1
-            _add(scr, row, x, pct_text.rjust(7), _util_color(colors, pct))
-            x += 8
-            _add(scr, row, x, value, colors["secondary"])
-            row += 1
+            for run in source_visible:
+                age = (f"vor {run['age_seconds']:.1f}s" if run.get("age_seconds") is not None else "")
+                details, _separator, rate_text = run_metric_detail(run).rpartition(" · ")
+                columns = (source_label(run.get("source"), run.get("provider")), str(run.get("model", "?")),
+                           run_status(run), details if show_details else "")
+                text = "\t".join(columns) + "\t"
+                _add(scr, row, 0, text, colors["secondary"])
+                rate_x = len(text.expandtabs(8))
+                _add(scr, row, rate_x, rate_text, _rate_color(colors, token_rate(run)))
+                if age:
+                    _add(scr, row, rate_x + len(rate_text) + 3, age, colors["secondary"])
+                row += 1
+                if show_details:
+                    used, limit, pct = context_values(run, model_for_run(run, oll["models"]))
+                    value = (f"{compact_tokens(used)} / {compact_tokens(limit)}"
+                             if used is not None else "warten auf Provider")
+                    pct_text = f"{pct:.1f} %" if pct is not None else "n/a"
+                    x = 0
+                    _add(scr, row, x, "Kontext".ljust(label_w), colors["context_label"])
+                    x += label_w
+                    meter = bar(pct, bar_w)
+                    _add(scr, row, x, meter, _util_color(colors, pct))
+                    x += len(meter) + 1
+                    _add(scr, row, x, pct_text.rjust(7), _util_color(colors, pct))
+                    _add(scr, row, x + 8, value, colors["secondary"])
+                    row += 1
         if len(grouped_runs) > visible_runs:
             _add(scr, row, 0, f"Runs {st['run_offset'] + 1}-{min(len(grouped_runs), st['run_offset'] + visible_runs)} von {len(grouped_runs)}  ·  a/↑↓ scrollen",
                  colors["secondary"])

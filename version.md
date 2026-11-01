@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.1.4 — 01.11.2026
+
+- Finale Pi- und Open-WebUI-Live-Runs nach zehn Sekunden atomar aus `run.jsonl` entfernen, bei unveränderter begrenzter Run-History.
+- Aktive Runs und frische Ergebnisse quellenneutral in gleichartigen Pi-/Open-WebUI-Blöcken darstellen.
+
 ### 2.1.3 — 01.11.2026
 
 - Letzte Pi- und WebUI-Abschlüsse auch neben neuen aktiven Runs behalten und Pi in der Live-Anzeige priorisieren.

@@ -20,6 +20,7 @@ DEFAULT_COLLECTOR_URL = "http://127.0.0.1:11435"
 DEFAULT_HISTORY_LIMIT = 500
 DEFAULT_RUN_HISTORY_LIMIT = 100
 DEFAULT_RUN_MAX_AGE = 90.0
+DEFAULT_FINAL_RUN_AGE = 10.0
 MAX_COLLECTOR_BODY = 32 * 1024
 ALLOWED_RUN_SOURCES = {"pi", "open-webui", "ollama-cli", "legacy"}
 FINAL_RUN_EVENTS = {"completed", "error", "cancelled"}
@@ -122,7 +123,10 @@ def normalize_run(run, final=False):
             out[key] = value[:120]
     if "context_tokens" not in out and "prompt_tokens" in out and "output_tokens" in out:
         out["context_tokens"] = out["prompt_tokens"] + out["output_tokens"]
-    if final and (status not in FINAL_RUN_EVENTS or not _parse_time(out.get("finished_at"))):
+    if status in FINAL_RUN_EVENTS and not _parse_time(out.get("finished_at")):
+        # Finale Adapter-Ereignisse ohne Zeitstempel laufen ab Empfangszeit ab.
+        out["finished_at"] = _utc_now()
+    if final and status not in FINAL_RUN_EVENTS:
         return None
     return out
 
@@ -209,13 +213,14 @@ def write_live_run(run, path=None):
         return write_jsonl(records, target)
 
 
-def load_run_events(path=None, max_age=DEFAULT_RUN_MAX_AGE, limit=None):
-    """Liest aktive Runs plus den letzten Abschluss aus der Live-Datei.
+def load_run_events(path=None, max_age=DEFAULT_RUN_MAX_AGE,
+                    final_max_age=DEFAULT_FINAL_RUN_AGE, limit=None):
+    """Liest frische aktive und finale Runs aus der Live-Datei.
 
-    Ein Run ohne Update bleibt für lange Anfragen bis zum Sicherheits-Timeout
-    sichtbar. Danach wird er nicht als aktueller Run dargestellt und aus der
-    Live-Datei entfernt; er wird nicht nachträglich historisiert. Der letzte
-    finale Run bleibt dagegen sichtbar, bis ein neuer Run beginnt.
+    Aktive Runs laufen nach dem letzten Heartbeat ab, finale Ergebnisse nach
+    ihrer Abschlusszeit. Das Bereinigen erfolgt unter derselben Sperre und
+    atomar wie das Schreiben der Live-Datei; die dauerhafte Run-History bleibt
+    davon unberührt.
     """
     target = os.path.expanduser(path or run_path())
     with RUN_FILE_LOCK:
@@ -228,22 +233,24 @@ def load_run_events(path=None, max_age=DEFAULT_RUN_MAX_AGE, limit=None):
         now = datetime.now(timezone.utc)
         fresh = {}
         for key, run in runs.items():
-            stamp = _parse_time(run.get("updated_at") or run.get("finished_at") or run.get("started_at"))
-            if run["status"] not in FINAL_RUN_EVENTS and stamp:
+            final = run["status"] in FINAL_RUN_EVENTS
+            stamp = _parse_time(run.get("finished_at") if final else
+                                run.get("updated_at") or run.get("started_at"))
+            if stamp:
                 age = max(0.0, (now - stamp).total_seconds())
-                if age > max_age:
+                if age > (final_max_age if final else max_age):
                     continue
                 run["age_seconds"] = age
-            elif run["status"] not in FINAL_RUN_EVENTS:
+            elif not final:
                 run["age_seconds"] = None
             fresh[key] = run
         if len(fresh) != len(runs):
             records = [{"timestamp": item.get("updated_at") or item.get("started_at"), "run": item}
                        for item in sorted(fresh.values(), key=lambda value: _parse_time(
-                           value.get("updated_at") or value.get("started_at")) or datetime.min.replace(tzinfo=timezone.utc))]
+                           value.get("updated_at") or value.get("finished_at") or value.get("started_at")) or datetime.min.replace(tzinfo=timezone.utc))]
             write_jsonl(records, target)
         ordered = sorted(fresh.values(), key=lambda item: _parse_time(
-            item.get("updated_at") or item.get("started_at")) or datetime.min.replace(tzinfo=timezone.utc),
+            item.get("updated_at") or item.get("finished_at") or item.get("started_at")) or datetime.min.replace(tzinfo=timezone.utc),
                          reverse=True)
         return ordered if limit is None else ordered[:max(0, int(limit))]
 

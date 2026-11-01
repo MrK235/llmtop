@@ -77,7 +77,8 @@ def test_live_run_keeps_active_run_until_final():
         }
         assert llmtop.write_live_run(run, live)
         assert len(list(llmtop.load_run_events(live))) == 1
-        final = dict(run, event='completed', finished_at='2026-10-31T18:01:00Z',
+        final = dict(run, event='completed',
+                     finished_at=datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
                      prompt_tokens=4, output_tokens=6)
         assert llmtop.append_run_history(final, history)
         assert llmtop.write_live_run(final, live)
@@ -87,8 +88,23 @@ def test_live_run_keeps_active_run_until_final():
         assert displayed[0]["prompt_tokens"] == 4
         next_run = dict(run, run_id="next", status="running")
         assert llmtop.write_live_run(next_run, live)
-        assert [item["run_id"] for item in llmtop.load_run_events(live)] == ["next"]
+        assert [item["run_id"] for item in llmtop.load_run_events(live)] == ["next", "active"]
         assert len(llmtop.load_run_history(history)) == 1
+
+
+def test_final_live_runs_expire_but_history_remains():
+    with tempfile.TemporaryDirectory() as directory:
+        live = Path(directory) / 'run.jsonl'
+        history = Path(directory) / 'runs.jsonl'
+        old = (datetime.now(timezone.utc).timestamp() - 11)
+        stamp = datetime.fromtimestamp(old, timezone.utc).isoformat().replace('+00:00', 'Z')
+        final = {'schema': 2, 'event': 'completed', 'run_id': 'done', 'source': 'pi',
+                 'model': 'model', 'started_at': stamp, 'updated_at': stamp, 'finished_at': stamp}
+        assert llmtop.append_run_history(final, history)
+        assert llmtop.write_live_run(final, live)
+        assert llmtop.load_run_events(live) == []
+        assert live.read_text() == ''
+        assert [run['run_id'] for run in llmtop.load_run_history(history)] == ['done']
 
 
 def test_stale_live_runs_are_pruned():
@@ -123,7 +139,7 @@ def test_parallel_live_updates_do_not_resurrect_runs():
             thread.start()
         for thread in threads:
             thread.join()
-        displayed = llmtop.load_run_events(live, max_age=10 ** 9)
+        displayed = llmtop.load_run_events(live, max_age=10 ** 9, final_max_age=10 ** 9)
         assert len(displayed) == 1
         assert displayed[0]["status"] == "completed"
 
@@ -144,14 +160,15 @@ def test_pi_events_use_existing_collector_schema():
             completed = dict(started, event='completed', finished_at='2026-11-01T12:00:01Z',
                              prompt_tokens=2, output_tokens=3)
             assert llmtop.process_run_event(completed)
-            displayed = llmtop.load_run_events(max_age=10 ** 9)
+            displayed = llmtop.load_run_events(max_age=10 ** 9, final_max_age=10 ** 9)
             assert displayed[0]['status'] == 'completed'
             assert displayed[0]['prompt_tokens'] == 2
             assert llmtop.load_run_history()[0]['source'] == 'pi'
             assert llmtop.load_run_history()[0]['context_limit'] == 4096
             next_run = dict(started, run_id='pi-next', started_at='2026-11-01T12:00:02Z')
             assert llmtop.process_run_event(next_run)
-            assert [item['run_id'] for item in llmtop.load_run_events(max_age=10 ** 9)] == ['pi-next']
+            assert [item['run_id'] for item in llmtop.load_run_events(
+                max_age=10 ** 9, final_max_age=10 ** 9)] == ['pi-next', 'pi-run']
         finally:
             if old_live is None:
                 os.environ.pop('LLMTOP_RUN_FILE', None)
@@ -169,7 +186,8 @@ def test_open_webui_adapter_auto_install():
     original_install = llmtop.install_open_webui_adapter
     try:
         llmtop.open_webui_config = lambda: ("http://webui", "key", "token")
-        llmtop.open_webui_api = lambda *_args: (200, {"is_active": True, "is_global": True})
+        llmtop.open_webui_api = lambda *_args: (200, {"is_active": True, "is_global": True,
+                                                        "content": Path(llmtop.filter_source_path()).read_text()})
         llmtop.install_open_webui_adapter = lambda: (_ for _ in ()).throw(AssertionError())
         assert llmtop.ensure_open_webui_adapter() == "bereit"
 
@@ -226,6 +244,9 @@ def test_tui_draws_loaded_model():
                  "schema": 2, "run_id": "current", "source": "pi", "model": "model",
                  "status": "running", "context_tokens": 20, "context_limit": 100,
                  "prompt_tokens": 20, "output_tokens": 100, "eval_duration_s": 1,
+             }, {
+                 "schema": 2, "run_id": "webui", "source": "open-webui", "model": "web-model",
+                 "status": "running",
              }], "run_history": [{
                  "schema": 2, "run_id": "history", "source": "pi", "model": "model",
                  "status": "completed", "finished_at": "2030-01-01T00:00:00Z",
@@ -257,7 +278,10 @@ def test_tui_draws_loaded_model():
     assert ("/50%", 17) in screen.calls
     assert any("VRAM 0.0 GiB / RAM 0.0 GiB" in text for text in screen.text)
     assert any("\t" in text for text in screen.text)
-    assert any(text.startswith("Pi\tmodel\trunning\t") for text in screen.text)
+    assert any(text.startswith("Pi (aktiv 1 · Ergebnis 0)") for text in screen.text)
+    assert any(text.startswith("Open WebUI (aktiv 1 · Ergebnis 0)") for text in screen.text)
+    assert any(text.startswith("Pi\tmodel\taktiv\t") for text in screen.text)
+    assert any(text.startswith("Open WebUI\tweb-model\taktiv\t") for text in screen.text)
     assert ("100.0 Tok/s", 13) in screen.calls
     assert llmtop_tui._rate_color(colors, 9) == 15
     assert llmtop_tui._rate_color(colors, 10) == 14
@@ -273,6 +297,7 @@ if __name__ == '__main__':
     test_run_history_defaults_to_hundred()
     test_history_sorting_and_context_cells()
     test_live_run_keeps_active_run_until_final()
+    test_final_live_runs_expire_but_history_remains()
     test_stale_live_runs_are_pruned()
     test_parallel_live_updates_do_not_resurrect_runs()
     test_pi_events_use_existing_collector_schema()

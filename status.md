@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.1.3** · Stand 01.11.2026 · Status: Pi- und Open-WebUI-Ergebnisse bleiben unabhängig neben aktiven Runs sichtbar.
+**Version 2.1.4** · Stand 01.11.2026 · Status: Pi- und Open-WebUI-Live-Runs sind gleichberechtigt; Ergebnisse bleiben zehn Sekunden sichtbar.
 
 ## Aktueller Stand
 
@@ -26,6 +26,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 2.1.4
+
+- Finale Live-Runs laufen zehn Sekunden nach `finished_at` ab und werden atomar aus `run.jsonl` bereinigt; die begrenzte Run-History bleibt erhalten.
+- Aktive Pi- und Open-WebUI-Runs stehen vor Ergebnissen und werden in gleichartigen Quellenblöcken mit sichtbaren Zählern dargestellt.
 
 ## Neu in 2.1.3
 

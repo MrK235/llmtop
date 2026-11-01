@@ -1,7 +1,7 @@
 """
 title: llmtop Run Metrics
 author: llmtop
-version: 2.1.2
+version: 2.1.4
 required_open_webui_version: 0.12.3
 description: Meldet datensparsame Provider-Runmetriken an den lokalen llmtop-Collector.
 """
