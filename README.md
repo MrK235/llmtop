@@ -1,6 +1,6 @@
 # llmtop — LLM Terminal Monitor für Ollama mit GPU-, RAM- und VRAM-Sensoren
 
-**Version 2.1.13 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
+**Version 2.1.14 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
 die über die Ollama-API das **geladene Modell** sowie **CPU-/RAM/GPU-Auslastung**
 anzeigt. Versionsgeschichte und Versionsschema: `version.md`.
 
@@ -175,10 +175,10 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   grau und unterstrichen; die folgenden Modellinformationen beginnen an einer
   verkürzten festen Tabulatorposition. Auch Quelle, Modell, Status und Metriken aktueller
   Runs sind per Tabulator ausgerichtet. Label und Klammern sind Cyan. VRAM ist oberhalb 55 % Grün,
-  bei 45–55 % Gelb und darunter Rot. Nach dem Balken stehen zuerst die
-  VRAM/RAM-Prozentwerte im Format `%/%`; nur der VRAM-Wert ist farbig, der
-  Trennstrich samt RAM-Wert sowie beide Größen sind gedimmt grau in GiB. Beide
-  Anteile verwenden `#`.
+  bei 45–55 % Gelb und darunter Rot. Der VRAM-Prozentwert steht auf derselben Flucht wie die Prozentwerte von System
+  und GPU. Der CPU/RAM-Anteil bleibt ausschließlich als grauer Balkenanteil und
+  in der gedimmten Größenangabe sichtbar; ein zweiter RAM-Prozentwert wird nicht
+  angezeigt.
   Das Label „Kontext“ vor dem Balken eines aktuellen Runs ist Cyan. Die
   Kontextanzeige folgt dem CPU-/GPU-Raster: Balken, rechtsbündiger Prozentwert
   und danach gedimmt grau Verbrauch/Limit. Tok/s aktueller Runs ist rot unter

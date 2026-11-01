@@ -358,18 +358,16 @@ def _draw(scr, st, host, interval):
             _add(scr, row, x + 1, "#" * gpu_width, gpu_attr)
             _add(scr, row, x + 1 + gpu_width, "#" * cpu_width, colors["secondary"])
             _add(scr, row, x + bar_w + 1, "]", colors["structure"])
-        x += bar_w + 3
+        x += len(bar(None, bar_w)) + 1
         if gpu_pct is None:
-            _add(scr, row, x, "VRAM/RAM n/a", colors["secondary"])
+            _add(scr, row, x, "n/a".rjust(7), colors["secondary"])
+            _add(scr, row, x + 8, "VRAM/RAM n/a", colors["secondary"])
         else:
-            vram_pct_text = f"{gpu_pct:.0f}%"
-            ram_pct_text = f"/{100 - gpu_pct:.0f}%"
-            padding = max(0, 7 - len(vram_pct_text) - len(ram_pct_text))
+            # Prozentwert exakt auf der Sensor-Flucht; der CPU/RAM-Anteil
+            # bleibt ausschließlich als grauer Balkenanteil und Größenangabe.
+            _add(scr, row, x, f"{gpu_pct:.0f} %".rjust(7), gpu_attr)
             sizes = (f"VRAM {vram / (1024 ** 3):.1f} GiB / "
                      f"RAM {cpu_mem / (1024 ** 3):.1f} GiB")
-            _add(scr, row, x, " " * padding, colors["secondary"])
-            _add(scr, row, x + padding, vram_pct_text, gpu_attr)
-            _add(scr, row, x + padding + len(vram_pct_text), ram_pct_text, colors["secondary"])
             _add(scr, row, x + 8, sizes, colors["secondary"])
         return row + 1
 

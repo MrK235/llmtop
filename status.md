@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.1.13** · Stand 01.11.2026 · Status: Geladene Modelle stehen unter GPU, aktuelle Runs direkt darüber der History.
+**Version 2.1.14** · Stand 01.11.2026 · Status: Modell-Prozentwerte folgen dem System-/GPU-Raster ohne zweiten RAM-Prozentwert.
 
 ## Aktueller Stand
 
@@ -26,6 +26,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 2.1.14
+
+- Modell-Prozentwert auf die Sensor-Flucht ausgerichtet.
+- Zweiten CPU/RAM-Prozentwert entfernt; der CPU/RAM-Anteil bleibt grau im Balken und in der Größenangabe.
 
 ## Neu in 2.1.13
 

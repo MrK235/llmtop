@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.1.14 — 01.11.2026
+
+- Modell-Prozentwert auf das System-/GPU-Sensorraster ausgerichtet.
+- Zweiten CPU/RAM-Prozentwert entfernt und graue Auslastungsdarstellung beibehalten.
+
 ### 2.1.13 — 01.11.2026
 
 - TUI-Reihenfolge auf System, GPU, geladene Modelle, aktuelle Runs und History umgestellt.
