@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.1.6 — 01.11.2026
+
+- Pi-Adapter überträgt Cache-Input, Kontextlimit, Gesamtdauer und Ausgaberate.
+- Ollama-Pi-Runs zeigen Tok/s und Dauer; ChatGPT-Pi-Runs Kontextgröße, Prozent und Tok/s.
+
 ### 2.1.5 — 01.11.2026
 
 - Pi-Modell- und Tool-Folgeturns je bearbeiteter Anfrage zu einem Live-Run zusammengefasst.

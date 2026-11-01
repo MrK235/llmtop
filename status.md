@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.1.5** · Stand 01.11.2026 · Status: Pi-Agentenläufe sind pro bearbeiteter Anfrage zusammengefasst; Ergebnisse bleiben zehn Sekunden sichtbar.
+**Version 2.1.6** · Stand 01.11.2026 · Status: Pi-Agentenläufe zeigen Token-, Kontext- und Laufzeitmetriken; Ergebnisse bleiben zehn Sekunden sichtbar.
 
 ## Aktueller Stand
 
@@ -26,6 +26,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 2.1.6
+
+- Pi überträgt Cache-Input zum Kontextverbrauch, das Modell-Kontextlimit sowie Gesamtdauer und Ausgaberate.
+- Ollama-Pi-Runs zeigen dadurch Tok/s und Dauer; ChatGPT-Pi-Runs zeigen Kontextgröße, Prozent und Tok/s.
 
 ## Neu in 2.1.5
 

@@ -12,6 +12,7 @@ type Run = {
   model: string;
   provider: string;
   started_at: string;
+  context_limit?: number;
   metrics: Record<string, number>;
   heartbeat?: ReturnType<typeof setInterval>;
 };
@@ -55,14 +56,25 @@ function usageMetrics(message: any): Record<string, number> {
   const usage = message?.usage;
   if (!usage || typeof usage !== "object") return {};
   const result: Record<string, number> = {};
-  const aliases: Array<[string, string]> = [
-    ["input", "prompt_tokens"], ["inputTokens", "prompt_tokens"], ["input_tokens", "prompt_tokens"], ["promptTokens", "prompt_tokens"],
-    ["output", "output_tokens"], ["outputTokens", "output_tokens"], ["output_tokens", "output_tokens"], ["completionTokens", "output_tokens"],
-    ["totalTokens", "context_tokens"], ["total_tokens", "context_tokens"],
-  ];
-  for (const [from, to] of aliases) {
-    const value = number(usage[from]);
-    if (value !== undefined) result[to] = value;
+  const first = (...names: string[]): number | undefined => {
+    for (const name of names) {
+      const value = number(usage[name]);
+      if (value !== undefined) return value;
+    }
+    return undefined;
+  };
+  const input = first("input", "inputTokens", "input_tokens", "promptTokens", "prompt_tokens") || 0;
+  const cacheRead = first("cacheRead", "cache_read", "cacheReadTokens", "cache_read_tokens") || 0;
+  const output = first("output", "outputTokens", "output_tokens", "completionTokens", "completion_tokens") || 0;
+  if (input || cacheRead || output || first("input", "inputTokens", "input_tokens", "promptTokens", "prompt_tokens") === 0) {
+    // Pi trennt normalen Input und Cache-Reads; für den Kontextverbrauch zählen beide.
+    result.prompt_tokens = input + cacheRead;
+  }
+  if (output || first("output", "outputTokens", "output_tokens", "completionTokens", "completion_tokens") === 0) {
+    result.output_tokens = output;
+  }
+  if (result.prompt_tokens !== undefined && result.output_tokens !== undefined) {
+    result.context_tokens = result.prompt_tokens + result.output_tokens;
   }
   return result;
 }
@@ -84,8 +96,11 @@ export default function (pi: ExtensionAPI) {
     active = undefined;
     if (run.heartbeat) clearInterval(run.heartbeat);
     const finished_at = now();
+    const duration = Math.max(0, (Date.parse(finished_at) - Date.parse(run.started_at)) / 1000);
+    const metrics = { ...run.metrics, total_duration_s: duration };
+    if (metrics.output_tokens !== undefined && duration > 0) metrics.eval_duration_s = duration;
     send({ schema: 2, event, source: "pi", ...eventRun(run),
-      updated_at: finished_at, finished_at, ...run.metrics });
+      updated_at: finished_at, finished_at, ...metrics });
   };
 
   pi.on("agent_start", (_event, ctx) => {
@@ -97,6 +112,7 @@ export default function (pi: ExtensionAPI) {
       model: text(model?.id, "unknown"),
       provider: text(model?.provider, "unknown"),
       started_at: now(),
+      context_limit: number(model?.contextWindow ?? model?.context_window),
       metrics: {},
     };
     active = run;
