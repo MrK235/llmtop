@@ -303,6 +303,11 @@ def _draw(scr, st, host, interval):
                 if len(items) == 1:
                     item = items[0]
                     text += f"  {item.get('model', '?')} · {run_status(item)}"
+                    used, limit, pct = context_values(item, model_for_run(item, oll.get("models", [])))
+                    if used is not None:
+                        limit_text = compact_tokens(limit) if limit is not None else "n/a"
+                        pct_text = f"{pct:.1f}%" if pct is not None else "n/a"
+                        text += f" · Kontext {compact_tokens(used)}/{limit_text} {pct_text}"
                 _add(scr, row, 0, text, colors["secondary"])
                 row += 1
         if row < h - 2:
@@ -458,8 +463,15 @@ def _draw(scr, st, host, interval):
             for run in source_visible:
                 age = (f"vor {run['age_seconds']:.1f}s" if run.get("age_seconds") is not None else "")
                 details, _separator, rate_text = run_metric_detail(run).rpartition(" · ")
+                short_context = ""
+                if not show_details:
+                    used, limit, pct = context_values(run, model_for_run(run, oll["models"]))
+                    if used is not None:
+                        limit_text = compact_tokens(limit) if limit is not None else "n/a"
+                        pct_text = f"{pct:.1f}%" if pct is not None else "n/a"
+                        short_context = f"Kontext {compact_tokens(used)}/{limit_text} {pct_text}"
                 columns = (source_label(run.get("source"), run.get("provider")), str(run.get("model", "?")),
-                           run_status(run), details if show_details else "")
+                           run_status(run), details if show_details else short_context)
                 text = "\t".join(columns) + "\t"
                 _add(scr, row, 0, text, colors["secondary"])
                 rate_x = len(text.expandtabs(8))

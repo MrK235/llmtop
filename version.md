@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.1.11 — 01.11.2026
+
+- Kontextverbrauch aktiver Runs in der kompakten TUI-Ansicht sichtbar gemacht.
+
 ### 2.1.10 — 01.11.2026
 
 - Pi-Session-Kontext über `sessionManager` gelesen und während aktiver Runs regelmäßig aktualisiert.
