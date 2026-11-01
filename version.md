@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.2 — 01.11.2026
+
+- Aktuelle Runs und History auf dieselbe dynamische Spaltenberechnung abgeglichen.
+
 ### 2.2.1 — 01.11.2026
 
 - Breiten der sichtbaren Run-Spalten dynamisch aus Überschrift und Inhalt berechnet; die History berücksichtigt die gesamte Liste.

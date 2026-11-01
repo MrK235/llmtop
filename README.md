@@ -121,8 +121,9 @@ nutzen `#` und zeigen zusätzlich Textwerte. Eine
 Leerzeile trennt System, GPU, geladene Modelle, aktuelle Runs und History.
 **Aktuelle Runs** und **History** verwenden dieselben Spalten und Werte für
 Zeit, Quelle, Modell, Status, Tokens, Kontext, Tok/s und Dauer. Die Breite jeder
-sichtbaren Spalte richtet sich dynamisch nach Überschrift und Inhalt; die History
-berücksichtigt dafür stets ihre gesamte Liste. Die Kontextspalte
+sichtbaren Spalte richtet sich dynamisch nach Überschrift und Inhalt; aktuelle
+Runs und History nutzen dabei dieselben Spaltenbreiten. Die History berücksichtigt
+dafür stets ihre gesamte Liste. Die Kontextspalte
 zeigt den Fortschritt als farbigen Prozent-/Balkenwert sowie graues Verbrauch/Limit. **History** zeigt
 eine scrollbare Tabelle mit bis zu 100 abgeschlossenen instrumentierten Runs.
 Sie kann nach Abschlusszeit, Quelle, Modell, Status, Tokens, Kontextverbrauch,

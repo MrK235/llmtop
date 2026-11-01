@@ -282,10 +282,10 @@ def _draw(scr, st, host, interval):
         if suffix_x < x + width:
             _add(scr, row, suffix_x, suffix[:max(0, x + width - suffix_x)], colors["secondary"])
 
-    def draw_history_table(row, max_rows):
+    def draw_history_table(row, max_rows, columns=None):
         sorted_runs = sort_run_history(st.get("run_history", []), st["history_sort"],
                                        st["history_desc"])
-        columns = table_columns(sorted_runs, history_cell)
+        columns = columns or table_columns(sorted_runs, history_cell)
         total = len(sorted_runs)
         data_rows = max(1, max_rows - 2)
         show_position = total > data_rows and data_rows >= 2
@@ -512,7 +512,9 @@ def _draw(scr, st, host, interval):
     row = section(row, "Aktuelle Runs")
     grouped_runs = ([run for _source, running, _finished in groups for run in running] +
                     [run for _source, _running, finished in groups for run in finished])
-    columns = table_columns(grouped_runs, current_run_cell)
+    # Beide Tabellen teilen eine Breitenberechnung, damit aktuelle Runs und
+    # History unabhängig vom sichtbaren Ausschnitt exakt untereinander stehen.
+    columns = table_columns(runs + grouped_runs, current_run_cell)
     total_run_rows = max(3, min(12, h - row - history_rows - 2))
     visible_runs = max(1, total_run_rows - 1 - len(groups))
     max_run_offset = max(0, len(grouped_runs) - visible_runs)
@@ -551,7 +553,7 @@ def _draw(scr, st, host, interval):
         _add(scr, row, 0, "Keine instrumentierten Requests", colors["secondary"])
         row += 1
     row += 1
-    draw_history_table(row, h - row - 2)
+    draw_history_table(row, h - row - 2, columns)
 
     draw_footer("q quit  r neu laden  a Runs/History  Tab/s sortieren  ↑↓ scrollen")
     if st["help"]:
