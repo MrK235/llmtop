@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.0.5 — 01.11.2026
+
+- Kopf-Logo als kompaktes Terminalfenster mit Prompt, Aktivitätspixel und
+  LLM-Kennung gestaltet.
+
 ### 2.0.4 — 01.11.2026
 
 - Pixel-Logo auf acht Zeichen Breite erweitert, damit es im Terminalraster

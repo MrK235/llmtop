@@ -7,7 +7,7 @@ import time
 from datetime import datetime
 
 VERSION = "?"
-PIXEL_ICON = ("▛▀▀▀▀▀▀▜", "▌▞▞▞▞▞▞▐", "▌▞▞▞▞▞▞▐", "▙▄▄▄▄▄▄▟")
+PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")
 
 from llmtop_metrics import (
     DEFAULT_RUN_HISTORY_LIMIT, HISTORY_COLUMNS, CollectorService, _parse_time, _token_value,
@@ -156,6 +156,7 @@ def _draw(scr, st, host, interval):
             _add(scr, row, 1, pixel, colors["structure"], indent=False)
 
         # Acht Zeichen Breite gleichen bei Terminal-Zeichen annähernd vier Zeilen Höhe aus.
+        # Das Logo kombiniert einen Terminal-Prompt mit einer LLM-Kennung.
         # Zwei freie Spalten trennen das Logo vom Textblock.
         x = 11
         if w >= 72:

@@ -5,8 +5,8 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.0.4"  # Single Source of Truth; History in version.md
-PIXEL_ICON = ("▛▀▀▀▀▀▀▜", "▌▞▞▞▞▞▞▐", "▌▞▞▞▞▞▞▐", "▙▄▄▄▄▄▄▟")  # Optisch quadratisches Logo im Terminal-Zeichenraster.
+VERSION = "2.0.5"  # Single Source of Truth; History in version.md
+PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
 

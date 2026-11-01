@@ -239,7 +239,7 @@ def test_tui_draws_loaded_model():
     screen = Screen()
     llmtop_tui._draw(screen, state, "http://localhost:11434", 2.0)
     assert any(text.startswith("llmtop ") for text in screen.text)
-    assert [text for text, x in screen.positions if x == 1][:4] == ["▛▀▀▀▀▀▀▜", "▌▞▞▞▞▞▞▐", "▌▞▞▞▞▞▞▐", "▙▄▄▄▄▄▄▟"]
+    assert [text for text, x in screen.positions if x == 1][:4] == ["╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝"]
     assert any(text.startswith("llmtop ") and x == 11 for text, x in screen.positions)
     assert ("Autor: llmtop  ·  Python-Standardbibliothek  ·  Intervall 2.0s", 17) in screen.calls
     assert ("Ollama vtest".ljust(22), 17) in screen.calls

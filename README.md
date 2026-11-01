@@ -1,6 +1,6 @@
 # llmtop — LLM Terminal Monitor für Ollama mit GPU-, RAM- und VRAM-Sensoren
 
-**Version 2.0.4 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
+**Version 2.0.5 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
 die über die Ollama-API das **geladene Modell** sowie **CPU-/RAM/GPU-Auslastung**
 anzeigt. Versionsgeschichte und Versionsschema: `version.md`.
 
@@ -95,8 +95,9 @@ Datenbank-Fallback kann `LLMTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 
 ## TUI-Layout
 
-Ein vierzeiliger Kopfbereich zeigt ein optisch quadratisches Pixel-Logo mit
-zwei Zeichen Abstand zum Produkttext, Ollama- und Open-WebUI-Collector-Status
+Ein vierzeiliger Kopfbereich zeigt ein optisch quadratisches Terminal-Logo mit
+Prompt und LLM-Kennung, zwei Zeichen Abstand zum Produkttext, Ollama- und
+Open-WebUI-Collector-Status
 sowie Autor, Technik und Intervall. Eine Leerzeile trennt ihn von den
 Messwerten. Die Vollbildansicht
 gliedert sich danach von oben nach unten in **System**, **GPU**,
@@ -130,8 +131,9 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
 
 ## Angezeigte Werte
 
-* **Kopfbereich**: vierzeiliges, optisch quadratisches Pixel-Logo mit zwei
-  freien Spalten zum Textblock, `llmtop <VERSION>` und Produktname,
+* **Kopfbereich**: vierzeiliges, optisch quadratisches Terminal-Logo mit
+  Prompt und LLM-Kennung sowie zwei freien Spalten zum Textblock,
+  `llmtop <VERSION>` und Produktname,
   `Ollama v<VERSION>` mit Erreichbarkeit (`/api/version`) sowie **Open-WebUI
   Collector**-Status (`aktiv` / `nicht aktiv`). Eine Leerzeile
   folgt vor den Messwerten. Die vierte Zeile nennt Autor,
