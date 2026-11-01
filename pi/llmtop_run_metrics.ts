@@ -1,4 +1,4 @@
-/* llmtop 2.1.4 – globale Pi-Erweiterung für datensparsame Run-Metriken.
+/* llmtop 2.1.5 – globale Pi-Erweiterung für datensparsame Run-Metriken.
  * Installation: nach ~/.pi/agent/extensions/ kopieren und Pi neu starten oder /reload.
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -12,6 +12,7 @@ type Run = {
   model: string;
   provider: string;
   started_at: string;
+  metrics: Record<string, number>;
   heartbeat?: ReturnType<typeof setInterval>;
 };
 
@@ -30,7 +31,8 @@ function collectorConfig(): { url?: string; token?: string } {
 }
 
 const collector = collectorConfig();
-const active: Run[] = [];
+// Ein Agentenlauf umfasst alle Modellturns einer Nutzeranfrage in einer Pi-Session.
+let active: Run | undefined;
 
 function now(): string {
   return new Date().toISOString();
@@ -44,8 +46,8 @@ function number(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : undefined;
 }
 
-function eventRun(run: Run): Omit<Run, "heartbeat"> {
-  const { heartbeat: _heartbeat, ...event } = run;
+function eventRun(run: Run): Omit<Run, "heartbeat" | "metrics"> {
+  const { heartbeat: _heartbeat, metrics: _metrics, ...event } = run;
   return event;
 }
 
@@ -76,56 +78,44 @@ function send(event: Record<string, unknown>): void {
 }
 
 export default function (pi: ExtensionAPI) {
-  pi.on("turn_start", (_event, ctx) => {
+  const finish = (event: "completed" | "cancelled" | "error") => {
+    const run = active;
+    if (!run) return;
+    active = undefined;
+    if (run.heartbeat) clearInterval(run.heartbeat);
+    const finished_at = now();
+    send({ schema: 2, event, source: "pi", ...eventRun(run),
+      updated_at: finished_at, finished_at, ...run.metrics });
+  };
+
+  pi.on("agent_start", (_event, ctx) => {
+    // Ein vorheriger, nicht sauber beendeter Agentenlauf darf nicht verwaisen.
+    finish("cancelled");
     const model = ctx.model as any;
     const run: Run = {
       run_id: randomUUID(),
       model: text(model?.id, "unknown"),
       provider: text(model?.provider, "unknown"),
       started_at: now(),
+      metrics: {},
     };
-    active.push(run);
+    active = run;
     send({ schema: 2, event: "started", source: "pi", ...eventRun(run), updated_at: run.started_at });
-    // Lange Cloud- oder lokale Turns dürfen nicht am Collector-Stale-Timeout verschwinden.
+    // Lange Cloud- oder lokale Agentenläufe dürfen nicht am Collector-Stale-Timeout verschwinden.
     run.heartbeat = setInterval(() => send({ schema: 2, event: "updated", source: "pi",
       ...eventRun(run), updated_at: now() }), 30_000);
   });
 
   pi.on("turn_end", (event: any) => {
-    const run = active.shift();
-    if (!run) return;
-    if (run.heartbeat) clearInterval(run.heartbeat);
-    const finished_at = now();
-    const stop = text(event?.message?.stopReason, "completed");
-    send({
-      schema: 2,
-      event: stop === "error" ? "error" : stop === "aborted" ? "cancelled" : "completed",
-      source: "pi",
-      ...eventRun(run),
-      updated_at: finished_at,
-      finished_at,
-      ...usageMetrics(event?.message),
-    });
+    if (!active) return;
+    // Nur die jeweils letzte Modellantwort zählt: Bei agent_settled ist dies
+    // die sichtbare Abschlussantwort, nicht ein interner Tool-Folgeturn.
+    active.metrics = usageMetrics(event?.message);
   });
 
   pi.on("agent_settled", (event: any) => {
-    if (!event?.aborted) return;
-    const finished_at = now();
-    while (active.length) {
-      const run = active.shift()!;
-      if (run.heartbeat) clearInterval(run.heartbeat);
-      send({ schema: 2, event: "cancelled", source: "pi", ...eventRun(run),
-        updated_at: finished_at, finished_at });
-    }
+    finish(event?.aborted ? "cancelled" : "completed");
   });
 
-  pi.on("session_shutdown", () => {
-    const finished_at = now();
-    while (active.length) {
-      const run = active.shift()!;
-      if (run.heartbeat) clearInterval(run.heartbeat);
-      send({ schema: 2, event: "cancelled", source: "pi", ...eventRun(run),
-        updated_at: finished_at, finished_at });
-    }
-  });
+  pi.on("session_shutdown", () => finish("cancelled"));
 }

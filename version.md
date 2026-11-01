@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.1.5 — 01.11.2026
+
+- Pi-Modell- und Tool-Folgeturns je bearbeiteter Anfrage zu einem Live-Run zusammengefasst.
+- Run-History schreibt nur den finalen `agent_settled`-Abschluss der sichtbaren Antwort.
+
 ### 2.1.4 — 01.11.2026
 
 - Finale Pi- und Open-WebUI-Live-Runs nach zehn Sekunden atomar aus `run.jsonl` entfernen, bei unveränderter begrenzter Run-History.

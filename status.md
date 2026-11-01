@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.1.4** · Stand 01.11.2026 · Status: Pi- und Open-WebUI-Live-Runs sind gleichberechtigt; Ergebnisse bleiben zehn Sekunden sichtbar.
+**Version 2.1.5** · Stand 01.11.2026 · Status: Pi-Agentenläufe sind pro bearbeiteter Anfrage zusammengefasst; Ergebnisse bleiben zehn Sekunden sichtbar.
 
 ## Aktueller Stand
 
@@ -26,6 +26,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 2.1.5
+
+- Der Pi-Adapter fasst alle Modell- und Tool-Folgeturns einer bearbeiteten Anfrage zu einem Live-Run zusammen.
+- Erst der finale `agent_settled`-Abschluss schreibt das Ergebnis der sichtbaren Antwort in die Run-History.
 
 ## Neu in 2.1.4
 
