@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.1.16** · Stand 01.11.2026 · Status: Modell-Prozentwerte folgen dem System-/GPU-Raster; Speichergrößen erscheinen als MiB / MiB.
+**Version 2.1.17** · Stand 01.11.2026 · Status: Aktuelle Runs und History verwenden eine homogene Tabellendarstellung.
 
 ## Aktueller Stand
 
@@ -26,6 +26,10 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 2.1.17
+
+- Aktuelle Runs übernehmen die History-Spalten und Werte einschließlich Zeit, Tokens, Kontext, Tok/s und Dauer.
 
 ## Neu in 2.1.16
 

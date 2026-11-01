@@ -227,6 +227,12 @@ def _draw(scr, st, host, interval):
             return f"{duration:.1f}s" if duration is not None else "n/a"
         return ""
 
+    def current_run_cell(run, column):
+        if column == "zeit":
+            stamp = _parse_time(run.get("finished_at") or run.get("started_at"))
+            return stamp.strftime("%d.%m %H:%M") if stamp else "n/a"
+        return history_cell(run, column)
+
     def draw_history_table(row, max_rows):
         columns = history_columns()
         sorted_runs = sort_run_history(st.get("run_history", []), st["history_sort"],
@@ -462,19 +468,19 @@ def _draw(scr, st, host, interval):
     row = section(row, "Aktuelle Runs")
     grouped_runs = ([run for _source, running, _finished in groups for run in running] +
                     [run for _source, _running, finished in groups for run in finished])
-    available_run_rows = max(2, min(10, h - row - history_rows - 2))
-    # Zuerst erhält jede Quelle eine sichtbare Zeile. Weitere Runs folgen in
-    # derselben statusneutralen Reihenfolge; aktiv vor Ergebnis ist die einzige
-    # Priorität innerhalb eines Quellenblocks.
-    visible_runs = max(1, available_run_rows - len(groups))
+    columns = history_columns()
+    total_run_rows = max(3, min(12, h - row - history_rows - 2))
+    visible_runs = max(1, total_run_rows - 1 - len(groups))
     max_run_offset = max(0, len(grouped_runs) - visible_runs)
     st["run_offset"] = min(max(0, st.get("run_offset", 0)), max_run_offset)
     visible = grouped_runs[st["run_offset"]:st["run_offset"] + visible_runs]
     if visible:
+        for x, (name, width) in enumerate(columns):
+            offset = sum(item[1] + 1 for item in columns[:x])
+            _add(scr, row, offset, name, colors["structure"])
+        row += 1
         visible_sources = [source for source, running, finished in groups
                            if any(run in visible for run in running + finished)]
-        # Kontextdetails nur ergänzen, wenn nach allen Quellenzeilen Platz ist.
-        show_details = available_run_rows >= len(visible_sources) + 2 * len(visible)
         for source in visible_sources:
             source_visible = [run for run in visible if run.get("source") == source]
             source_all = next((item for item in groups if item[0] == source), None)
@@ -483,43 +489,14 @@ def _draw(scr, st, host, interval):
                  colors["structure"])
             row += 1
             for run in source_visible:
-                age = (f"vor {run['age_seconds']:.1f}s" if run.get("age_seconds") is not None else "")
-                details, _separator, rate_text = run_metric_detail(run).rpartition(" · ")
-                short_context = ""
-                if not show_details:
-                    used, limit, pct = context_values(run, model_for_run(run, oll["models"]))
-                    if used is not None:
-                        limit_text = compact_tokens(limit) if limit is not None else "n/a"
-                        pct_text = f"{pct:.1f}%" if pct is not None else "n/a"
-                        short_context = f"Kontext {compact_tokens(used)}/{limit_text} {pct_text}"
-                columns = (source_label(run.get("source"), run.get("provider")), str(run.get("model", "?")),
-                           run_status(run), details if show_details else short_context)
-                text = "\t".join(columns) + "\t"
-                # Tok/s und Alter sitzen fest rechts; der linke Bereich wird
-                # davor gekürzt, statt die Rate durch lange Kontextwerte zu
-                # überdecken.
-                right_text = rate_text + (f"   {age}" if age else "")
-                rate_x = max(1, w - len(right_text) - 2)
-                prefix = text.expandtabs(8)[:max(0, rate_x - 1)]
-                _add(scr, row, 0, prefix, colors["secondary"])
-                _add(scr, row, rate_x, rate_text, _rate_color(colors, token_rate(run)))
-                if age:
-                    _add(scr, row, rate_x + len(rate_text) + 3, age, colors["secondary"])
+                cells = [current_run_cell(run, name)[:width].ljust(width) for name, width in columns]
+                _add(scr, row, 0, " ".join(cells), colors["secondary"])
+                rate_column = next((index for index, (name, _width) in enumerate(columns) if name == "rate"), None)
+                if rate_column is not None:
+                    rate_x = sum(width + 1 for _name, width in columns[:rate_column])
+                    rate_value = current_run_cell(run, "rate")[:columns[rate_column][1]].rjust(columns[rate_column][1])
+                    _add(scr, row, rate_x, rate_value, _rate_color(colors, token_rate(run)))
                 row += 1
-                if show_details:
-                    used, limit, pct = context_values(run, model_for_run(run, oll["models"]))
-                    value = (f"{compact_tokens(used)} / {compact_tokens(limit)}"
-                             if used is not None else "warten auf Provider")
-                    pct_text = f"{pct:.1f} %" if pct is not None else "n/a"
-                    x = 0
-                    _add(scr, row, x, "Kontext".ljust(label_w), colors["context_label"])
-                    x += label_w
-                    meter = bar(pct, bar_w)
-                    _add(scr, row, x, meter, _util_color(colors, pct))
-                    x += len(meter) + 1
-                    _add(scr, row, x, pct_text.rjust(7), _util_color(colors, pct))
-                    _add(scr, row, x + 8, value, colors["secondary"])
-                    row += 1
         if len(grouped_runs) > visible_runs:
             _add(scr, row, 0, f"Runs {st['run_offset'] + 1}-{min(len(grouped_runs), st['run_offset'] + visible_runs)} von {len(grouped_runs)}  ·  a/↑↓ scrollen",
                  colors["secondary"])
