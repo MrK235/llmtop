@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.1.2** · Stand 01.11.2026 · Status: Pi- und Open-WebUI-Runs werden quellensepariert erfasst und angezeigt.
+**Version 2.1.3** · Stand 01.11.2026 · Status: Pi- und Open-WebUI-Ergebnisse bleiben unabhängig neben aktiven Runs sichtbar.
 
 ## Aktueller Stand
 
@@ -26,6 +26,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 2.1.3
+
+- Ein neuer Pi- oder WebUI-Run entfernt den letzten Abschluss derselben Quelle nicht mehr aus der Live-Anzeige.
+- Aktuelle Runs priorisieren Pi vor WebUI und kennzeichnen Quelle getrennt nach aktiv und erledigt.
 
 ## Neu in 2.1.2
 

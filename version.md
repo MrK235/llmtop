@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.1.3 — 01.11.2026
+
+- Letzte Pi- und WebUI-Abschlüsse auch neben neuen aktiven Runs behalten und Pi in der Live-Anzeige priorisieren.
+
 ### 2.1.2 — 01.11.2026
 
 - Quellenseparate Pi- und Open-WebUI-Collector-Pfade sowie letzte Live-Abschlüsse je Quelle ergänzt.

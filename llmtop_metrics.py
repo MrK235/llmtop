@@ -199,12 +199,9 @@ def write_live_run(run, path=None):
                     or item["source"] != normalized["source"]}
             runs[key] = normalized
         else:
-            # Ein neuer Run ersetzt den bislang angezeigten Abschluss, aktive
-            # parallele Runs bleiben erhalten.
-            if key not in runs or runs[key]["status"] in FINAL_RUN_EVENTS:
-                runs = {item_key: item for item_key, item in runs.items()
-                        if item["status"] not in FINAL_RUN_EVENTS
-                        or item["source"] != normalized["source"]}
+            # Ein neuer aktiver Run ergänzt den letzten Abschluss derselben
+            # Quelle. So bleibt dessen Ergebnis sichtbar, während Pi oder
+            # WebUI bereits den nächsten Run verarbeitet.
             runs[key] = normalized
         records = [{"timestamp": item.get("updated_at") or item.get("started_at"), "run": item}
                    for item in sorted(runs.values(), key=lambda value: _parse_time(

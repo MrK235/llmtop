@@ -124,6 +124,11 @@ def _draw(scr, st, host, interval):
              colors["structure"], indent=False)
         return row + 1
 
+    def run_status(run):
+        return {"running": "aktiv", "completed": "erledigt",
+                "cancelled": "abgebrochen", "error": "Fehler"}.get(
+                    str(run.get("status", "unknown")), str(run.get("status", "unknown")))
+
     def sensor(row, label, pct, value, detail="", value_attr=None, accent="", accent_attr=None):
         x = 0
         _add(scr, row, x, label.ljust(label_w), colors["structure"])
@@ -209,7 +214,7 @@ def _draw(scr, st, host, interval):
         if column == "modell":
             return str(run.get("model", "?"))
         if column == "status":
-            return str(run.get("status", "?"))
+            return run_status(run)
         if column == "tokens":
             return compact_tokens(total_tokens(run))
         if column == "kontext":
@@ -283,10 +288,17 @@ def _draw(scr, st, host, interval):
         active_runs = st.get("runs", [])
         compact_runs = []
         for source in ("pi", "open-webui"):
-            run = next((item for item in active_runs if item.get("source") == source), None)
-            if run:
-                compact_runs.append(f"{source_label(source, run.get('provider'))} "
-                                    f"{run.get('model', '?')} {run.get('status', '?')}")
+            source_runs = [item for item in active_runs if item.get("source") == source]
+            if not source_runs:
+                continue
+            active = sum(item.get("status") not in ("completed", "error", "cancelled")
+                         for item in source_runs)
+            done = len(source_runs) - active
+            representative = next((item for item in source_runs
+                                   if item.get("status") not in ("completed", "error", "cancelled")),
+                                  source_runs[0])
+            compact_runs.append(f"{source_label(source, representative.get('provider'))} "
+                                f"aktiv {active} · erledigt {done}")
         text = "  ·  ".join(compact_runs) or "Keine Pi-/WebUI-Runs"
         _add(scr, row, 0, f"Modelle {model_count}  ·  {text}", colors["secondary"])
         row += 1
@@ -398,21 +410,29 @@ def _draw(scr, st, host, interval):
             row = sensor(row, "Power", power_pct, power_value, power_detail)
 
     row += 1
-    pi_count = sum(run.get("source") == "pi" for run in active_runs)
-    webui_count = sum(run.get("source") == "open-webui" for run in active_runs)
-    row = section(row, f"Aktuelle Runs · Pi {pi_count} · WebUI {webui_count}")
-    # Zwei Zeilen je Run; bei vielen parallelen Clients bleibt jeder Eintrag
-    # über den eigenen Scroll-Offset erreichbar statt nach drei zu verschwinden.
+    grouped_runs = []
+    counts = []
+    for source, label in (("pi", "Pi"), ("open-webui", "WebUI")):
+        source_runs = [run for run in active_runs if run.get("source") == source]
+        active = [run for run in source_runs if run.get("status") not in ("completed", "error", "cancelled")]
+        finished = [run for run in source_runs if run.get("status") in ("completed", "error", "cancelled")]
+        counts.append(f"{label} aktiv {len(active)}/erledigt {len(finished)}")
+        grouped_runs.extend(active + finished)
+    grouped_runs.extend(run for run in active_runs
+                        if run.get("source") not in ("pi", "open-webui"))
+    row = section(row, "Aktuelle Runs · " + " · ".join(counts))
+    # Pi bleibt vor WebUI priorisiert; ein dauerhafter WebUI-Abschluss kann
+    # damit weder Pi-Ergebnisse noch aktive Pi-Runs überdecken.
     available_run_rows = max(2, min(8, h - row - 12))
     visible_runs = max(1, available_run_rows // 2)
-    max_run_offset = max(0, len(active_runs) - visible_runs)
+    max_run_offset = max(0, len(grouped_runs) - visible_runs)
     st["run_offset"] = min(max(0, st.get("run_offset", 0)), max_run_offset)
-    if active_runs:
-        for run in active_runs[st["run_offset"]:st["run_offset"] + visible_runs]:
+    if grouped_runs:
+        for run in grouped_runs[st["run_offset"]:st["run_offset"] + visible_runs]:
             age = (f"vor {run['age_seconds']:.1f}s" if run.get("age_seconds") is not None else "")
             details, _separator, rate_text = run_metric_detail(run).rpartition(" · ")
             columns = (source_label(run.get("source"), run.get("provider")), str(run.get("model", "?")),
-                       str(run.get("status", "unknown")), details)
+                       run_status(run), details)
             text = "\t".join(columns) + "\t"
             _add(scr, row, 0, text, colors["secondary"])
             rate_x = len(text.expandtabs(8))
@@ -434,8 +454,8 @@ def _draw(scr, st, host, interval):
             x += 8
             _add(scr, row, x, value, colors["secondary"])
             row += 1
-        if len(active_runs) > visible_runs:
-            _add(scr, row, 0, f"Runs {st['run_offset'] + 1}-{min(len(active_runs), st['run_offset'] + visible_runs)} von {len(active_runs)}  ·  a/↑↓ scrollen",
+        if len(grouped_runs) > visible_runs:
+            _add(scr, row, 0, f"Runs {st['run_offset'] + 1}-{min(len(grouped_runs), st['run_offset'] + visible_runs)} von {len(grouped_runs)}  ·  a/↑↓ scrollen",
                  colors["secondary"])
             row += 1
     else:
