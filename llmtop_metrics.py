@@ -25,6 +25,7 @@ ALLOWED_RUN_SOURCES = {"pi", "open-webui", "ollama-cli", "legacy"}
 FINAL_RUN_EVENTS = {"completed", "error", "cancelled"}
 RUN_FILE_LOCK = threading.RLock()
 OPEN_WEBUI_FUNCTION_ID = "llmtop_run_metrics"
+PI_ADAPTER_FILENAME = "llmtop_run_metrics.ts"
 
 
 def history_path():
@@ -516,6 +517,55 @@ def collector_config():
     load_dotenv()
     return (os.environ.get("LLMTOP_COLLECTOR_TOKEN", ""),
             os.environ.get("LLMTOP_COLLECTOR_URL", DEFAULT_COLLECTOR_URL))
+
+
+def pi_adapter_state_path():
+    """Privater Laufzeitpfad für die globale Pi-Erweiterung."""
+    return os.path.join(os.path.dirname(history_path()), "pi-collector.json")
+
+
+def pi_adapter_source_path():
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "pi", PI_ADAPTER_FILENAME)
+
+
+def ensure_pi_adapter():
+    """Installiert den Pi-Adapter und dessen private Collector-Laufzeitdaten.
+
+    Nur ein konfigurierter Collector aktiviert den Adapter. Fehler bleiben ein
+    No-op, damit der Monitor ohne Pi-Installation unverändert startet.
+    """
+    token, url = collector_config()
+    if not token:
+        return False
+    target_dir = os.path.expanduser("~/.pi/agent/extensions")
+    target = os.path.join(target_dir, PI_ADAPTER_FILENAME)
+    state = pi_adapter_state_path()
+    try:
+        with open(pi_adapter_source_path(), encoding="utf-8") as fh:
+            source = fh.read()
+        os.makedirs(target_dir, mode=0o700, exist_ok=True)
+        os.makedirs(os.path.dirname(state), mode=0o700, exist_ok=True)
+        for path, content in ((target, source),
+                              (state, json.dumps({"collector_url": url,
+                                                  "collector_token": token}, separators=(",", ":")))):
+            directory = os.path.dirname(path)
+            fd, temporary = tempfile.mkstemp(prefix=".llmtop-", dir=directory, text=True)
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as fh:
+                    fh.write(content)
+                    fh.flush()
+                    os.fsync(fh.fileno())
+                os.replace(temporary, path)
+                os.chmod(path, 0o600)
+            except Exception:
+                try:
+                    os.unlink(temporary)
+                except OSError:
+                    pass
+                raise
+    except OSError:
+        return False
+    return True
 
 
 def collector_listen_address(bind=None, port=None):

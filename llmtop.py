@@ -5,7 +5,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.1.0"  # Single Source of Truth; History in version.md
+VERSION = "2.1.1"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -104,8 +104,8 @@ def main(argv=None):
     from llmtop_sources import normalize_host
     host = normalize_host(args.host)
     from llmtop_metrics import (emit_run_event, ensure_open_webui_adapter,
-                                install_open_webui_adapter, read_request_payload,
-                                run_collector, run_ollama_request)
+                                ensure_pi_adapter, install_open_webui_adapter,
+                                read_request_payload, run_collector, run_ollama_request)
     if args.install_open_webui_adapter:
         try:
             action, function_id = install_open_webui_adapter()
@@ -141,8 +141,9 @@ def main(argv=None):
     if not sys.stdout.isatty():
         sys.stderr.write("kein Terminal gefunden; bitte --once verwenden\n")
         return 1
-    # Der Filterabgleich darf die TUI nicht beim Start blockieren. Ohne lokale
-    # Open-WebUI-Konfiguration ist ensure_open_webui_adapter ein No-op.
+    # Adapter bleiben ohne lokale Collector-Konfiguration No-ops. Der Pi-Adapter
+    # wird global aktualisiert und erhält private Laufzeitdaten für neue Pi-Prozesse.
+    ensure_pi_adapter()
     from threading import Thread
     Thread(target=ensure_open_webui_adapter, name="llmtop-open-webui", daemon=True).start()
     from llmtop_tui import _run_tui

@@ -1,6 +1,6 @@
 # llmtop — LLM Terminal Monitor für Ollama mit GPU-, RAM- und VRAM-Sensoren
 
-**Version 2.1.0 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
+**Version 2.1.1 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
 die über die Ollama-API das **geladene Modell** sowie **CPU-/RAM/GPU-Auslastung**
 anzeigt. Versionsgeschichte und Versionsschema: `version.md`.
 
@@ -214,12 +214,7 @@ Der Installationsbefehl erkennt die private Docker-Gateway-Adresse, setzt die Fi
 
 ## Pi-Adapter
 
-Der optionale, dependency-freie Adapter unter `pi/llmtop_run_metrics.ts` erfasst Pi-Modellturns für lokale und Cloud-Provider. Er benötigt nur die im Startprozess von Pi gesetzten Variablen `LLMTOP_COLLECTOR_URL` und `LLMTOP_COLLECTOR_TOKEN`; ohne beide Werte bleibt er ein No-op. Für alle Projekte einmal global installieren und Pi neu starten oder `/reload` ausführen:
-
-```bash
-mkdir -p ~/.pi/agent/extensions
-cp pi/llmtop_run_metrics.ts ~/.pi/agent/extensions/
-```
+Der dependency-freie Adapter unter `pi/llmtop_run_metrics.ts` wird beim normalen TUI-Start automatisch nach `~/.pi/agent/extensions/` aktualisiert. Dabei legt llmtop die Collector-URL und den Token ausschließlich mit Dateimodus `0600` unter `$XDG_STATE_HOME/llmtop/pi-collector.json` (Fallback `~/.local/state/llmtop/`) ab; neue Pi-Prozesse lesen diese private Laufzeitdatei automatisch. Für bereits laufende Pi-Prozesse einmal `/reload` ausführen oder Pi neu starten.
 
 Er sendet ausschließlich Quelle, Provider, Modell, UUID, Zeit und von Pi gelieferte Tokenzähler. Prompt, Antwort, Tooldaten, Sessionpfade und Credentials bleiben lokal in Pi.
 

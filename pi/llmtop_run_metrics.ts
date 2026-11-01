@@ -3,6 +3,9 @@
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 
 type Run = {
   run_id: string;
@@ -12,8 +15,21 @@ type Run = {
   heartbeat?: ReturnType<typeof setInterval>;
 };
 
-const url = process.env.LLMTOP_COLLECTOR_URL?.replace(/\/$/, "");
-const token = process.env.LLMTOP_COLLECTOR_TOKEN;
+function collectorConfig(): { url?: string; token?: string } {
+  const url = process.env.LLMTOP_COLLECTOR_URL?.replace(/\/$/, "");
+  const token = process.env.LLMTOP_COLLECTOR_TOKEN;
+  if (url && token) return { url, token };
+  try {
+    const stateHome = process.env.XDG_STATE_HOME || join(homedir(), ".local", "state");
+    const state = JSON.parse(readFileSync(join(stateHome, "llmtop", "pi-collector.json"), "utf8"));
+    return { url: typeof state.collector_url === "string" ? state.collector_url.replace(/\/$/, "") : undefined,
+      token: typeof state.collector_token === "string" ? state.collector_token : undefined };
+  } catch {
+    return {};
+  }
+}
+
+const collector = collectorConfig();
 const active: Run[] = [];
 
 function now(): string {
@@ -50,10 +66,10 @@ function usageMetrics(message: any): Record<string, number> {
 }
 
 function send(event: Record<string, unknown>): void {
-  if (!url || !token) return;
-  void fetch(url + "/v1/runs", {
+  if (!collector.url || !collector.token) return;
+  void fetch(collector.url + "/v1/runs", {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + collector.token },
     body: JSON.stringify(event),
     signal: AbortSignal.timeout(500),
   }).catch(() => undefined);

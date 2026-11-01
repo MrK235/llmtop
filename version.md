@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.1.1 — 01.11.2026
+
+- Pi-Adapter beim normalen TUI-Start automatisch global aktualisieren und private Collector-Laufzeitdaten bereitstellen.
+
 ### 2.1.0 — 01.11.2026
 
 - Optionalen globalen Pi-Adapter für lokale und Cloud-Provider ergänzt.

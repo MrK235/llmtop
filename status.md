@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.1.0** · Stand 01.11.2026 · Status: Pi- und Open-WebUI-Provider-Runs werden gemeinsam erfasst.
+**Version 2.1.1** · Stand 01.11.2026 · Status: Pi-Adapter wird beim TUI-Start automatisch bereitgestellt.
 
 ## Aktueller Stand
 
@@ -26,6 +26,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 2.1.1
+
+- Normaler TUI-Start installiert oder aktualisiert den globalen Pi-Adapter und schreibt dessen private Collector-Laufzeitdaten mit Modus `0600` unter dem bestehenden llmtop-State-Pfad.
+- Neue Pi-Prozesse benötigen keine manuell exportierten Collector-Variablen mehr; bereits laufende Instanzen werden einmal neu geladen oder gestartet.
 
 ## Neu in 2.1.0
 
