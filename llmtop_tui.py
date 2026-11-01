@@ -191,18 +191,38 @@ def _draw(scr, st, host, interval):
         _add(scr, h - 1, 0, text[:max(0, interval_x - 1)], colors["structure"], indent=False)
         _add(scr, h - 1, interval_x, interval_text, colors["structure"], indent=False)
 
-    def history_columns():
-        # Quelle/Provider bleibt in jeder Breite sichtbar; Detailspalten sind
-        # nachrangig, weil nur so Pi- und WebUI-Runs unterscheidbar sind.
+    def table_columns(runs, cell):
+        """Ermittelt Breiten aus allen Zeilen der jeweiligen Tabelle."""
+        # Quelle/Provider bleibt auch in schmalen Ansichten sichtbar; weitere
+        # Spalten folgen, sobald der verfügbare Platz dies zulässt.
         if w >= 118:
-            return (("zeit", 12), ("quelle", 12), ("modell", 16), ("status", 10),
-                    ("tokens", 8), ("kontext", 30), ("rate", 8), ("dauer", 8))
-        if w >= 80:
-            return (("zeit", 8), ("quelle", 10), ("modell", 12), ("status", 8),
-                    ("tokens", 7), ("kontext", 30))
-        if w >= 60:
-            return (("zeit", 11), ("quelle", 14), ("modell", 16), ("status", 10))
-        return (("zeit", 8), ("quelle", 9), ("modell", 11), ("status", 8))
+            names = ("zeit", "quelle", "modell", "status", "tokens", "kontext", "rate", "dauer")
+        elif w >= 80:
+            names = ("zeit", "quelle", "modell", "status", "tokens", "kontext")
+        else:
+            names = ("zeit", "quelle", "modell", "status")
+
+        widths = []
+        for name in names:
+            header = history_header_label(name, st["history_sort"], st["history_desc"])
+            values = [cell(run, name) for run in runs]
+            widths.append(max(len(header), *(len(value) for value in values), 1))
+
+        # Inhalt wird nur dann gekürzt, wenn er nicht ins Terminal passt.
+        # Die Mindestbreite schützt Überschriften und die Kontextkennung.
+        minimums = [max(len(history_header_label(name, st["history_sort"], st["history_desc"])),
+                        9 if name == "kontext" else 1)
+                    for name in names]
+        overflow = sum(widths) + len(widths) - 1 - max(1, w - 2)
+        while overflow > 0:
+            candidates = [index for index, width in enumerate(widths)
+                          if width > minimums[index]]
+            if not candidates:
+                break
+            index = max(candidates, key=lambda item: widths[item] - minimums[item])
+            widths[index] -= 1
+            overflow -= 1
+        return tuple(zip(names, widths))
 
     def context_table_cell(run, model=None):
         used, limit, pct = context_values(run, model)
@@ -263,9 +283,9 @@ def _draw(scr, st, host, interval):
             _add(scr, row, suffix_x, suffix[:max(0, x + width - suffix_x)], colors["secondary"])
 
     def draw_history_table(row, max_rows):
-        columns = history_columns()
         sorted_runs = sort_run_history(st.get("run_history", []), st["history_sort"],
                                        st["history_desc"])
+        columns = table_columns(sorted_runs, history_cell)
         total = len(sorted_runs)
         data_rows = max(1, max_rows - 2)
         show_position = total > data_rows and data_rows >= 2
@@ -492,7 +512,7 @@ def _draw(scr, st, host, interval):
     row = section(row, "Aktuelle Runs")
     grouped_runs = ([run for _source, running, _finished in groups for run in running] +
                     [run for _source, _running, finished in groups for run in finished])
-    columns = history_columns()
+    columns = table_columns(grouped_runs, current_run_cell)
     total_run_rows = max(3, min(12, h - row - history_rows - 2))
     visible_runs = max(1, total_run_rows - 1 - len(groups))
     max_run_offset = max(0, len(grouped_runs) - visible_runs)

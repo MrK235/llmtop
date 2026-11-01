@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.0** · Stand 01.11.2026 · Status: Aktuelle Runs und History verwenden homogene Überschriften; Live-Kontext ist farbig.
+**Version 2.2.1** · Stand 01.11.2026 · Status: Run-Tabellen passen ihre sichtbaren Spalten dynamisch an.
 
 ## Aktueller Stand
 
@@ -26,6 +26,10 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.2.1
+
+- Sichtbare Spalten der aktuellen Runs und der History richten ihre Breite dynamisch nach Überschrift und Inhalt aus; die History wertet dafür alle gespeicherten Zeilen aus.
 
 ## Neu in 2.2.0
 
