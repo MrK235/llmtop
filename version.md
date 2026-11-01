@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.1.15 — 01.11.2026
+
+- Modell-Speichergrößen auf das kompakte Format `GiB / GiB` reduziert.
+
 ### 2.1.14 — 01.11.2026
 
 - Modell-Prozentwert auf das System-/GPU-Sensorraster ausgerichtet.
