@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.1.12** · Stand 01.11.2026 · Status: Pi-Live-Runs zeigen Kontext und Tok/s ohne Überlappung.
+**Version 2.1.13** · Stand 01.11.2026 · Status: Geladene Modelle stehen unter GPU, aktuelle Runs direkt darüber der History.
 
 ## Aktueller Stand
 
@@ -26,6 +26,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 2.1.13
+
+- TUI-Reihenfolge auf System, GPU, geladene Modelle, aktuelle Runs und History umgestellt.
+- Modell-, Run- und History-Bereiche erhalten feste Platzreservierungen gegen Überlappung.
 
 ## Neu in 2.1.12
 

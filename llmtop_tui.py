@@ -285,6 +285,8 @@ def _draw(scr, st, host, interval):
             row += 1
         row += 1
         model_count = len(oll.get("models", []))
+        _add(scr, row, 0, f"Geladene Modelle: {model_count}", colors["secondary"])
+        row += 1
         active_runs = st.get("runs", [])
         source_order = ("pi", "open-webui")
         compact_groups = [(source, [item for item in active_runs if item.get("source") == source])
@@ -419,6 +421,28 @@ def _draw(scr, st, host, interval):
             row = sensor(row, "Power", power_pct, power_value, power_detail)
 
     row += 1
+    # Geladene Modelle stehen direkt unter GPU. Für Runs und History wird
+    # bewusst Platz reserviert, damit die Bereiche nicht überzeichnen.
+    row = section(row, "Geladene Modelle")
+    history_rows = 5
+    run_reserved_rows = 6
+    model_end = h - 1 - history_rows - 2 - run_reserved_rows
+    if not oll["ok"] or oll["error"]:
+        _add(scr, row, 0, oll["error"] or "Ollama nicht erreichbar", colors["error"])
+        row += 1
+    elif not oll["models"]:
+        _add(scr, row, 0, "Kein Modell geladen (/api/ps ist leer)", colors["secondary"])
+        row += 1
+    else:
+        shown_models = 0
+        while shown_models < len(oll["models"]) and row + 2 <= model_end:
+            row = model_card(row, oll["models"][shown_models])
+            shown_models += 1
+        remaining_models = len(oll["models"]) - shown_models
+        if remaining_models and row < model_end:
+            _add(scr, row, 0, f"… {remaining_models} weitere Modelle ausgeblendet", colors["secondary"])
+            row += 1
+    row += 1
     final_statuses = ("completed", "error", "cancelled")
 
     def run_sort_key(run):
@@ -440,7 +464,7 @@ def _draw(scr, st, host, interval):
     row = section(row, "Aktuelle Runs")
     grouped_runs = ([run for _source, running, _finished in groups for run in running] +
                     [run for _source, _running, finished in groups for run in finished])
-    available_run_rows = max(2, min(10, h - row - 12))
+    available_run_rows = max(2, min(10, h - row - history_rows - 2))
     # Zuerst erhält jede Quelle eine sichtbare Zeile. Weitere Runs folgen in
     # derselben statusneutralen Reihenfolge; aktiv vor Ergebnis ist die einzige
     # Priorität innerhalb eines Quellenblocks.
@@ -505,28 +529,6 @@ def _draw(scr, st, host, interval):
     else:
         _add(scr, row, 0, "Keine instrumentierten Requests", colors["secondary"])
         row += 1
-    row += 1
-    row = section(row, "Geladene Modelle")
-    # Die History ist scrollbar; der Modellbereich erhält den verbleibenden
-    # Platz oberhalb einer kompakten Tabellenansicht.
-    history_rows = 5
-    model_end = h - 1 - history_rows - 2
-    if not oll["ok"] or oll["error"]:
-        _add(scr, row, 0, oll["error"] or "Ollama nicht erreichbar", colors["error"])
-        row += 1
-    elif not oll["models"]:
-        _add(scr, row, 0, "Kein Modell geladen (/api/ps ist leer)", colors["secondary"])
-        row += 1
-    else:
-        shown_models = 0
-        while shown_models < len(oll["models"]) and row + 2 <= model_end:
-            row = model_card(row, oll["models"][shown_models])
-            shown_models += 1
-        remaining_models = len(oll["models"]) - shown_models
-        if remaining_models and row < model_end:
-            _add(scr, row, 0, f"… {remaining_models} weitere Modelle ausgeblendet", colors["secondary"])
-            row += 1
-
     row += 1
     draw_history_table(row, h - row - 2)
 

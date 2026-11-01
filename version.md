@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.1.13 — 01.11.2026
+
+- TUI-Reihenfolge auf System, GPU, geladene Modelle, aktuelle Runs und History umgestellt.
+- Platzberechnung gegen Überlappungen zwischen den Bereichen angepasst.
+
 ### 2.1.12 — 01.11.2026
 
 - Tok/s und Laufalter in Run-Zeilen rechtsbündig und kollisionsfrei dargestellt.
