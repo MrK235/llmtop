@@ -244,6 +244,24 @@ def _draw(scr, st, host, interval):
             return stamp.strftime("%d.%m %H:%M") if stamp else "n/a"
         return history_cell(run, column)
 
+    def draw_live_context_cell(row, x, width, run):
+        used, limit, pct = context_values(run, model_for_run(run, oll.get("models", [])))
+        if used is None:
+            _add(scr, row, x, "n/a".ljust(width), colors["secondary"])
+            return
+        pct_text = f"{pct:.0f}%" if pct is not None else "n/a"
+        meter = bar(pct, 12)
+        suffix = f" {compact_tokens(used)}/{compact_tokens(limit) if limit is not None else 'n/a'}"
+        prefix = f"{pct_text} "
+        available = max(0, width - len(prefix) - len(meter) - len(suffix))
+        suffix = " " * available + suffix
+        _add(scr, row, x, (prefix + meter)[:width], _util_color(colors, pct))
+        if len(prefix) < width:
+            _add(scr, row, x + len(prefix), meter[:max(0, width - len(prefix))], _util_color(colors, pct))
+        suffix_x = x + len(prefix) + len(meter)
+        if suffix_x < x + width:
+            _add(scr, row, suffix_x, suffix[:max(0, x + width - suffix_x)], colors["secondary"])
+
     def draw_history_table(row, max_rows):
         columns = history_columns()
         sorted_runs = sort_run_history(st.get("run_history", []), st["history_sort"],
@@ -481,9 +499,10 @@ def _draw(scr, st, host, interval):
     st["run_offset"] = min(max(0, st.get("run_offset", 0)), max_run_offset)
     visible = grouped_runs[st["run_offset"]:st["run_offset"] + visible_runs]
     if visible:
-        for x, (name, width) in enumerate(columns):
-            offset = sum(item[1] + 1 for item in columns[:x])
-            _add(scr, row, offset, name, colors["structure"])
+        for index, (name, width) in enumerate(columns):
+            offset = sum(item[1] + 1 for item in columns[:index])
+            _add(scr, row, offset, history_header_label(name, st["history_sort"], st["history_desc"]),
+                 colors["structure"])
         row += 1
         visible_sources = [source for source, running, finished in groups
                            if any(run in visible for run in running + finished)]
@@ -495,13 +514,14 @@ def _draw(scr, st, host, interval):
                  colors["structure"])
             row += 1
             for run in source_visible:
-                cells = [current_run_cell(run, name)[:width].ljust(width) for name, width in columns]
-                _add(scr, row, 0, " ".join(cells), colors["secondary"])
-                rate_column = next((index for index, (name, _width) in enumerate(columns) if name == "rate"), None)
-                if rate_column is not None:
-                    rate_x = sum(width + 1 for _name, width in columns[:rate_column])
-                    rate_value = current_run_cell(run, "rate")[:columns[rate_column][1]].rjust(columns[rate_column][1])
-                    _add(scr, row, rate_x, rate_value, _rate_color(colors, token_rate(run)))
+                for index, (name, width) in enumerate(columns):
+                    column_x = sum(item[1] + 1 for item in columns[:index])
+                    if name == "kontext":
+                        draw_live_context_cell(row, column_x, width, run)
+                        continue
+                    value = current_run_cell(run, name)[:width].ljust(width)
+                    attr = _rate_color(colors, token_rate(run)) if name == "rate" else colors["secondary"]
+                    _add(scr, row, column_x, value, attr)
                 row += 1
         if len(grouped_runs) > visible_runs:
             _add(scr, row, 0, f"Runs {st['run_offset'] + 1}-{min(len(grouped_runs), st['run_offset'] + visible_runs)} von {len(grouped_runs)}  ·  a/↑↓ scrollen",

@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.2.0 — 01.11.2026
+
+- Live-Run-Tabelle an die History-Überschriften und Spaltenzeichnung angeglichen.
+- Tok/s in der eigenen Spalte positioniert und Live-Kontext farbig dargestellt.
+
 ### 2.1.20 — 01.11.2026
 
 - Kontextspalte in History und aktuellen Runs als Prozent, Balken und Verbrauch/Limit vereinheitlicht.

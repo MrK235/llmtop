@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.1.20** · Stand 01.11.2026 · Status: Kontext wird in der gemeinsamen Tabellenzelle als Prozent, Balken und Verbrauch/Limit dargestellt.
+**Version 2.2.0** · Stand 01.11.2026 · Status: Aktuelle Runs und History verwenden homogene Überschriften; Live-Kontext ist farbig.
 
 ## Aktueller Stand
 
@@ -26,6 +26,12 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 2.2.0
+
+- Live-Run-Tabelle verwendet dieselben Überschriften wie die History.
+- Tok/s wird direkt in der gemeinsamen Tok/s-Spalte gezeichnet.
+- Der Live-Kontextbalken ist statusabhängig farbig; Verbrauch und Limit bleiben grau.
 
 ## Neu in 2.1.20
 
