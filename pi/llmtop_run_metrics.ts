@@ -14,6 +14,7 @@ type Run = {
   started_at: string;
   context_limit?: number;
   metrics: Record<string, number>;
+  context_reader?: () => number | undefined;
   last_progress_at?: number;
   heartbeat?: ReturnType<typeof setInterval>;
 };
@@ -48,9 +49,62 @@ function number(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : undefined;
 }
 
-function eventRun(run: Run): Omit<Run, "heartbeat" | "metrics"> {
-  const { heartbeat: _heartbeat, metrics: _metrics, ...event } = run;
+function eventRun(run: Run): Omit<Run, "heartbeat" | "metrics" | "context_reader"> {
+  const { heartbeat: _heartbeat, metrics: _metrics, context_reader: _context_reader, ...event } = run;
   return event;
+}
+
+function contentTokens(content: any): number {
+  if (typeof content === "string") return Math.ceil(content.length / 3.5);
+  if (!Array.isArray(content)) return 0;
+  return content.reduce((total, block) => {
+    if (block?.type === "text") return total + Math.ceil(String(block.text || "").length / 3.5);
+    if (block?.type === "thinking") return total + Math.ceil(String(block.thinking || "").length / 3.5);
+    if (block?.type === "toolCall") return total + Math.ceil((String(block.name || "").length + JSON.stringify(block.arguments || {}).length) / 3.5);
+    if (block?.type === "image") return total + 1200;
+    return total;
+  }, 0);
+}
+
+function messageTokens(message: any): number {
+  if (!message || typeof message !== "object") return 0;
+  if (message.role === "assistant" && message.usage) {
+    const usage = message.usage;
+    const exact = number(usage.totalTokens);
+    if (exact !== undefined && exact > 0) return exact;
+    const input = number(usage.input) || 0;
+    const output = number(usage.output) || 0;
+    const cacheRead = number(usage.cacheRead) || 0;
+    const cacheWrite = number(usage.cacheWrite) || 0;
+    if (input + output + cacheRead + cacheWrite > 0) return input + output + cacheRead + cacheWrite;
+  }
+  return contentTokens(message.content);
+}
+
+function sessionContextTokens(sessionManager: any): number | undefined {
+  try {
+    const projection = sessionManager?.buildSessionProjection?.();
+    const messages = Array.isArray(projection?.messages) ? projection.messages : [];
+    if (!messages.length) return 0;
+    let latestUsageIndex = -1;
+    let exactTokens = 0;
+    for (let index = 0; index < messages.length; index++) {
+      const message = messages[index];
+      if (message?.role !== "assistant" || !message.usage) continue;
+      const tokens = messageTokens(message);
+      if (tokens > 0) {
+        latestUsageIndex = index;
+        exactTokens = tokens;
+      }
+    }
+    if (latestUsageIndex >= 0) {
+      return exactTokens + messages.slice(latestUsageIndex + 1).reduce(
+        (total: number, message: any) => total + contentTokens(message?.content), 0);
+    }
+    return messages.reduce((total: number, message: any) => total + messageTokens(message), 0);
+  } catch {
+    return undefined;
+  }
 }
 
 function usageMetrics(message: any): Record<string, number> {
@@ -93,6 +147,8 @@ function send(event: Record<string, unknown>): void {
 export default function (pi: ExtensionAPI) {
   const progress = (run: Run, force = false) => {
     const current = Date.now();
+    const contextTokens = run.context_reader?.();
+    if (contextTokens !== undefined) run.metrics.context_tokens = contextTokens;
     if (!force && run.last_progress_at !== undefined && current - run.last_progress_at < 1000) return;
     run.last_progress_at = current;
     const duration = Math.max(0, (current - Date.parse(run.started_at)) / 1000);
@@ -126,11 +182,14 @@ export default function (pi: ExtensionAPI) {
       started_at: now(),
       context_limit: number(model?.contextWindow ?? model?.context_window),
       metrics: {},
+      context_reader: () => sessionContextTokens(ctx.sessionManager),
     };
     active = run;
     send({ schema: 2, event: "started", source: "pi", ...eventRun(run), updated_at: run.started_at });
     // Lange Cloud- oder lokale Agentenläufe dürfen nicht am Collector-Stale-Timeout verschwinden.
-    run.heartbeat = setInterval(() => progress(run, true), 30_000);
+    // Session-Kontext kann sich auch ohne neue Provider-Usage durch Tool- und
+    // Folgeturns ändern. Ein kurzer Takt hält die Anzeige aktuell.
+    run.heartbeat = setInterval(() => progress(run, true), 1000);
   });
 
   pi.on("message_update", (event: any) => {

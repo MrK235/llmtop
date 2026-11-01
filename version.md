@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.1.10 — 01.11.2026
+
+- Pi-Session-Kontext über `sessionManager` gelesen und während aktiver Runs regelmäßig aktualisiert.
+
 ### 2.1.9 — 01.11.2026
 
 - Bekannte Pi-Provider-Usage während aktiver Streams höchstens einmal pro Sekunde an den Collector übertragen.

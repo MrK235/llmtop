@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.1.9** · Stand 01.11.2026 · Status: Pi-Live-Runs aktualisieren bekannte Usage während aktiver Streams.
+**Version 2.1.10** · Stand 01.11.2026 · Status: Pi-Live-Runs lesen und aktualisieren den Session-Kontext.
 
 ## Aktueller Stand
 
@@ -26,6 +26,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 2.1.10
+
+- Der Pi-Adapter liest den kompaktionsbereinigten Session-Kontext über `sessionManager`.
+- Der Kontextverbrauch wird während aktiver Runs einmal pro Sekunde aktualisiert, ohne Sessioninhalte zu übertragen.
 
 ## Neu in 2.1.9
 
