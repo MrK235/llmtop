@@ -38,8 +38,8 @@ function usageMetrics(message: any): Record<string, number> {
   if (!usage || typeof usage !== "object") return {};
   const result: Record<string, number> = {};
   const aliases: Array<[string, string]> = [
-    ["inputTokens", "prompt_tokens"], ["input_tokens", "prompt_tokens"], ["promptTokens", "prompt_tokens"],
-    ["outputTokens", "output_tokens"], ["output_tokens", "output_tokens"], ["completionTokens", "output_tokens"],
+    ["input", "prompt_tokens"], ["inputTokens", "prompt_tokens"], ["input_tokens", "prompt_tokens"], ["promptTokens", "prompt_tokens"],
+    ["output", "output_tokens"], ["outputTokens", "output_tokens"], ["output_tokens", "output_tokens"], ["completionTokens", "output_tokens"],
     ["totalTokens", "context_tokens"], ["total_tokens", "context_tokens"],
   ];
   for (const [from, to] of aliases) {
