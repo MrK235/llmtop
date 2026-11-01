@@ -159,10 +159,11 @@ def _draw(scr, st, host, interval):
         # Das Logo kombiniert einen Terminal-Prompt mit einer LLM-Kennung.
         # Zwei freie Spalten trennen das Logo vom Textblock.
         x = 11
+        title = "LLM Terminal Monitor"
+        _add(scr, 0, max(0, (w - len(title)) // 2), title, colors["secondary"], indent=False)
         if w >= 72:
             label_width = 22
             _add(scr, 0, x, f"llmtop {VERSION}", colors["structure"], indent=False)
-            _add(scr, 0, x + 18, "LLM Terminal Monitor", colors["secondary"], indent=False)
             ollama_label = f"Ollama v{version}"
             _add(scr, 1, x, ollama_label.ljust(label_width), colors["secondary"], indent=False)
             _add(scr, 1, x + label_width, ollama_state, ollama_attr, indent=False)
@@ -171,13 +172,12 @@ def _draw(scr, st, host, interval):
             _add(scr, 3, x, f"Autor: llmtop  ·  Python-Standardbibliothek  ·  Intervall {interval:.1f}s",
                  colors["secondary"], indent=False)
         else:
-            _add(scr, 0, x, f"llmtop {VERSION}", colors["structure"], indent=False)
             ollama_label = f"Ollama v{version} "
             _add(scr, 1, x, ollama_label, colors["secondary"], indent=False)
             _add(scr, 1, x + len(ollama_label), ollama_short, ollama_attr, indent=False)
             _add(scr, 2, x, "OW Collector ", colors["secondary"], indent=False)
             _add(scr, 2, x + 13, collector_short, collector_attr, indent=False)
-            _add(scr, 3, x, f"Autor: llmtop · {interval:.1f}s", colors["secondary"], indent=False)
+            _add(scr, 3, x, f"llmtop {VERSION} · {interval:.1f}s", colors["secondary"], indent=False)
 
     def history_columns():
         if w >= 118:

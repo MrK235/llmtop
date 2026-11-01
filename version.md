@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.0.6 — 01.11.2026
+
+- „LLM Terminal Monitor“ unabhängig von der Terminalbreite horizontal mittig
+  in der ersten Kopfzeile positioniert.
+
 ### 2.0.5 — 01.11.2026
 
 - Kopf-Logo als kompaktes Terminalfenster mit Prompt, Aktivitätspixel und
