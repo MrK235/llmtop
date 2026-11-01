@@ -14,8 +14,8 @@ gebracht.
 
 ### 2.2.0 — 01.11.2026
 
-- Live-Run-Tabelle an die History-Überschriften und Spaltenzeichnung angeglichen.
-- Tok/s in der eigenen Spalte positioniert und Live-Kontext farbig dargestellt.
+- Live-Run-Tabelle an die History-Überschriften und Spaltenpositionen angeglichen.
+- Tok/s in der eigenen Spalte positioniert und den Live-Kontextbalken ausschließlich in der Kontextspalte farbig dargestellt.
 
 ### 2.1.20 — 01.11.2026
 

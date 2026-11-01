@@ -108,8 +108,7 @@ gliedert sich danach von oben nach unten in **System**, **GPU**,
 **Geladene Modelle**, **Aktuelle Runs** und **History**. Bereichslinien beginnen am linken Rand und laufen
 vor sowie nach dem Titel; alle übrigen Inhalte haben einen Leerzeichen-Rand
 links. Bei 40×18 verwendet sie eine kompakte Ansicht mit
-Kernwerten, Modellanzahl und History-Status. Ein einzelner aktiver Run zeigt
-dort zusätzlich seinen kompakten Kontextverbrauch, damit sich keine Bereiche
+Kernwerten, Modellanzahl und History-Status, damit sich keine Bereiche
 überzeichnen.
 CPU, RAM, GPU-Auslastung, VRAM und Power verwenden
 pro Terminal dieselbe Balkenbreite; Label, Prozentwert und Detailwert sind
@@ -119,7 +118,7 @@ Sekundärinfos gedimmt. Im Ollama-Speicherbalken bedeuten die Farben explizit
 den Offload-Grad der GPU/VRAM-Anzeige: Grün oberhalb 55 %, Gelb bei 45–55 %
 und Rot unterhalb 45 % GPU-Anteil. CPU/RAM bleibt gedimmt grau. Beide Anteile
 nutzen `#` und zeigen zusätzlich Textwerte. Eine
-Leerzeilen trennen System, GPU, aktuelle Runs, geladene Modelle und History.
+Leerzeile trennt System, GPU, geladene Modelle, aktuelle Runs und History.
 **Aktuelle Runs** und **History** verwenden dieselben Spalten und Werte für
 Zeit, Quelle, Modell, Status, Tokens, Kontext, Tok/s und Dauer. Die Kontextspalte
 zeigt den Fortschritt als farbigen Prozent-/Balkenwert sowie graues Verbrauch/Limit. **History** zeigt
@@ -130,8 +129,9 @@ Tabellenkopf exakt über die Länge ihres Textes unterstrichen und mit `▾`
 beziehungsweise `▴` markiert; die History-Überschrift bleibt frei von
 Sortierdetails. Eine Leerzeile trennt die History von der Statusleiste.
 Kontext wird nach dem prozentualen Verbrauch sortiert, nicht nach der absoluten
-Tokengröße. Die Kontextspalte zeigt zuerst den Prozentwert und danach genutzte
-Token sowie das Limit; fehlende Providerwerte bleiben `n/a`. Die Daten bleiben
+Tokengröße. Die Kontextspalte zeigt Prozentwert, Fortschrittsbalken und danach
+Verbrauch/Limit im Format `42% [######      ] 6.8k/16.4k`; fehlende
+Providerwerte bleiben `n/a`. Die Daten bleiben
 als begrenzte JSONL-Datei gespeichert; eine Datenbank ist bei 100 Einträgen
 nicht nötig. Zusätzlich speichert llmtop lokale, begrenzte System-Snapshots. Der
 Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
@@ -181,9 +181,9 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   und GPU. Der CPU/RAM-Anteil bleibt ausschließlich als grauer Balkenanteil und
   in der gedimmten Größenangabe im Format `MiB / MiB` mit einmaliger Einheit sichtbar; ein zweiter
   RAM-Prozentwert wird nicht angezeigt.
-  Das Label „Kontext“ vor dem Balken eines aktuellen Runs ist Cyan. Die
-  Kontextanzeige folgt dem CPU-/GPU-Raster: Balken, rechtsbündiger Prozentwert
-  und danach gedimmt grau Verbrauch/Limit. Tok/s aktueller Runs ist rot unter
+  Der Kontextbalken aktueller Runs steht ausschließlich in der Kontextspalte.
+  Prozentwert und Balken sind statusabhängig farbig; Verbrauch und Limit bleiben
+  gedimmt grau. Tok/s aktueller Runs ist rot unter
   10, gelb von 10 bis unter 50 und grün ab 50 Tok/s; diese Tok/s-Farbe ist
   nicht fett.
 

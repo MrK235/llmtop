@@ -8,7 +8,7 @@
 mit curses-TUI und `--once`-Ausgabe. Die Datenerfassung liegt in
 `llmtop_sources.py`, Run-Metriken, History und Collector in `llmtop_metrics.py`
 sowie Rendering und TUI-Sampler in `llmtop_tui.py`. Die TUI zeigt die Bereiche
-System, GPU, aktuelle Runs, geladene Modelle und History in dieser Reihenfolge. CPU, RAM, GPU, VRAM und Power verwenden
+System, GPU, geladene Modelle, aktuelle Runs und History in dieser Reihenfolge. CPU, RAM, GPU, VRAM und Power verwenden
 konsistente Balken, Abstände und eine globale Farbsyntax. Struktur ist Cyan,
 Statuswerte und Temperaturen verwenden Grün/Gelb/Rot, Sekundärinfos sind
 gedimmt. Ollama-Modelle zeigen einen geteilten Speicherbalken im gleichen
@@ -25,13 +25,13 @@ eine getrennte, begrenzte JSONL-Historie. Während des Streamings sind keine
 Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
-Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
 
 ## Neu in 2.2.0
 
-- Live-Run-Tabelle verwendet dieselben Überschriften wie die History.
+- Live-Run-Tabelle verwendet dieselben Überschriften und Spaltenpositionen wie die History.
 - Tok/s wird direkt in der gemeinsamen Tok/s-Spalte gezeichnet.
-- Der Live-Kontextbalken ist statusabhängig farbig; Verbrauch und Limit bleiben grau.
+- Der Live-Kontextbalken steht ausschließlich in der Kontextspalte und ist statusabhängig farbig; Verbrauch und Limit bleiben grau.
 
 ## Neu in 2.1.20
 
