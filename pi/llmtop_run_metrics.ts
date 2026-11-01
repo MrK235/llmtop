@@ -14,6 +14,7 @@ type Run = {
   started_at: string;
   context_limit?: number;
   metrics: Record<string, number>;
+  last_progress_at?: number;
   heartbeat?: ReturnType<typeof setInterval>;
 };
 
@@ -90,6 +91,17 @@ function send(event: Record<string, unknown>): void {
 }
 
 export default function (pi: ExtensionAPI) {
+  const progress = (run: Run, force = false) => {
+    const current = Date.now();
+    if (!force && run.last_progress_at !== undefined && current - run.last_progress_at < 1000) return;
+    run.last_progress_at = current;
+    const duration = Math.max(0, (current - Date.parse(run.started_at)) / 1000);
+    const metrics = { ...run.metrics, total_duration_s: duration };
+    if (metrics.output_tokens !== undefined && duration > 0) metrics.eval_duration_s = duration;
+    send({ schema: 2, event: "updated", source: "pi", ...eventRun(run),
+      updated_at: now(), ...metrics });
+  };
+
   const finish = (event: "completed" | "cancelled" | "error") => {
     const run = active;
     if (!run) return;
@@ -118,15 +130,23 @@ export default function (pi: ExtensionAPI) {
     active = run;
     send({ schema: 2, event: "started", source: "pi", ...eventRun(run), updated_at: run.started_at });
     // Lange Cloud- oder lokale Agentenläufe dürfen nicht am Collector-Stale-Timeout verschwinden.
-    run.heartbeat = setInterval(() => send({ schema: 2, event: "updated", source: "pi",
-      ...eventRun(run), updated_at: now() }), 30_000);
+    run.heartbeat = setInterval(() => progress(run, true), 30_000);
+  });
+
+  pi.on("message_update", (event: any) => {
+    if (!active) return;
+    const metrics = usageMetrics(event?.message);
+    if (Object.keys(metrics).length) active.metrics = { ...active.metrics, ...metrics };
+    progress(active);
   });
 
   pi.on("turn_end", (event: any) => {
     if (!active) return;
     // Nur die jeweils letzte Modellantwort zählt: Bei agent_settled ist dies
     // die sichtbare Abschlussantwort, nicht ein interner Tool-Folgeturn.
-    active.metrics = usageMetrics(event?.message);
+    const metrics = usageMetrics(event?.message);
+    if (Object.keys(metrics).length) active.metrics = { ...active.metrics, ...metrics };
+    progress(active, true);
   });
 
   pi.on("agent_settled", (event: any) => {

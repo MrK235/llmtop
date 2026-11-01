@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.1.9 — 01.11.2026
+
+- Bekannte Pi-Provider-Usage während aktiver Streams höchstens einmal pro Sekunde an den Collector übertragen.
+- Kontext und Tok/s bereits vor `agent_settled` aktualisiert.
+
 ### 2.1.8 — 01.11.2026
 
 - Bereits gespeicherte Doppelmeldungen mit identischen Open-WebUI-Metriken in der History dedupliziert.

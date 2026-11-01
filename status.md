@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.1.8** · Stand 01.11.2026 · Status: Open-WebUI meldet jeden Request nur noch einmal; alte Doppelmeldungen werden ausgeblendet.
+**Version 2.1.9** · Stand 01.11.2026 · Status: Pi-Live-Runs aktualisieren bekannte Usage während aktiver Streams.
 
 ## Aktueller Stand
 
@@ -26,6 +26,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 2.1.9
+
+- Pi sendet bekannte Provider-Usage während aktiver Streams höchstens einmal pro Sekunde sowie nach jedem Modellturn.
+- Kontext und Tok/s werden dadurch bereits vor dem finalen Session-Abschluss aktualisiert.
 
 ## Neu in 2.1.8
 
@@ -283,7 +288,7 @@ Ollama-Endpunkte beziehungsweise vorhandene Dateien.
 
 ## Weiterhin bekannte Grenzen
 
-- Der Kontextbalken verwendet Prompt- plus Ausgabetoken. Das Limit stammt aus `options.num_ctx` oder wird für passende Runs zuverlässig aus `context_length` des aktuell geladenen Modells in `/api/ps` übernommen und in der Run-History nachgetragen. Ein serverseitiger KV-Cache oder ein exakter Liveverbrauch ist nicht sichtbar; während des Streamings bleibt der Verbrauchswert daher unbekannt.
+- Der Kontextbalken verwendet Prompt- plus Ausgabetoken. Das Limit stammt aus `options.num_ctx` oder wird für passende Runs zuverlässig aus `context_length` des aktuell geladenen Modells in `/api/ps` übernommen und in der Run-History nachgetragen. Ein serverseitiger KV-Cache ist nicht separat sichtbar. Wenn der Provider Usage bereits während des Streams liefert, wird der Liveverbrauch aktualisiert; andernfalls bleibt er bis zum Abschluss unbekannt.
 
 - GPU-Auslastung ist geräteweit und nicht exklusiv Ollama zurechenbar.
 - `nvidia-smi` und sysfs werden als Fallback, nicht parallel, abgefragt.
