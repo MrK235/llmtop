@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.0.6** · Stand 01.11.2026 · Status: Open-WebUI-Filter wird beim TUI-Start geprüft und ergänzt.
+**Version 2.0.7** · Stand 01.11.2026 · Status: Open-WebUI-Filter wird beim TUI-Start geprüft und ergänzt.
 
 ## Aktueller Stand
 
@@ -26,6 +26,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 2.0.7
+
+- Intervallanzeige mit der `-/+`-Legende rechtsbündig in die Statusleiste
+  verschoben.
 
 ## Neu in 2.0.6
 

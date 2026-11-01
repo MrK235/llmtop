@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.0.7 — 01.11.2026
+
+- Intervallanzeige samt `-/+`-Legende rechtsbündig in der unteren Statusleiste
+  angeordnet.
+
 ### 2.0.6 — 01.11.2026
 
 - „LLM Terminal Monitor“ unabhängig von der Terminalbreite horizontal mittig

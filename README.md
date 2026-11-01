@@ -1,6 +1,6 @@
 # llmtop — LLM Terminal Monitor für Ollama mit GPU-, RAM- und VRAM-Sensoren
 
-**Version 2.0.6 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
+**Version 2.0.7 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
 die über die Ollama-API das **geladene Modell** sowie **CPU-/RAM/GPU-Auslastung**
 anzeigt. Versionsgeschichte und Versionsschema: `version.md`.
 
@@ -99,8 +99,9 @@ Ein vierzeiliger Kopfbereich zeigt ein optisch quadratisches Terminal-Logo mit
 Prompt und LLM-Kennung. Der Schriftzug **LLM Terminal Monitor** steht stets
 mittig in der ersten Zeile; zwei Zeichen trennen Logo und Produkttext.
 Ollama- und Open-WebUI-Collector-Status
-sowie Autor, Technik und Intervall. Eine Leerzeile trennt ihn von den
-Messwerten. Die Vollbildansicht
+sowie Autor und Technik. Die rechtsbündige Statusleiste enthält das Intervall
+und die Legende `-/+`. Eine Leerzeile trennt ihn von den Messwerten. Die
+Vollbildansicht
 gliedert sich danach von oben nach unten in **System**, **GPU**,
 **Aktuelle Runs**, **Geladene Modelle** und **History**. Bereichslinien beginnen am linken Rand und laufen
 vor sowie nach dem Titel; alle übrigen Inhalte haben einen Leerzeichen-Rand
@@ -138,8 +139,9 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   und Produktname,
   `Ollama v<VERSION>` mit Erreichbarkeit (`/api/version`) sowie **Open-WebUI
   Collector**-Status (`aktiv` / `nicht aktiv`). Eine Leerzeile
-  folgt vor den Messwerten. Die vierte Zeile nennt Autor,
-  Python-Standardbibliothek und Refresh-Intervall. Namen und Metadaten sind
+  folgt vor den Messwerten. Die vierte Zeile nennt Autor und
+  Python-Standardbibliothek. Rechts unten steht `-/+ Intervall <SEKUNDEN>` als
+  Anzeige und Legende. Namen und Metadaten sind
   gedimmt grau; verbundene/aktive Stati sind Grün und OFFLINE/nicht aktive
   Stati Rot. Bei 40 Spalten werden die Verbindungsstati als `Ollama OK/OFF` und
   `OW Collector OK/OFF` verdichtet.

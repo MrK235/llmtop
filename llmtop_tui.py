@@ -169,7 +169,7 @@ def _draw(scr, st, host, interval):
             _add(scr, 1, x + label_width, ollama_state, ollama_attr, indent=False)
             _add(scr, 2, x, "Open-WebUI Collector".ljust(label_width), colors["secondary"], indent=False)
             _add(scr, 2, x + label_width, collector_state, collector_attr, indent=False)
-            _add(scr, 3, x, f"Autor: llmtop  ·  Python-Standardbibliothek  ·  Intervall {interval:.1f}s",
+            _add(scr, 3, x, "Autor: llmtop  ·  Python-Standardbibliothek",
                  colors["secondary"], indent=False)
         else:
             ollama_label = f"Ollama v{version} "
@@ -177,7 +177,14 @@ def _draw(scr, st, host, interval):
             _add(scr, 1, x + len(ollama_label), ollama_short, ollama_attr, indent=False)
             _add(scr, 2, x, "OW Collector ", colors["secondary"], indent=False)
             _add(scr, 2, x + 13, collector_short, collector_attr, indent=False)
-            _add(scr, 3, x, f"llmtop {VERSION} · {interval:.1f}s", colors["secondary"], indent=False)
+            _add(scr, 3, x, f"llmtop {VERSION}", colors["secondary"], indent=False)
+
+    def draw_footer(text):
+        """Zeichnet Navigation links und Intervall-Steuerung rechtsbündig."""
+        interval_text = f"-/+ Intervall {interval:.1f}s"
+        interval_x = max(0, w - len(interval_text) - 1)
+        _add(scr, h - 1, 0, text[:max(0, interval_x - 1)], colors["structure"], indent=False)
+        _add(scr, h - 1, interval_x, interval_text, colors["structure"], indent=False)
 
     def history_columns():
         if w >= 118:
@@ -274,7 +281,7 @@ def _draw(scr, st, host, interval):
              colors["secondary"])
         row += 1
         draw_history_table(row, h - row - 2)
-        _add(scr, h - 1, 0, "q quit  Tab/s sortieren  ↑↓ scrollen  h Hilfe", colors["structure"])
+        draw_footer("q quit  Tab/s sortieren  ↑↓ scrollen  h Hilfe")
         scr.refresh()
         return
 
@@ -437,7 +444,7 @@ def _draw(scr, st, host, interval):
     row += 1
     draw_history_table(row, h - row - 2)
 
-    _add(scr, h - 1, 0, "q quit  r neu laden  Tab/Shift-Tab Spalte  s Richtung  ↑↓ scrollen", colors["structure"])
+    draw_footer("q quit  r neu laden  Tab/Shift-Tab Spalte  s Richtung  ↑↓ scrollen")
     if st["help"]:
         sources = ", ".join(sorted(set(g.get("source", "?") for g in st["gpus"]))) or "keine"
         box = ["Hilfe", "", "q  Q  beenden", "r  Programm neu laden",
