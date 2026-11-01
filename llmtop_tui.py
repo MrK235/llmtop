@@ -197,7 +197,7 @@ def _draw(scr, st, host, interval):
         if w >= 118:
             return (("zeit", 17), ("quelle", 12), ("modell", 21), ("status", 11),
                     ("tokens", 8), ("kontext", 15), ("rate", 8), ("dauer", 8))
-        if w >= 88:
+        if w >= 80:
             return (("zeit", 12), ("quelle", 14), ("modell", 16), ("status", 10),
                     ("tokens", 8), ("kontext", 14))
         if w >= 60:

@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.1.17** · Stand 01.11.2026 · Status: Aktuelle Runs und History verwenden eine homogene Tabellendarstellung.
+**Version 2.1.18** · Stand 01.11.2026 · Status: Aktuelle Runs und History zeigen Kontext ab 80 Spalten wieder gemeinsam.
 
 ## Aktueller Stand
 
@@ -26,6 +26,10 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 2.1.18
+
+- Kontextspalte in aktueller Run- und History-Tabelle ab 80 Terminalspalten wieder aktiviert.
 
 ## Neu in 2.1.17
 

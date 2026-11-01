@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.1.18 — 01.11.2026
+
+- Kontextspalte in aktueller Run- und History-Tabelle ab 80 Terminalspalten wieder aktiviert.
+
 ### 2.1.17 — 01.11.2026
 
 - Aktuelle Runs an die History-Spalten und Werte für eine homogene Darstellung angeglichen.
