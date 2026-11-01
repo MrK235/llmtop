@@ -1,7 +1,7 @@
 """
 title: llmtop Run Metrics
 author: llmtop
-version: 2.1.0
+version: 2.1.2
 required_open_webui_version: 0.12.3
 description: Meldet datensparsame Provider-Runmetriken an den lokalen llmtop-Collector.
 """
@@ -88,6 +88,7 @@ class Filter:
         ollama_base_url: str = Field(default_factory=lambda: os.getenv("OLLAMA_BASE_URL", "http://ollama:11434"))
         timeout_seconds: float = 0.5
         stale_seconds: float = 900.0
+        duplicate_request_seconds: float = 0.5
 
     def __init__(self):
         self.valves = self.Valves()
@@ -123,7 +124,7 @@ class Filter:
         if not self.valves.collector_token or not self.valves.collector_url:
             return
         request = urllib.request.Request(
-            self.valves.collector_url.rstrip("/") + "/v1/runs",
+            self.valves.collector_url.rstrip("/") + "/v1/runs/open-webui",
             data=json.dumps(event, separators=(",", ":")).encode("utf-8"),
             headers={
                 "Authorization": "Bearer " + self.valves.collector_token,
@@ -167,13 +168,16 @@ class Filter:
         async with self._lock:
             self._cleanup()
             queue = self._runs.get(key)
-            if has_identity and queue:
-                # Open WebUI ruft den Request-Filter bei Tool- und anderen
-                # Fortsetzungsrunden erneut auf. Diese Aufrufe gehören zum
-                # selben sichtbaren Chat-Request und dürfen keinen zweiten
-                # Live-Run erzeugen.
+            duplicate = (queue and len(queue) == 1 and
+                         now_mono - queue[0].get("last_request", 0.0) <=
+                         max(0.05, self.valves.duplicate_request_seconds))
+            if (has_identity and queue) or duplicate:
+                # Identische Filter-Durchläufe treffen teils ohne Metadaten
+                # ein. Nur ein direkter Doppelaufruf innerhalb eines kurzen
+                # Fensters wird zusammengelegt; parallele Chats bleiben Runs.
                 run = queue[0]
                 run["created"] = now_mono
+                run["last_request"] = now_mono
                 is_new = False
             else:
                 run = {
@@ -181,6 +185,7 @@ class Filter:
                     "model": model,
                     "started_at": now,
                     "created": now_mono,
+                    "last_request": now_mono,
                     "last_heartbeat": now_mono,
                     "provider": provider,
                 }

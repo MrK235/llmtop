@@ -187,13 +187,17 @@ def _draw(scr, st, host, interval):
         _add(scr, h - 1, interval_x, interval_text, colors["structure"], indent=False)
 
     def history_columns():
+        # Quelle/Provider bleibt in jeder Breite sichtbar; Detailspalten sind
+        # nachrangig, weil nur so Pi- und WebUI-Runs unterscheidbar sind.
         if w >= 118:
             return (("zeit", 17), ("quelle", 12), ("modell", 21), ("status", 11),
                     ("tokens", 8), ("kontext", 15), ("rate", 8), ("dauer", 8))
         if w >= 88:
-            return (("zeit", 14), ("modell", 19), ("status", 10), ("tokens", 8),
-                    ("kontext", 15), ("rate", 8), ("dauer", 8))
-        return (("zeit", 11), ("modell", 14), ("status", 10), ("kontext", 14))
+            return (("zeit", 12), ("quelle", 14), ("modell", 16), ("status", 10),
+                    ("tokens", 8), ("kontext", 14))
+        if w >= 60:
+            return (("zeit", 11), ("quelle", 14), ("modell", 16), ("status", 10))
+        return (("zeit", 8), ("quelle", 9), ("modell", 11), ("status", 8))
 
     def history_cell(run, column):
         model = model_for_run(run, oll.get("models", [])) if oll else None
@@ -277,8 +281,14 @@ def _draw(scr, st, host, interval):
         row += 1
         model_count = len(oll.get("models", []))
         active_runs = st.get("runs", [])
-        _add(scr, row, 0, f"Geladene Modelle: {model_count}  ·  Aktuelle Runs: {len(active_runs)}",
-             colors["secondary"])
+        compact_runs = []
+        for source in ("pi", "open-webui"):
+            run = next((item for item in active_runs if item.get("source") == source), None)
+            if run:
+                compact_runs.append(f"{source_label(source, run.get('provider'))} "
+                                    f"{run.get('model', '?')} {run.get('status', '?')}")
+        text = "  ·  ".join(compact_runs) or "Keine Pi-/WebUI-Runs"
+        _add(scr, row, 0, f"Modelle {model_count}  ·  {text}", colors["secondary"])
         row += 1
         draw_history_table(row, h - row - 2)
         draw_footer("q quit  Tab/s sortieren  ↑↓ scrollen  h Hilfe")
@@ -388,7 +398,9 @@ def _draw(scr, st, host, interval):
             row = sensor(row, "Power", power_pct, power_value, power_detail)
 
     row += 1
-    row = section(row, f"Aktuelle Runs ({len(active_runs)})")
+    pi_count = sum(run.get("source") == "pi" for run in active_runs)
+    webui_count = sum(run.get("source") == "open-webui" for run in active_runs)
+    row = section(row, f"Aktuelle Runs · Pi {pi_count} · WebUI {webui_count}")
     # Zwei Zeilen je Run; bei vielen parallelen Clients bleibt jeder Eintrag
     # über den eigenen Scroll-Offset erreichbar statt nach drei zu verschwinden.
     available_run_rows = max(2, min(8, h - row - 12))

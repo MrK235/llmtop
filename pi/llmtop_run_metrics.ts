@@ -1,4 +1,4 @@
-/* llmtop 2.1.0 – globale Pi-Erweiterung für datensparsame Run-Metriken.
+/* llmtop 2.1.2 – globale Pi-Erweiterung für datensparsame Run-Metriken.
  * Installation: nach ~/.pi/agent/extensions/ kopieren und Pi neu starten oder /reload.
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -67,7 +67,7 @@ function usageMetrics(message: any): Record<string, number> {
 
 function send(event: Record<string, unknown>): void {
   if (!collector.url || !collector.token) return;
-  void fetch(collector.url + "/v1/runs", {
+  void fetch(collector.url + "/v1/runs/pi", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: "Bearer " + collector.token },
     body: JSON.stringify(event),

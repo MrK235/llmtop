@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.1.1** · Stand 01.11.2026 · Status: Pi-Adapter wird beim TUI-Start automatisch bereitgestellt.
+**Version 2.1.2** · Stand 01.11.2026 · Status: Pi- und Open-WebUI-Runs werden quellensepariert erfasst und angezeigt.
 
 ## Aktueller Stand
 
@@ -26,6 +26,12 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
+
+## Neu in 2.1.2
+
+- Pi und Open WebUI senden auf getrennte Collector-Pfade; der Collector erzwingt die passende Quelle.
+- Letzte Abschlüsse bleiben je Quelle in der Live-Datei erhalten, und die Kompaktansicht sowie schmale History zeigen die Quelle zwingend.
+- Aktive ältere Open-WebUI-Filter werden anhand ihres Inhalts erkannt und beim TUI-Start aktualisiert.
 
 ## Neu in 2.1.1
 

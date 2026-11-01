@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.1.2 — 01.11.2026
+
+- Quellenseparate Pi- und Open-WebUI-Collector-Pfade sowie letzte Live-Abschlüsse je Quelle ergänzt.
+- Quelle in Kompaktansicht und schmaler History priorisiert; alte aktive Open-WebUI-Filter werden automatisch aktualisiert.
+
 ### 2.1.1 — 01.11.2026
 
 - Pi-Adapter beim normalen TUI-Start automatisch global aktualisieren und private Collector-Laufzeitdaten bereitstellen.

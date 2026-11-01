@@ -192,15 +192,19 @@ def write_live_run(run, path=None):
                 merged = dict(prior)
                 merged.update(normalized)
                 normalized = normalize_run(merged) or normalized
+            # Letzten Abschluss je Quelle behalten: Pi und Open WebUI dürfen
+            # einander in der Live-Ansicht nie verdrängen.
             runs = {item_key: item for item_key, item in runs.items()
-                    if item_key == key or item["status"] not in FINAL_RUN_EVENTS}
+                    if item_key == key or item["status"] not in FINAL_RUN_EVENTS
+                    or item["source"] != normalized["source"]}
             runs[key] = normalized
         else:
             # Ein neuer Run ersetzt den bislang angezeigten Abschluss, aktive
             # parallele Runs bleiben erhalten.
             if key not in runs or runs[key]["status"] in FINAL_RUN_EVENTS:
                 runs = {item_key: item for item_key, item in runs.items()
-                        if item["status"] not in FINAL_RUN_EVENTS}
+                        if item["status"] not in FINAL_RUN_EVENTS
+                        or item["source"] != normalized["source"]}
             runs[key] = normalized
         records = [{"timestamp": item.get("updated_at") or item.get("started_at"), "run": item}
                    for item in sorted(runs.values(), key=lambda value: _parse_time(
@@ -596,7 +600,12 @@ def collector_handler(token):
             self.end_headers()
 
         def do_POST(self):
-            if self.path != "/v1/runs":
+            # Eigene Adapterwege verhindern Quellverwechslungen. Der alte
+            # generische Pfad bleibt für den kompatiblen Ollama-CLI-Modus.
+            expected_source = {"/v1/runs/pi": "pi",
+                               "/v1/runs/open-webui": "open-webui",
+                               "/v1/runs": None}.get(self.path)
+            if self.path not in ("/v1/runs", "/v1/runs/pi", "/v1/runs/open-webui"):
                 self._reply(400)
                 return
             supplied = self.headers.get("Authorization", "")
@@ -614,6 +623,9 @@ def collector_handler(token):
             try:
                 event = json.loads(self.rfile.read(length).decode("utf-8"))
             except (UnicodeDecodeError, json.JSONDecodeError):
+                self._reply(400)
+                return
+            if expected_source and event.get("source") != expected_source:
                 self._reply(400)
                 return
             self._reply(202 if process_run_event(event) else 400)
@@ -738,8 +750,13 @@ def open_webui_adapter_ready():
         if "HTTP 401" in str(exc) or "HTTP 404" in str(exc):
             return False
         raise
-    return bool(isinstance(function, dict) and function.get("is_active") and
-                function.get("is_global"))
+    if not isinstance(function, dict) or not function.get("is_active") or not function.get("is_global"):
+        return False
+    try:
+        with open(filter_source_path(), encoding="utf-8") as fh:
+            return function.get("content") == fh.read()
+    except OSError:
+        return False
 
 
 def ensure_open_webui_adapter():
