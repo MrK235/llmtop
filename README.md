@@ -1,10 +1,10 @@
 # otop — Ollama Terminal Monitor mit GPU-, RAM- und VRAM-Sensoren
 
-**Version 1.10.11 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
+**Version 1.10.12 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
 die über die Ollama-API das **geladene Modell** sowie **CPU-/RAM/GPU-Auslastung**
 anzeigt. Versionsgeschichte und Versionsschema: `version.md`.
 
-Die Version wird angezeigt: in der TUI-Kopfzeile (`otop 1.10.11 • Ollama …`), in der
+Die Version wird angezeigt: in der TUI-Kopfzeile (`otop 1.10.12 • Ollama …`), in der
 ersten Zeile von `--once`, und über `--version`. Maßgebliche Zahl ist `VERSION`
 in `otop.py`.
 
@@ -87,7 +87,7 @@ Datenbank-Fallback kann `OTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 ## TUI-Layout
 
 Die Vollbildansicht gliedert sich von oben nach unten in **System**, **GPU**,
-**Ollama** und **History**. Bereichslinien beginnen am linken Rand und laufen
+**Aktuelle Runs**, **Geladene Modelle** und **History**. Bereichslinien beginnen am linken Rand und laufen
 vor sowie nach dem Titel; alle übrigen Inhalte haben einen Leerzeichen-Rand
 links. Bei 40×18 verwendet sie eine kompakte Ansicht mit
 Kernwerten, Modellanzahl und History-Status, damit sich keine Bereiche überzeichnen.
@@ -118,8 +118,8 @@ Snapshot-Pfad kann über `OTOP_HISTORY_FILE`, die Run-Historie über
 
 * **Kopfzeile**: `otop <VERSION>`, Ollama-Version und Erreichbarkeit
   (`/api/version`) sowie **Open-WebUI Collector**-Status (`aktiv` / `nicht
-  aktiv`). Namen sind Cyan; verbundene/aktive Stati sind Grün und OFFLINE/nicht
-  aktive Stati Rot. Bei ausreichender Breite steht zusätzlich das
+  aktiv`). Die Namen sind gedimmt grau; verbundene/aktive Stati sind Grün und
+  OFFLINE/nicht aktive Stati Rot. Bei ausreichender Breite steht zusätzlich das
   Refresh-Intervall dort; bei 40 Spalten werden beide Verbindungsstati als
   `Ollama:OK/OFF` und `OWC:OK/OFF` gezielt verdichtet.
 * **Aktuelle Runs**: bis zu drei aktive Schema-2-Runs aus `OTOP_RUN_FILE`, jeweils mit Quelle (`Pi`, `Open WebUI`, `Ollama CLI`), Status, Modell und verfügbaren Token-/Dauerwerten. Nach dem Abschluss bleibt der letzte Run mit den finalen Token- und Zeitwerten sichtbar, bis ein neuer Run startet. Eine Open-WebUI-Chat-Anfrage bleibt auch bei internen Tool- oder Fortsetzungsrunden genau ein aktueller Run. Verwaiste nicht-finale Live-Einträge werden nach 90 Sekunden ohne Lebenszeichen entfernt und nicht als aktuelle Runs angezeigt. Lange Streams senden regelmäßig Lebenszeichen. Schema-1-Daten bleiben als `Legacy` lesbar. Status, Modell, Kontextlimit und grafischer Kontextverbrauch (Prompt- plus Ausgabetoken),

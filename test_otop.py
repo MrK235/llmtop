@@ -216,9 +216,9 @@ def test_tui_draws_loaded_model():
              }]}}
     screen = Screen()
     otop_tui._draw(screen, state, "http://localhost:11434", 2.0)
-    assert ("Ollama", 0) in screen.calls
+    assert ("Ollama", 17) in screen.calls
     assert ("verbunden", 18) in screen.calls
-    assert ("Open-WebUI Collector", 0) in screen.calls
+    assert ("Open-WebUI Collector", 17) in screen.calls
     assert ("nicht aktiv", 19) in screen.calls
     assert any(text.startswith("── System ") and x == 0 for text, x in screen.positions)
     assert any(text.startswith("CPU") and x == 1 for text, x in screen.positions)

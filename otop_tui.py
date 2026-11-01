@@ -149,13 +149,13 @@ def _draw(scr, st, host, interval):
         collector_short = "OK" if collector_active else "OFF"
         collector_attr = colors["status_green"] if collector_active else colors["error"]
         full = [(f"otop {VERSION}  •  ", colors["structure"]),
-                ("Ollama", colors["structure"]), (f" {version} ", colors["secondary"]),
+                ("Ollama", colors["secondary"]), (f" {version} ", colors["secondary"]),
                 (ollama_state, ollama_attr), ("  •  ", colors["structure"]),
-                ("Open-WebUI Collector", colors["structure"]), (" ", colors["secondary"]),
+                ("Open-WebUI Collector", colors["secondary"]), (" ", colors["secondary"]),
                 (collector_state, collector_attr)]
         compact = [(f"otop {VERSION} • ", colors["structure"]),
-                   ("Ollama:", colors["structure"]), (ollama_short, ollama_attr),
-                   (" • ", colors["structure"]), ("OWC:", colors["structure"]),
+                   ("Ollama:", colors["secondary"]), (ollama_short, ollama_attr),
+                   (" • ", colors["structure"]), ("OWC:", colors["secondary"]),
                    (collector_short, collector_attr)]
         interval_text = f"Intervall {interval:.1f}s"
         full_width = sum(len(text) for text, _attr in full)
@@ -263,10 +263,6 @@ def _draw(scr, st, host, interval):
         else:
             _add(scr, row, 0, st["gpu_err"] or "Keine GPU-Daten", colors["secondary"])
             row += 1
-        row += 1
-        row = section(row, "Ollama")
-        _add(scr, row, 0, "Open-WebUI Collector: " + st.get("collector_status", "nicht konfiguriert"),
-             colors["secondary"])
         row += 1
         model_count = len(oll.get("models", []))
         active_runs = st.get("runs", [])
@@ -381,10 +377,6 @@ def _draw(scr, st, host, interval):
             row = sensor(row, "Power", power_pct, power_value, power_detail)
 
     row += 1
-    row = section(row, "Ollama")
-    _add(scr, row, 0, "Open-WebUI Collector: " + st.get("collector_status", "nicht konfiguriert"),
-         colors["secondary"])
-    row += 2
     row = section(row, f"Aktuelle Runs ({len(active_runs)})")
     if active_runs:
         for run in active_runs[:3]:

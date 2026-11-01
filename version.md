@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 1.10.12 — 01.11.2026
+
+- Verbindungsnamen Ollama und Open-WebUI Collector gedimmt grau dargestellt.
+- Redundanten Ollama-Abschnitt und seine Collector-Zeile entfernt.
+
 ### 1.10.11 — 01.11.2026
 
 - Collector als „Open-WebUI Collector“ bezeichnet.
