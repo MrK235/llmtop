@@ -171,6 +171,20 @@ def write_jsonl(records, path):
     return True
 
 
+def _merge_live_run(prior, update):
+    """Erhält bekannte Tokenwerte bei unvollständigen Zwischenmeldungen."""
+    merged = dict(prior)
+    for key, value in update.items():
+        # Einige Provider senden während eines Streams vorübergehend 0 statt
+        # eines bereits gemeldeten Tokenstands. Ein solcher Platzhalter darf
+        # den sichtbaren Fortschritt nicht zurücksetzen.
+        if (key in ("prompt_tokens", "output_tokens", "context_tokens") and value == 0
+                and isinstance(prior.get(key), (int, float)) and prior[key] > 0):
+            continue
+        merged[key] = value
+    return normalize_run(merged) or update
+
+
 def write_live_run(run, path=None):
     normalized = normalize_run(run)
     if not normalized:
@@ -194,9 +208,7 @@ def write_live_run(run, path=None):
             # neuer Run beginnt. Seine finalen Werte ersetzen Zwischenstände.
             prior = runs.get(key)
             if prior:
-                merged = dict(prior)
-                merged.update(normalized)
-                normalized = normalize_run(merged) or normalized
+                normalized = _merge_live_run(prior, normalized)
             # Letzten Abschluss je Quelle behalten: Pi und Open WebUI dürfen
             # einander in der Live-Ansicht nie verdrängen.
             runs = {item_key: item for item_key, item in runs.items()
@@ -204,10 +216,10 @@ def write_live_run(run, path=None):
                     or item["source"] != normalized["source"]}
             runs[key] = normalized
         else:
-            # Ein neuer aktiver Run ergänzt den letzten Abschluss derselben
-            # Quelle. So bleibt dessen Ergebnis sichtbar, während Pi oder
-            # WebUI bereits den nächsten Run verarbeitet.
-            runs[key] = normalized
+            # Zwischenmeldungen enthalten je nach Provider nur Teilwerte.
+            # Bereits bekannte Tokenstände bleiben deshalb erhalten.
+            prior = runs.get(key)
+            runs[key] = _merge_live_run(prior, normalized) if prior else normalized
         records = [{"timestamp": item.get("updated_at") or item.get("started_at"), "run": item}
                    for item in sorted(runs.values(), key=lambda value: _parse_time(
                        value.get("updated_at") or value.get("started_at")) or datetime.min.replace(tzinfo=timezone.utc))]

@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.2** · Stand 01.11.2026 · Status: Aktuelle Runs und History fluchten dynamisch.
+**Version 2.2.3** · Stand 01.11.2026 · Status: Live-Tokenstände bleiben bei unvollständigen Updates erhalten.
 
 ## Aktueller Stand
 
@@ -26,6 +26,10 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.2.3
+
+- Bereits gemeldete Tokenstände aktiver Runs bleiben erhalten, wenn ein Provider in einer Zwischenmeldung vorübergehend `0` liefert.
 
 ## Neu in 2.2.2
 

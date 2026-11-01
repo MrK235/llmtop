@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.3 — 01.11.2026
+
+- Tokenstände aktiver Runs gegen unvollständige Provider-Zwischenmeldungen mit `0` abgesichert.
+
 ### 2.2.2 — 01.11.2026
 
 - Aktuelle Runs und History auf dieselbe dynamische Spaltenberechnung abgeglichen.
