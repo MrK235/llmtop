@@ -12,6 +12,14 @@ gebracht.
 
 ## Changelog
 
+### 2.0.2 — 01.11.2026
+
+- TUI-Kopfbereich als vierzeilige Produktidentität mit Pixel-Icon, Version,
+  Ollama- und Open-WebUI-Collector-Status sowie Autor, Technik und Intervall
+  gestaltet.
+- Kompaktansicht priorisiert bei 40×18 den neuen Kopf und die Kernwerte; VRAM
+  und Leistung werden dort ausgeblendet.
+
 ### 2.0.1 — 01.11.2026
 
 - TUI-Start prüft den global aktiven Open-WebUI-Filter `llmtop_run_metrics`
@@ -24,7 +32,7 @@ gebracht.
 - Projekt hart von **otop** zu **llmtop** umbenannt: Startdatei, Module,
   Tests, Open-WebUI-Adapter, Konfigurationspräfix und State-Pfad migriert.
 - `OTOP_*` und `$XDG_STATE_HOME/otop/` werden nicht mehr gelesen.
-- Neues Mini-Pixel-Icon `▞` in TUI-Kopfzeile und `--once` ergänzt.
+- Neues Pixel-Icon in TUI-Kopfzeile und `--once` ergänzt.
 - Open-WebUI-Filter-ID lautet nun `llmtop_run_metrics` und wird separat neu
   installiert.
 

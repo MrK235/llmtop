@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.0.1** · Stand 01.11.2026 · Status: Open-WebUI-Filter wird beim TUI-Start geprüft und ergänzt.
+**Version 2.0.2** · Stand 01.11.2026 · Status: Open-WebUI-Filter wird beim TUI-Start geprüft und ergänzt.
 
 ## Aktueller Stand
 
@@ -27,6 +27,13 @@ gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
 
+## Neu in 2.0.2
+
+- Kopfbereich als vierzeilige Produktidentität mit Pixel-Icon, Version,
+  Verbindungsstati, Autor, Technik und Refresh-Intervall gestaltet.
+- Die 40×18-Kompaktansicht lässt VRAM- und Power-Zeilen weg, damit der größere
+  Kopf ohne Überlappung Platz findet.
+
 ## Neu in 2.0.1
 
 - Normaler TUI-Start prüft den global aktiven Open-WebUI-Filter asynchron und
@@ -38,7 +45,7 @@ Darstellung mit System- und GPU-Kernwerten, Ollama-Status und History-Status.
 
 - Harter Namenswechsel von otop zu llmtop: Kommando, Python-Module,
   Open-WebUI-Filter, `LLMTOP_*`-Umgebungsvariablen und State-Pfad sind umgestellt.
-- Kopfzeile und `--once` verwenden das neue Mini-Pixel-Icon `▞`.
+- Kopfzeile und `--once` verwenden das neue Pixel-Icon.
 - Alte otop-Dateien, Variablen und State-Pfade werden nicht mehr unterstützt;
   der neue Open-WebUI-Filter muss einmal installiert werden.
 

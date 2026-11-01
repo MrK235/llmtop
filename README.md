@@ -1,12 +1,12 @@
 # llmtop — LLM Terminal Monitor für Ollama mit GPU-, RAM- und VRAM-Sensoren
 
-**Version 2.0.1 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
+**Version 2.0.2 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
 die über die Ollama-API das **geladene Modell** sowie **CPU-/RAM/GPU-Auslastung**
 anzeigt. Versionsgeschichte und Versionsschema: `version.md`.
 
-Die Version wird angezeigt: in der TUI-Kopfzeile (`▞ llmtop 2.0.1 • Ollama …`), in
-der ersten Zeile von `--once`, und über `--version`. Das Icon `▞` ist ein
-kompaktes 2×2-Pixelmuster. Maßgebliche Zahl ist `VERSION` in `llmtop.py`.
+Die Version wird angezeigt: im vierzeiligen TUI-Kopfbereich, in der ersten
+Zeile von `--once`, und über `--version`. Die TUI verwendet ein vierzeiliges
+Pixel-Icon; maßgebliche Zahl ist `VERSION` in `llmtop.py`.
 
 ## Dateien
 
@@ -95,7 +95,9 @@ Datenbank-Fallback kann `LLMTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 
 ## TUI-Layout
 
-Die Vollbildansicht gliedert sich von oben nach unten in **System**, **GPU**,
+Ein vierzeiliger Kopfbereich zeigt das Pixel-Icon, Produkt und Version,
+Ollama- und Open-WebUI-Collector-Status sowie Autor, Technik und Intervall.
+Die Vollbildansicht gliedert sich danach von oben nach unten in **System**, **GPU**,
 **Aktuelle Runs**, **Geladene Modelle** und **History**. Bereichslinien beginnen am linken Rand und laufen
 vor sowie nach dem Titel; alle übrigen Inhalte haben einen Leerzeichen-Rand
 links. Bei 40×18 verwendet sie eine kompakte Ansicht mit
@@ -126,12 +128,13 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
 
 ## Angezeigte Werte
 
-* **Kopfzeile**: `llmtop <VERSION>`, Ollama-Version und Erreichbarkeit
-  (`/api/version`) sowie **Open-WebUI Collector**-Status (`aktiv` / `nicht
-  aktiv`). Die Namen sind gedimmt grau; verbundene/aktive Stati sind Grün und
-  OFFLINE/nicht aktive Stati Rot. Bei ausreichender Breite steht zusätzlich das
-  Refresh-Intervall dort; bei 40 Spalten werden beide Verbindungsstati als
-  `Ollama:OK/OFF` und `OWC:OK/OFF` gezielt verdichtet.
+* **Kopfbereich**: vierzeiliges Pixel-Icon, `llmtop <VERSION>` und Produktname,
+  Ollama-Version und Erreichbarkeit (`/api/version`) sowie **Open-WebUI
+  Collector**-Status (`aktiv` / `nicht aktiv`). Die vierte Zeile nennt Autor,
+  Python-Standardbibliothek und Refresh-Intervall. Namen und Metadaten sind
+  gedimmt grau; verbundene/aktive Stati sind Grün und OFFLINE/nicht aktive
+  Stati Rot. Bei 40 Spalten werden die Verbindungsstati als `Ollama OK/OFF` und
+  `OW Collector OK/OFF` verdichtet.
 * **Aktuelle Runs**: bis zu drei aktive Schema-2-Runs aus `LLMTOP_RUN_FILE`, jeweils mit Quelle (`Pi`, `Open WebUI`, `Ollama CLI`), Status, Modell und verfügbaren Token-/Dauerwerten. Nach dem Abschluss bleibt der letzte Run mit den finalen Token- und Zeitwerten sichtbar, bis ein neuer Run startet. Eine Open-WebUI-Chat-Anfrage bleibt auch bei internen Tool- oder Fortsetzungsrunden genau ein aktueller Run. Verwaiste nicht-finale Live-Einträge werden nach 90 Sekunden ohne Lebenszeichen entfernt und nicht als aktuelle Runs angezeigt. Lange Streams senden regelmäßig Lebenszeichen. Schema-1-Daten bleiben als `Legacy` lesbar. Status, Modell, Kontextlimit und grafischer Kontextverbrauch (Prompt- plus Ausgabetoken),
   Prompt-/Ausgabe-/Gesamttoken und Ausgabe-Rate. `--chat` und `--generate`
   instrumentieren eigene direkte Ollama-Aufrufe ohne Reverse Proxy. Während

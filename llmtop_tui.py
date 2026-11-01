@@ -7,7 +7,7 @@ import time
 from datetime import datetime
 
 VERSION = "?"
-PIXEL_ICON = "▞"
+PIXEL_ICON = ("▟▙", "▙▟", "▟▙", "▙▟")
 
 from llmtop_metrics import (
     DEFAULT_RUN_HISTORY_LIMIT, HISTORY_COLUMNS, CollectorService, _parse_time, _token_value,
@@ -140,6 +140,7 @@ def _draw(scr, st, host, interval):
         return row + 1
 
     def draw_header(ollama):
+        """Zeichnet die vierzeilige llmtop-Identität und Verbindungsstati."""
         ollama_state = "verbunden" if ollama["ok"] else "OFFLINE"
         ollama_short = "OK" if ollama["ok"] else "OFF"
         ollama_attr = colors["status_green"] if ollama["ok"] else colors["error"]
@@ -149,26 +150,30 @@ def _draw(scr, st, host, interval):
         collector_state = "aktiv" if collector_active else "nicht aktiv"
         collector_short = "OK" if collector_active else "OFF"
         collector_attr = colors["status_green"] if collector_active else colors["error"]
-        full = [(f"{PIXEL_ICON} llmtop {VERSION}  •  ", colors["structure"]),
-                ("Ollama", colors["secondary"]), (f" {version} ", colors["secondary"]),
-                (ollama_state, ollama_attr), ("  •  ", colors["structure"]),
-                ("Open-WebUI Collector", colors["secondary"]), (" ", colors["secondary"]),
-                (collector_state, collector_attr)]
-        compact = [(f"{PIXEL_ICON} llmtop {VERSION} • ", colors["structure"]),
-                   ("Ollama:", colors["secondary"]), (ollama_short, ollama_attr),
-                   (" • ", colors["structure"]), ("OWC:", colors["secondary"]),
-                   (collector_short, collector_attr)]
-        interval_text = f"Intervall {interval:.1f}s"
-        full_width = sum(len(text) for text, _attr in full)
-        compact_width = sum(len(text) for text, _attr in compact)
-        parts = full if full_width + len(interval_text) + 2 <= w else compact
-        width = full_width if parts is full else compact_width
-        x = 1
-        for text, attr in parts:
-            _add(scr, 0, x, text, attr, indent=False)
-            x += len(text)
-        if width + len(interval_text) + 2 <= w:
-            _add(scr, 0, w - len(interval_text) - 1, interval_text, colors["secondary"], indent=False)
+        icon = tuple(PIXEL_ICON) if isinstance(PIXEL_ICON, (tuple, list)) else (PIXEL_ICON,) * 4
+        icon = (icon + (icon[-1],) * 4)[:4]
+        for row, pixel in enumerate(icon):
+            _add(scr, row, 1, pixel, colors["structure"], indent=False)
+
+        x = 5
+        if w >= 72:
+            label_width = 22
+            _add(scr, 0, x, f"llmtop {VERSION}", colors["structure"], indent=False)
+            _add(scr, 0, x + 18, "LLM Terminal Monitor", colors["secondary"], indent=False)
+            _add(scr, 1, x, "Ollama".ljust(label_width), colors["secondary"], indent=False)
+            _add(scr, 1, x + label_width, f"v{version}  ", colors["secondary"], indent=False)
+            _add(scr, 1, x + label_width + len(f"v{version}  "), ollama_state, ollama_attr, indent=False)
+            _add(scr, 2, x, "Open-WebUI Collector".ljust(label_width), colors["secondary"], indent=False)
+            _add(scr, 2, x + label_width, collector_state, collector_attr, indent=False)
+            _add(scr, 3, x, f"Autor: llmtop  ·  Python-Standardbibliothek  ·  Intervall {interval:.1f}s",
+                 colors["secondary"], indent=False)
+        else:
+            _add(scr, 0, x, f"llmtop {VERSION}", colors["structure"], indent=False)
+            _add(scr, 1, x, "Ollama ", colors["secondary"], indent=False)
+            _add(scr, 1, x + 7, ollama_short, ollama_attr, indent=False)
+            _add(scr, 2, x, "OW Collector ", colors["secondary"], indent=False)
+            _add(scr, 2, x + 13, collector_short, collector_attr, indent=False)
+            _add(scr, 3, x, f"Autor: llmtop · {interval:.1f}s", colors["secondary"], indent=False)
 
     def history_columns():
         if w >= 118:
@@ -239,7 +244,7 @@ def _draw(scr, st, host, interval):
     if h < 26:
         oll = st["ollama"]
         draw_header(oll)
-        row = 1
+        row = 4
         row = section(row, "System")
         cpu = st["cpu"]
         cpu_value = f"{cpu:.1f} %" if cpu is not None else "n/a"
@@ -253,14 +258,8 @@ def _draw(scr, st, host, interval):
             g = st["gpus"][0]
             util = g["util"]
             row = sensor(row, "GPU0", util, f"{util:d} %" if util is not None else "n/a")
-            if g["mem_total"] is not None and g["mem_used"] is not None:
-                vram_pct = g["vram_pct"]
-                row = sensor(row, "VRAM", vram_pct,
-                             f"{vram_pct:.1f} %" if vram_pct is not None else "n/a")
-            if g["power_watt"] is not None:
-                limit = max(g["power_limit"] or 0.0, GPU_POWER_BOOST_W)
-                power_pct = min(100.0, 100.0 * g["power_watt"] / limit)
-                row = sensor(row, "Power", power_pct, f"{power_pct:.1f} %")
+            # In der kompakten Ansicht bleibt nach dem vierzeiligen Kopf nur
+            # die GPU-Auslastung sichtbar; VRAM und Leistung folgen im großen Layout.
         else:
             _add(scr, row, 0, st["gpu_err"] or "Keine GPU-Daten", colors["secondary"])
             row += 1
@@ -335,7 +334,7 @@ def _draw(scr, st, host, interval):
     runs = st.get("run_history", [])
     draw_header(oll)
 
-    row = 1
+    row = 4
     row = section(row, "System")
     cpu = st["cpu"]
     cpu_value = f"{cpu:.1f} %" if cpu is not None else "n/a"

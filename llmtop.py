@@ -5,8 +5,8 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.0.1"  # Single Source of Truth; History in version.md
-PIXEL_ICON = "▞"  # Kompaktes 2×2-Pixelmuster fuer die TUI-Kopfzeile.
+VERSION = "2.0.2"  # Single Source of Truth; History in version.md
+PIXEL_ICON = ("▟▙", "▙▟", "▟▙", "▙▟")  # Vierzeiliges Pixelmuster für die TUI.
 DEFAULT_HOST = "http://localhost:11434"
 
 
@@ -25,7 +25,7 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
     run = active_runs[0] if active_runs else None
     runs = load_run_history(limit=10)
     backfill_context_limits(runs, st.get("models", []))
-    lines.append(f"{PIXEL_ICON} llmtop {VERSION}  Ollama {st['version'] if st['ok'] else 'nicht erreichbar'}  {host}")
+    lines.append(f"{PIXEL_ICON[0]} llmtop {VERSION}  Ollama {st['version'] if st['ok'] else 'nicht erreichbar'}  {host}")
     token, _collector_url = collector_config()
     lines.append("Collector: " + ("konfiguriert" if token else "nicht konfiguriert"))
     if st["error"]:
