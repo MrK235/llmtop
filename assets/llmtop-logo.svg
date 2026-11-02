@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 190" role="img" aria-labelledby="title desc">
+  <title id="title">llmtop – LLM Terminal Monitor</title>
+  <desc id="desc">Cyan terminal icon and llmtop wordmark on a dark background</desc>
+  <rect width="760" height="190" rx="18" fill="#101820"/>
+  <rect x="18" y="18" width="724" height="154" rx="12" fill="#16232d" stroke="#19c3d1" stroke-width="2"/>
+  <g fill="#19c3d1" font-family="DejaVu Sans Mono, monospace" font-size="28" font-weight="700">
+    <text x="54" y="62">╔══════╗</text>
+    <text x="54" y="94">║ &gt;▞_  ║</text>
+    <text x="54" y="126">║  LLM ║</text>
+    <text x="54" y="158">╚══════╝</text>
+  </g>
+  <text x="285" y="92" fill="#f2f7f8" font-family="DejaVu Sans, sans-serif" font-size="48" font-weight="700">llmtop</text>
+  <text x="290" y="128" fill="#8ea5ad" font-family="DejaVu Sans, sans-serif" font-size="22">LLM Terminal Monitor</text>
+  <circle cx="691" cy="48" r="7" fill="#55d187"/>
+</svg>

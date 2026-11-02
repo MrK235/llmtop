@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 760" role="img" aria-labelledby="title desc">
+  <title id="title">Beispielansicht von llmtop</title>
+  <desc id="desc">Terminalansicht mit System-, GPU-, Modell-, Run- und History-Metriken</desc>
+  <rect width="1280" height="760" rx="14" fill="#0d1117"/>
+  <rect x="18" y="18" width="1244" height="724" rx="10" fill="#111b22" stroke="#19c3d1" stroke-width="2"/>
+  <circle cx="45" cy="43" r="7" fill="#ff5f57"/><circle cx="70" cy="43" r="7" fill="#febc2e"/><circle cx="95" cy="43" r="7" fill="#28c840"/>
+  <g font-family="DejaVu Sans Mono, monospace" font-size="20">
+    <g fill="#19c3d1" font-weight="700">
+      <text x="42" y="102">╔══════╗</text><text x="42" y="126">║ &gt;▞_  ║</text><text x="42" y="150">║  LLM ║</text><text x="42" y="174">╚══════╝</text>
+      <text x="300" y="92" fill="#d8e8eb" font-family="DejaVu Sans, sans-serif" font-size="27">LLM Terminal Monitor</text>
+      <text x="300" y="122">llmtop 2.2.4</text>
+      <text x="300" y="150" fill="#8ea5ad">Ollama v0.40.6</text><text x="500" y="150" fill="#55d187">verbunden</text>
+      <text x="300" y="178" fill="#8ea5ad">Open-WebUI Collector</text><text x="575" y="178" fill="#55d187">aktiv</text>
+    </g>
+    <line x1="38" y1="202" x2="1242" y2="202" stroke="#26434b"/>
+    <g fill="#19c3d1" font-weight="700"><text x="42" y="238">SYSTEM</text><text x="42" y="302">GPU</text><text x="42" y="414">GELADENE MODELLE</text><text x="42" y="484">AKTUELLE RUNS</text><text x="42" y="588">HISTORY</text></g>
+    <g fill="#d8e8eb">
+      <text x="42" y="270">CPU  [##########          ]  42.6%   Load 1.24   Kerne 24</text>
+      <text x="42" y="334">GPU0 [####                ]  18%     Temp 54°C</text>
+      <text x="42" y="366">VRAM [############        ]  61.4%   5002 / 8151 MiB</text>
+      <text x="42" y="398">Power[#####             ]  38.0%   43.7 W / 115 W</text>
+      <text x="42" y="446">qwen3.5:4b     4.7 GiB   VRAM/RAM  92% / 8%   8.2k context</text>
+      <text x="42" y="516">19:54  Open WebUI/Ollama  qwen3.5:4b  running    12.4k  18%  42.1 Tok/s</text>
+      <text x="42" y="548">19:52  Pi/Ollama          qwen3.5:4b  completed   8.9k   13%  38.7 Tok/s</text>
+      <text x="42" y="620">19:49  Open WebUI/Ollama  qwen3.5:4b  completed   6.2k   9%   44.3 Tok/s</text>
+      <text x="42" y="652">19:47  Pi/OpenAI           gpt-4o      completed   4.8k   n/a  29.6 Tok/s</text>
+    </g>
+    <g fill="#8ea5ad"><text x="42" y="700">q quit   r reload   h help   a focus   ↑↓ scroll</text><text x="1040" y="700">-/+ Intervall 0.5s</text></g>
+  </g>
+</svg>

@@ -1,12 +1,23 @@
-# llmtop — LLM Terminal Monitor für Ollama mit GPU-, RAM- und VRAM-Sensoren
+<div align="center">
+  <img src="assets/llmtop-logo.svg" alt="llmtop – LLM Terminal Monitor" width="620">
+  <p><strong>Terminal-Monitor für Ollama</strong> mit CPU-, RAM-, GPU-, VRAM- und Run-Metriken.</p>
+  <p>
+    <a href="#start">Schnellstart</a> ·
+    <a href="#angezeigte-werte">Messwerte</a> ·
+    <a href="#open-webui-adapter">Open WebUI</a> ·
+    <a href="#pi-adapter">Pi-Adapter</a>
+  </p>
+</div>
 
-**Version 2.2.1 · Python-Terminal-Anwendung (nur Python-Standardbibliothek),
-die über die Ollama-API das **geladene Modell** sowie **CPU-/RAM/GPU-Auslastung**
-anzeigt. Versionsgeschichte und Versionsschema: `version.md`.
+![llmtop-Beispielansicht](assets/llmtop-screenshot.svg)
 
-Die Version wird angezeigt: im vierzeiligen TUI-Kopfbereich, in der ersten
-Zeile von `--once`, und über `--version`. Die TUI verwendet ein vierzeiliges
-Pixel-Icon; maßgebliche Zahl ist `VERSION` in `llmtop.py`.
+> **Version 2.2.4** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
+> zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
+
+Die Version wird im TUI-Kopf, in der ersten Zeile von `--once` und über
+`--version` angezeigt. Die maßgebliche Versionsnummer steht in `VERSION` in
+`llmtop.py`; die vollständige Historie befindet sich in `version.md`.
 
 ## Dateien
 
@@ -20,7 +31,9 @@ Pixel-Icon; maßgebliche Zahl ist `VERSION` in `llmtop.py`.
 | `status.md` | Projektstand, bekannte Grenzen und Prüfhinweise |
 | `version.md` | Versionsschema, Versionsanzeige, Changelog |
 | `pi/llmtop_run_metrics.ts` | optionaler globaler Pi-Adapter für lokale und Cloud-Provider |
-| `.gitignore` | lokale Python-Artefakte ausschließen |
+| `assets/llmtop-logo.svg` | Projektlogo im aktuellen TUI-Stil |
+| `assets/llmtop-screenshot.svg` | Beispielansicht der TUI |
+| `.gitignore` | lokale Python-Artefakte und Backups ausschließen |
 | `plan/` | akzeptierte Arbeitspläne (Plan-Mode-Artefakte) |
 
 ## Versionierung
