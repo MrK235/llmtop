@@ -210,9 +210,9 @@ def _init_colors():
         c["rate_error"] = curses.color_pair(3)
         c["error"] = curses.color_pair(3) | curses.A_BOLD
         c["structure"] = curses.color_pair(4) | curses.A_BOLD
-        # Kein A_BOLD: Einige Terminals wandeln damit Weiß in grelles Weiß
-        # und Schwarz in helles Grau um. Normal hält Gruppe und Cursor neutral.
-        c["group"] = curses.color_pair(6)
+        # Gedimmtes Weiß ergibt die gewünschte graue Gruppenzeile, ohne
+        # terminalspezifische Fettdarstellung.
+        c["group"] = curses.color_pair(6) | curses.A_DIM
         c["cursor"] = curses.color_pair(7)
         c["offload_good"] = curses.color_pair(1) | curses.A_BOLD
         c["offload_mixed"] = curses.color_pair(2) | curses.A_BOLD

@@ -9,7 +9,7 @@ import llmtop_metrics as llmtop
 import llmtop_tui
 
 
-def test_history_group_and_cursor_colors_are_not_bold():
+def test_history_group_is_gray_and_cursor_is_not_bold():
     missing = object()
     original_colors = getattr(curses, 'COLORS', missing)
     original_init_pair = curses.init_pair
@@ -19,8 +19,9 @@ def test_history_group_and_cursor_colors_are_not_bold():
         curses.init_pair = lambda *_args: None
         curses.color_pair = lambda number: number << 8
         colors = llmtop_tui._init_colors()
-        assert colors['group'] == 6 << 8
+        assert colors['group'] == (6 << 8) | curses.A_DIM
         assert colors['cursor'] == 7 << 8
+        assert colors['group'] & curses.A_DIM
         assert not colors['group'] & curses.A_BOLD
         assert not colors['cursor'] & curses.A_BOLD
     finally:
@@ -434,7 +435,7 @@ def test_tui_draws_loaded_model():
 
 
 if __name__ == '__main__':
-    test_history_group_and_cursor_colors_are_not_bold()
+    test_history_group_is_gray_and_cursor_is_not_bold()
     test_run_metric_detail()
     test_run_history_defaults_to_hundred()
     test_clear_run_history()

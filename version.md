@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.20 — 02.11.2026
+
+- History-Gruppenzeilen werden wieder gedimmt grau dargestellt, ohne Fettdarstellung.
+
 ### 2.2.19 — 02.11.2026
 
 - History-Gruppen verwenden ausschließlich den neuesten abgeschlossenen Run. Ältere Tokens, Kontexte, Dauern und Statuswerte werden nicht mehr summiert oder übernommen; fehlende Werte werden nur aus demselben Run eindeutig abgeleitet.

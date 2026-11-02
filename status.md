@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.19** · Stand 02.11.2026 · Status: Gruppen zeigen den neuesten abgeschlossenen Run.
+**Version 2.2.20** · Stand 02.11.2026 · Status: Graue History-Gruppenzeilen.
 
 ## Aktueller Stand
 
