@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.2.11** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.2.12** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -146,10 +146,13 @@ Ausgaberate und Dauer sortiert werden. Die aktive Sortierspalte ist im
 Tabellenkopf exakt über die Länge ihres Textes unterstrichen und mit `▾`
 beziehungsweise `▴` markiert; die History-Überschrift bleibt frei von
 Sortierdetails. Eine Leerzeile trennt die History von der Statusleiste. Die
-History gruppiert Runs quellengetrennt nach `session_id`, ersatzweise `chat_id`
-und danach `message_id`; ohne diese IDs bleibt jeder Run einzeln. Gruppen sind
-zunächst eingeklappt, zeigen Anzahl, Kurzkennung und letzten Abschluss, und
-lassen sich mit dem Cursor auf- und zuklappen. Die Persistenz und die
+History gruppiert Pi-Runs nach `session_id` und Open-WebUI-Runs vorrangig nach
+`chat_id`; Session und Nachricht dienen dort nur als Fallback. Ohne diese IDs
+bleibt jeder Run einzeln. Gruppen sind zunächst eingeklappt. Ihre Tabellenzeile
+zeigt die summierten Token-, Kontext- und Dauerwerte des gesamten Chats sowie
+die daraus berechnete Ausgaberate; Quelle, Chat-Kurzkennung, Modell, Status und
+letzter Abschluss bleiben ebenfalls sichtbar. Mit dem Cursor lässt sich die
+Gruppe aufklappen und zeigt dann alle einzelnen Runs. Die Persistenz und die
 Begrenzung auf 100 Runs bleiben unverändert.
 Kontext wird nach dem prozentualen Verbrauch sortiert, nicht nach der absoluten
 Tokengröße. Die Kontextspalte zeigt Prozentwert, Fortschrittsbalken und danach
@@ -162,11 +165,11 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
 
 ## Angezeigte Werte
 
-* **History**: Gruppen aus derselben Pi-Session beziehungsweise Open-WebUI-
-  Session, Chat oder Nachricht werden kompakt dargestellt. Die Anzeige
-  verwendet nur kurze IDs; fehlende Identitäten führen nicht zu spekulativer
-  Zusammenlegung.
-  Aufgeklappte Gruppen zeigen alle enthaltenen Runs in der bestehenden Tabelle.
+* **History**: Gruppen aus derselben Pi-Session beziehungsweise demselben
+  Open-WebUI-Chat werden kompakt dargestellt. Open WebUI verwendet `chat_id`
+  vor der Browser-`session_id`, damit unterschiedliche Chats nicht gemeinsam
+  gruppiert werden. Die Gruppenzeile enthält die summierten Ergebniswerte;
+  aufgeklappte Gruppen zeigen alle enthaltenen Runs in der bestehenden Tabelle.
 * **Kopfbereich**: vierzeiliges, optisch quadratisches Terminal-Logo mit
   Prompt und LLM-Kennung sowie zwei freien Spalten zum Textblock. **LLM Terminal
   Monitor** ist stets mittig in der ersten Zeile platziert; `llmtop <VERSION>`

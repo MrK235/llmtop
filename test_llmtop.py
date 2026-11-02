@@ -72,19 +72,42 @@ def test_history_groups_keep_all_runs_and_sources_separate():
          'status': 'completed', 'finished_at': '2026-11-02T21:02:00Z'},
         {'run_id': 'pi-2', 'source': 'pi', 'session_id': 'session-a', 'model': 'm',
          'status': 'completed', 'finished_at': '2026-11-02T21:01:00Z'},
-        {'run_id': 'web-1', 'source': 'open-webui', 'session_id': 'session-a', 'model': 'm',
-         'status': 'completed', 'finished_at': '2026-11-02T21:00:00Z'},
-        {'run_id': 'single', 'source': 'pi', 'model': 'm', 'status': 'completed',
+        {'run_id': 'web-1', 'source': 'open-webui', 'session_id': 'browser-a',
+         'chat_id': 'chat-a', 'message_id': 'message-1', 'model': 'm',
+         'status': 'completed', 'finished_at': '2026-11-02T21:00:00Z',
+         'prompt_tokens': 100, 'output_tokens': 20, 'context_tokens': 120,
+         'context_limit': 1000, 'eval_duration_s': 2, 'total_duration_s': 3},
+        {'run_id': 'web-2', 'source': 'open-webui', 'session_id': 'browser-a',
+         'chat_id': 'chat-a', 'message_id': 'message-2', 'model': 'm',
+         'status': 'completed', 'finished_at': '2026-11-02T20:59:30Z',
+         'prompt_tokens': 200, 'output_tokens': 30, 'context_tokens': 230,
+         'context_limit': 1000, 'eval_duration_s': 3, 'total_duration_s': 4},
+        {'run_id': 'web-other', 'source': 'open-webui', 'session_id': 'browser-a',
+         'chat_id': 'chat-b', 'model': 'm', 'status': 'completed',
          'finished_at': '2026-11-02T20:59:00Z'},
+        {'run_id': 'single', 'source': 'pi', 'model': 'm', 'status': 'completed',
+         'finished_at': '2026-11-02T20:58:00Z'},
     ]
     groups = llmtop_tui.build_history_groups(runs)
-    assert [len(group['runs']) for group in groups] == [2, 1, 1]
+    assert [len(group['runs']) for group in groups] == [2, 2, 1, 1]
     assert groups[0]['key'][0] == 'pi'
-    assert groups[1]['key'][0] == 'open-webui'
+    assert groups[1]['key'] == ('open-webui', ('chat_id', 'chat-a'))
+    assert groups[2]['key'] == ('open-webui', ('chat_id', 'chat-b'))
+    aggregate = groups[1]['aggregate']
+    assert aggregate['prompt_tokens'] == 300
+    assert aggregate['output_tokens'] == 50
+    assert aggregate['context_tokens'] == 350
+    assert aggregate['context_limit'] == 2000
+    assert aggregate['eval_duration_s'] == 5
+    assert aggregate['total_duration_s'] == 7
+    assert llmtop.token_rate(aggregate) == 10
+    assert aggregate['_source_label'] == 'WebUI · Chat chat-a'
+    assert aggregate['model'] == 'm ×2'
     _, collapsed = llmtop_tui.history_display_items(runs)
-    assert [item['kind'] for item in collapsed] == ['group', 'group', 'run']
-    _, expanded = llmtop_tui.history_display_items(runs, expanded={groups[0]['key']})
-    assert [item['kind'] for item in expanded] == ['group', 'run', 'run', 'group', 'run']
+    assert [item['kind'] for item in collapsed] == ['group', 'group', 'group', 'run']
+    _, expanded = llmtop_tui.history_display_items(runs, expanded={groups[1]['key']})
+    assert [item['kind'] for item in expanded] == [
+        'group', 'group', 'run', 'run', 'group', 'run']
 
 
 def test_live_run_keeps_active_run_until_final():

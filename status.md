@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.11** · Stand 02.11.2026 · Status: Gruppierte Run-History mit robuster Pi-Session-ID.
+**Version 2.2.12** · Stand 02.11.2026 · Status: Chatweise gruppierte History mit Summenwerten.
 
 ## Aktueller Stand
 
@@ -26,6 +26,12 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.2.12
+
+- Open-WebUI-History verwendet `chat_id` vor `session_id`; verschiedene Chats derselben Browser-Session bleiben getrennt.
+- Gruppenzeilen zeigen alle Tabellenspalten und summieren Tokens, Kontext und Dauer über den gesamten Chat; Tok/s wird aus summierter Ausgabe und Auswertungsdauer berechnet.
+- Aufklappen zeigt weiterhin sämtliche einzelnen Runs des Chats.
 
 ## Neu in 2.2.11
 

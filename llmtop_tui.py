@@ -84,6 +84,40 @@ def history_group_key(run):
     return (run.get("source", "legacy"), run_group_key(run))
 
 
+def aggregate_history_group(group):
+    """Fasst die sichtbaren Metriken eines Chats oder einer Session zusammen."""
+    runs = group["runs"]
+    latest = max(runs, key=lambda run: _parse_time(run.get("finished_at")) or
+                 datetime.min.replace(tzinfo=datetime.now().astimezone().tzinfo))
+    aggregate = dict(latest)
+    aggregate["run_id"] = f"group:{group['key']}"
+    aggregate["finished_at"] = latest.get("finished_at")
+    models = {str(run.get("model", "?")) for run in runs}
+    model_label = next(iter(models)) if len(models) == 1 else f"{len(models)} Modelle"
+    aggregate["model"] = f"{model_label} ×{len(runs)}"
+    providers = {run.get("provider") for run in runs if run.get("provider")}
+    if len(providers) != 1:
+        aggregate.pop("provider", None)
+    statuses = {run.get("status") for run in runs}
+    aggregate["status"] = ("error" if "error" in statuses else
+                           "cancelled" if "cancelled" in statuses else
+                           "completed" if statuses == {"completed"} else "running")
+    for key in ("prompt_tokens", "output_tokens", "context_tokens", "context_limit",
+                "eval_duration_s", "total_duration_s"):
+        values = [_token_value(run, key) for run in runs]
+        present = [value for value in values if value is not None]
+        if present:
+            aggregate[key] = sum(present)
+        else:
+            aggregate.pop(key, None)
+    source = source_label(aggregate.get("source"), aggregate.get("provider"))
+    if aggregate.get("source") == "open-webui":
+        source = source.replace("Open WebUI", "WebUI", 1)
+    identity = run_identity_label(aggregate)
+    aggregate["_source_label"] = f"{source} · {identity}"
+    return aggregate
+
+
 def build_history_groups(sorted_runs):
     """Baut Gruppen in der Reihenfolge ihres ersten sortierten History-Runs."""
     groups = {}
@@ -95,24 +129,9 @@ def build_history_groups(sorted_runs):
     for group in groups.values():
         field, _value = group["key"][1]
         group["grouped"] = len(group["runs"]) > 1 or field != "run_id"
+        group["aggregate"] = aggregate_history_group(group)
         result.append(group)
     return result
-
-
-def history_group_label(group, compact=False):
-    """Erzeugt eine kurze Gruppenkennung ohne Run-Inhalte zu übernehmen."""
-    first = group["first"]
-    source = source_label(first.get("source"), first.get("provider"))
-    identity = run_identity_label(first)
-    timestamps = [_parse_time(run.get("finished_at")) for run in group["runs"]]
-    finished = max((stamp for stamp in timestamps if stamp), default=None)
-    if finished:
-        stamp = finished.strftime("%H:%M" if compact else "%d.%m %H:%M")
-    else:
-        stamp = "n/a"
-    count = len(group["runs"])
-    noun = "Run" if count == 1 else "Runs"
-    return f"{source} · {identity} ({count} {noun} · zuletzt {stamp})"
 
 
 def history_display_items(runs, column="zeit", descending=True, expanded=()):
@@ -318,7 +337,7 @@ def _draw(scr, st, host, interval):
                 return "n/a"
             return finished.strftime("%d.%m %H:%M") if w >= 118 else finished.strftime("%H:%M")
         if column == "quelle":
-            return source_label(run.get("source"), run.get("provider"))
+            return run.get("_source_label") or source_label(run.get("source"), run.get("provider"))
         if column == "modell":
             return str(run.get("model", "?"))
         if column == "status":
@@ -359,9 +378,10 @@ def _draw(scr, st, host, interval):
     def draw_history_table(row, max_rows, columns=None):
         sorted_runs = history_runs
         items = history_items
-        columns = columns or table_columns(sorted_runs, history_cell)
-        total = len(sorted_runs)
         groups = build_history_groups(sorted_runs)
+        aggregate_runs = [group["aggregate"] for group in groups if group["grouped"]]
+        columns = columns or table_columns(sorted_runs + aggregate_runs, history_cell)
+        total = len(sorted_runs)
         group_count = len(groups)
         data_rows = max(1, max_rows - 2)
         show_position = len(items) > data_rows and data_rows >= 2
@@ -389,16 +409,16 @@ def _draw(scr, st, host, interval):
             if item["kind"] == "group":
                 group = item["group"]
                 marker = "▾" if group["key"] in st.get("history_expanded", set()) else "▸"
-                attr = cursor_attr if active else colors["structure"]
-                _add(scr, row, 0, f"{marker} {history_group_label(group, compact=w < 80)}", attr)
-                row += 1
-                continue
-            run = item["run"]
+                run = dict(group["aggregate"])
+                run["_source_label"] = f"{marker} {run['_source_label']}"
+            else:
+                run = item["run"]
             cells = []
             for name, width in columns:
                 text = history_cell(run, name)
                 cells.append(text[:width].ljust(width))
-            attr = cursor_attr if active else colors["secondary"]
+            attr = cursor_attr if active else (colors["structure"] if item["kind"] == "group"
+                                                else colors["secondary"])
             _add(scr, row, 0, " ".join(cells), attr)
             row += 1
         if not sorted_runs:
@@ -623,7 +643,10 @@ def _draw(scr, st, host, interval):
                     [run for _source, _identity, _running, finished in groups for run in finished])
     # Beide Tabellen teilen eine Breitenberechnung, damit aktuelle Runs und
     # History unabhängig vom sichtbaren Ausschnitt exakt untereinander stehen.
-    columns = table_columns(runs + grouped_runs, current_run_cell)
+    sorted_history = sort_run_history(runs, st["history_sort"], st["history_desc"])
+    history_aggregates = [group["aggregate"] for group in build_history_groups(sorted_history)
+                          if group["grouped"]]
+    columns = table_columns(runs + history_aggregates + grouped_runs, current_run_cell)
     total_run_rows = max(3, min(12, h - row - history_rows - 2))
     visible_runs = max(1, total_run_rows - 1 - len(groups))
     max_run_offset = max(0, len(grouped_runs) - visible_runs)

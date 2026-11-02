@@ -361,9 +361,15 @@ RUN_IDENTITY_LABELS = {"session_id": "Session", "chat_id": "Chat", "message_id":
 
 
 def run_identity(run):
-    """Liefert die stärkste vorhandene externe Identität eines Runs."""
-    for field in RUN_IDENTITY_FIELDS:
-        value = run.get(field) if isinstance(run, dict) else None
+    """Liefert die stärkste gruppierbare Identität eines Runs."""
+    if not isinstance(run, dict):
+        return None, None
+    # Open WebUI kann dieselbe Browser-Session für mehrere Chats melden. Der
+    # Chat ist deshalb die fachliche Gruppe; die Session dient nur als Fallback.
+    fields = (("chat_id", "session_id", "message_id")
+              if run.get("source") == "open-webui" else RUN_IDENTITY_FIELDS)
+    for field in fields:
+        value = run.get(field)
         if isinstance(value, str) and value.strip():
             return field, value.strip()
     return None, None

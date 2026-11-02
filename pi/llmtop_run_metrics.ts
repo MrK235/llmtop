@@ -1,4 +1,4 @@
-/* llmtop 2.2.11 – globale Pi-Erweiterung für datensparsame Run-Metriken.
+/* llmtop 2.2.12 – globale Pi-Erweiterung für datensparsame Run-Metriken.
  * Installation: nach ~/.pi/agent/extensions/ kopieren und Pi neu starten oder /reload.
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";

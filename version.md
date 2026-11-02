@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.2.12 — 02.11.2026
+
+- Open-WebUI-History chatweise statt browser-sessionweit gruppiert.
+- Gruppenzeilen auf vollständige Tabellenwerte mit summierten Token-, Kontext- und Dauerwerten sowie berechneter Gesamtrate umgestellt.
+
 ### 2.2.11 — 02.11.2026
 
 - Pi-Session-IDs werden zusätzlich aus Session-Header oder Sessiondatei ermittelt, damit neue Pi-Runs auch bei älteren Laufzeitobjekten quellenintern gruppiert werden.
