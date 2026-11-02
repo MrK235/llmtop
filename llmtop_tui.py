@@ -372,20 +372,22 @@ def _draw(scr, st, host, interval):
         scr.refresh()
         return
 
-    def model_card(row, model):
+    def model_card(row, model, meta_x):
         details = model.get("details") or {}
         size = max(0, model.get("size") or 0)
         vram = max(0, min(size, model.get("size_vram") or 0)) if size else 0
         cpu_mem = max(0, size - vram)
         gpu_pct = 100.0 * vram / size if size else None
-        name = model.get("name", "?")
-        meta = "\t".join((str(details.get("parameter_size", "-")),
-                          str(details.get("quantization_level", "-")),
-                          f"ctx {model.get('context_length', '-')}",
-                          str(model.get("runner", "-"))))
-        meta_x = max(16, ((len(name) + 9) // 8) * 8)
+        name = str(model.get("name", "?"))
+        meta_fields = (
+            (0, str(details.get("parameter_size", "-"))),
+            (8, str(details.get("quantization_level", "-"))),
+            (20, f"ctx {model.get('context_length', '-')}"),
+            (32, str(model.get("runner", "-"))),
+        )
         _add(scr, row, 0, name, colors["model_name"])
-        _add(scr, row, meta_x, meta, colors["secondary"])
+        for offset, value in meta_fields:
+            _add(scr, row, meta_x + offset, value, colors["secondary"])
         exp = model.get("expires_at")
         if exp:
             try:
@@ -486,9 +488,14 @@ def _draw(scr, st, host, interval):
         _add(scr, row, 0, "Kein Modell geladen (/api/ps ist leer)", colors["secondary"])
         row += 1
     else:
+        # Alle Modellkarten teilen sich dieselbe Startspalte und feste
+        # Metadaten-Spalten; dadurch bleiben Name, Quantisierung, Kontext und
+        # Runner unabhängig von Namens- und Kontextlängen untereinander.
+        model_name_lengths = [len(str(model.get("name", "?"))) for model in oll["models"]]
+        model_meta_x = max(16, ((max(model_name_lengths) + 9) // 8) * 8)
         shown_models = 0
         while shown_models < len(oll["models"]) and row + 2 <= model_end:
-            row = model_card(row, oll["models"][shown_models])
+            row = model_card(row, oll["models"][shown_models], model_meta_x)
             shown_models += 1
         remaining_models = len(oll["models"]) - shown_models
         if remaining_models and row < model_end:

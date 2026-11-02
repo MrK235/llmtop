@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.6 — 01.11.2026
+
+- Geladene Modelle verwenden eine gemeinsame Metadaten-Startspalte und feste Spalten für Parametergröße, Quantisierung, Kontext und Runner.
+
 ### 2.2.5 — 01.11.2026
 
 - Prozentwerte in aktuellen Runs und History rechtsbündig auf vier Zeichen ausgerichtet, damit die Kontextbalken unabhängig von ihrer Stellenzahl fluchten.

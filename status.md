@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.5** · Stand 01.11.2026 · Status: Kontextbalken bleiben bei jeder Prozentstellenzahl ausgerichtet.
+**Version 2.2.6** · Stand 01.11.2026 · Status: Modellinformationen sind spaltenweise ausgerichtet.
 
 ## Aktueller Stand
 
@@ -27,9 +27,13 @@ gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
 
+## Neu in 2.2.6
+
+- Geladene Modelle verwenden eine gemeinsame Metadaten-Startspalte und feste Spalten für Parametergröße, Quantisierung, Kontext und Runner.
+
 ## Neu in 2.2.5
 
-- Prozentwerte in aktuellen Runs und History sind fest vier Zeichen breit und rechtsbündig; dadurch beginnt der Kontextbalken unabhängig von ein-, zwei- oder dreistelligen Werten an derselben Stelle.
+- Prozentwerte in aktuellen Runs und History sind fest vier Zeichen breit und rechtsbündig; dadurch beginnt der Kontextbalken unabhängig von ein-, zwei- oder dreistelligen Werten.
 
 ## Neu in 2.2.4
 
