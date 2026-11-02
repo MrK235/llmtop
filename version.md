@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.8 — 01.11.2026
+
+- Kontextanzeige in aktuellen Runs und History auf Balken, Prozentwert und Kontextlimit in dieser Reihenfolge umgestellt.
+
 ### 2.2.7 — 01.11.2026
 
 - Pi-Adapter-Status in die Kopfzeile integriert; die Autoren- und Python-Standardbibliothekszeile entfernt.

@@ -237,9 +237,9 @@ def _draw(scr, st, host, interval):
         pct_text = f"{pct:.0f}%" if pct is not None else "n/a"
         meter = bar(pct, 12)
         limit_text = compact_tokens(limit) if limit is not None else "n/a"
-        # Prozentwert auf vier Zeichen rechtsbündig halten, damit der Balken
-        # bei ein-, zwei- und dreistelligen Werten immer an derselben Stelle beginnt.
-        return f"{pct_text.rjust(4)} {meter} {limit_text}"
+        # Der Balken steht zuerst; der Prozentwert folgt rechtsbündig auf
+        # einer festen Breite und kann dadurch die Balkenposition nicht verschieben.
+        return f"{meter} {pct_text.rjust(4)} {limit_text}"
 
     def history_cell(run, column):
         model = model_for_run(run, oll.get("models", [])) if oll else None
@@ -279,18 +279,13 @@ def _draw(scr, st, host, interval):
             return
         pct_text = f"{pct:.0f}%" if pct is not None else "n/a"
         meter = bar(pct, 12)
-        suffix = f" {compact_tokens(limit) if limit is not None else 'n/a'}"
-        # Prozentwert auf vier Zeichen rechtsbündig halten, damit der Balken
-        # bei ein-, zwei- und dreistelligen Werten immer an derselben Stelle beginnt.
-        prefix = f"{pct_text.rjust(4)} "
-        available = max(0, width - len(prefix) - len(meter) - len(suffix))
-        suffix = " " * available + suffix
-        _add(scr, row, x, (prefix + meter)[:width], _util_color(colors, pct))
-        if len(prefix) < width:
-            _add(scr, row, x + len(prefix), meter[:max(0, width - len(prefix))], _util_color(colors, pct))
-        suffix_x = x + len(prefix) + len(meter)
-        if suffix_x < x + width:
-            _add(scr, row, suffix_x, suffix[:max(0, x + width - suffix_x)], colors["secondary"])
+        percentage = f" {pct_text.rjust(4)}"
+        limit = f" {compact_tokens(limit) if limit is not None else 'n/a'}"
+        available = max(0, width - len(meter) - len(percentage) - len(limit))
+        _add(scr, row, x, (meter + percentage)[:width], _util_color(colors, pct))
+        limit_x = x + len(meter) + len(percentage) + available
+        if limit_x < x + width:
+            _add(scr, row, limit_x, limit[:max(0, x + width - limit_x)], colors["secondary"])
 
     def draw_history_table(row, max_rows, columns=None):
         sorted_runs = sort_run_history(st.get("run_history", []), st["history_sort"],
