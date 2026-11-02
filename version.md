@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.14 — 02.11.2026
+
+- TUI-Taste `c`/`C` zum atomaren Leeren der Run-History ergänzt; Cursor- und Gruppenzustand werden dabei zurückgesetzt.
+
 ### 2.2.13 — 02.11.2026
 
 - Pi-Session-ID beim Session-Start im Adapter zwischengespeichert und an alle Collector-Runs weitergegeben.

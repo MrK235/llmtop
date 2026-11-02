@@ -316,6 +316,13 @@ def append_run_history(run, path=None, limit=DEFAULT_RUN_HISTORY_LIMIT):
         return write_jsonl(records, target)
 
 
+def clear_run_history(path=None):
+    """Leert ausschließlich die persistierte Run-History atomar."""
+    target = os.path.expanduser(path or run_history_path())
+    with RUN_FILE_LOCK:
+        return write_jsonl([], target)
+
+
 def _token_value(run, key):
     value = run.get(key)
     return value if isinstance(value, (int, float)) and value >= 0 else None

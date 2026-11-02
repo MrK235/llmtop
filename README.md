@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.2.13** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.2.14** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -106,6 +106,7 @@ Datenbank-Fallback kann `LLMTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 | `Tab` / `Shift-Tab` | nächste / vorherige Sortierspalte der Run-History |
 | `s` / `S` | Sortierrichtung der Run-History umschalten |
 | `a` / `A` | Fokus zwischen aktuellen Runs und Run-History wechseln |
+| `c` / `C` | gesamte persistierte Run-History leeren |
 | `Enter` / `Leertaste` | markierte History-Gruppe auf- oder zuklappen |
 | `←` / `→` | markierte History-Gruppe zu- oder aufklappen |
 | `↑` / `↓`, `Bild↑` / `Bild↓` | Cursor im fokussierten Bereich bewegen |
@@ -153,7 +154,8 @@ zeigt die summierten Token-, Kontext- und Dauerwerte des gesamten Chats sowie
 die daraus berechnete Ausgaberate; Quelle, Chat-Kurzkennung, Modell, Status und
 letzter Abschluss bleiben ebenfalls sichtbar. Mit dem Cursor lässt sich die
 Gruppe aufklappen und zeigt dann alle einzelnen Runs. Die Persistenz und die
-Begrenzung auf 100 Runs bleiben unverändert.
+Begrenzung auf 100 Runs bleiben unverändert. Mit `c` wird ausschließlich die
+Run-History atomar geleert; aktuelle Runs und System-Snapshots bleiben erhalten.
 Kontext wird nach dem prozentualen Verbrauch sortiert, nicht nach der absoluten
 Tokengröße. Die Kontextspalte zeigt Prozentwert, Fortschrittsbalken und danach
 nur das Limit im Format `[######      ] 42% 16.4k`; fehlende Providerwerte

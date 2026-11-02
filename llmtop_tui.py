@@ -11,7 +11,7 @@ PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚
 
 from llmtop_metrics import (
     DEFAULT_RUN_HISTORY_LIMIT, HISTORY_COLUMNS, CollectorService, _parse_time, _token_value,
-    backfill_context_limits, compact_tokens, context_values,
+    backfill_context_limits, clear_run_history, compact_tokens, context_values,
     history_header_label, load_run_events, load_run_history, model_for_run,
     run_group_key, run_identity_label, run_metric_detail, snapshot_record, sort_run_history,
     source_label, token_rate, total_tokens,
@@ -479,7 +479,7 @@ def _draw(scr, st, host, interval):
                 row += 1
         if row < h - 2:
             draw_history_table(row, h - row - 2)
-        draw_footer("q quit  a Fokus  Enter/Leertaste auf/zu  ↑↓ Cursor  h Hilfe")
+        draw_footer("q quit  c History leeren  Enter auf/zu  ↑↓ Cursor  h Hilfe")
         scr.refresh()
         return
 
@@ -686,10 +686,11 @@ def _draw(scr, st, host, interval):
     row += 1
     draw_history_table(row, h - row - 2, columns)
 
-    draw_footer("q quit  r neu laden  a Runs/History  Enter auf/zu  ↑↓ Cursor")
+    draw_footer("q quit  c History leeren  a Runs/History  Enter auf/zu  ↑↓ Cursor")
     if st["help"]:
         sources = ", ".join(sorted(set(g.get("source", "?") for g in st["gpus"]))) or "keine"
         box = ["Hilfe", "", "q  Q  beenden", "r  Programm neu laden",
+               "c  Run-History vollständig leeren",
                "h  Hilfe ein/aus", "-  Intervall halbieren (min 0.2s)",
                "+  Intervall verdoppeln (max 60s)",
                "a  Aktuelle Runs oder History fokussieren",
@@ -728,7 +729,8 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
              "history_ok": None, "runs": [], "run_history": [],
              "collector_status": collector.status(), "pi_adapter_active": pi_adapter_active,
              "history_sort": "zeit", "history_desc": True, "history_offset": 0,
-             "history_cursor": None, "history_expanded": set(), "run_offset": 0,
+             "history_cursor": None, "history_expanded": set(), "history_generation": 0,
+             "run_offset": 0,
              "run_focus": False}
     lock = threading.Lock()
     stop = threading.Event()
@@ -737,6 +739,8 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
     def sample():
         nonlocal interval
         while not stop.is_set():
+            with lock:
+                history_generation = state["history_generation"]
             ollama = collect_ollama(host)
             runs = load_run_events()
             run_history = load_run_history()
@@ -751,11 +755,13 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
             history_ok = write_history(snapshot_record(
                 host, ollama, cpu, ram, gpus, gpu_err, runs[0] if runs else None))
             with lock:
-                state.update({"ollama": ollama, "runs": runs, "run_history": run_history,
+                state.update({"ollama": ollama, "runs": runs,
                               "gpus": gpus, "gpu_err": gpu_err, "prev_cpu": cur,
                               "cpu": cpu, "ram": ram, "cpu_temp": cpu_temp,
                               "cpu_temp_source": cpu_temp_source, "history_ok": history_ok,
                               "collector_status": collector.status()})
+                if history_generation == state["history_generation"]:
+                    state["run_history"] = run_history
                 delay = interval
             refresh.wait(max(0.2, delay))
             refresh.clear()
@@ -787,7 +793,15 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
                 return "reload"
             with lock:
                 normalize_history_state(state)
-                if key in (ord("h"), ord("H")):
+                if key in (ord("c"), ord("C")):
+                    if clear_run_history():
+                        state["run_history"] = []
+                        state["history_offset"] = 0
+                        state["history_cursor"] = None
+                        state["history_expanded"].clear()
+                        state["history_generation"] += 1
+                        refresh.set()
+                elif key in (ord("h"), ord("H")):
                     state["help"] = not state["help"]
                 elif key in (ord("+"), ord("=")):
                     interval = min(60.0, interval * 2)

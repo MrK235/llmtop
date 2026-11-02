@@ -35,6 +35,20 @@ def test_run_history_defaults_to_hundred():
         assert len(result) == 100
 
 
+def test_clear_run_history():
+    with tempfile.TemporaryDirectory() as directory:
+        path = Path(directory) / 'runs.jsonl'
+        record = {
+            'schema': 2, 'run_id': 'clear-me', 'source': 'pi', 'model': 'model',
+            'status': 'completed', 'finished_at': '2026-11-02T21:00:00Z',
+        }
+        path.write_text(json.dumps(record) + '\n')
+        assert llmtop.load_run_history(path)
+        assert llmtop.clear_run_history(path)
+        assert llmtop.load_run_history(path) == []
+        assert path.read_text() == ''
+
+
 def test_history_sorting_and_context_cells():
     runs = [
         {'run_id': 'a', 'source': 'open-webui', 'model': 'Beta', 'status': 'completed',
@@ -349,6 +363,7 @@ def test_tui_draws_loaded_model():
 if __name__ == '__main__':
     test_run_metric_detail()
     test_run_history_defaults_to_hundred()
+    test_clear_run_history()
     test_history_sorting_and_context_cells()
     test_history_groups_keep_all_runs_and_sources_separate()
     test_live_run_keeps_active_run_until_final()

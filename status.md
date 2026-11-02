@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.13** · Stand 02.11.2026 · Status: Gruppierte Pi-Sessions und WebUI-Chats mit Summenwerten.
+**Version 2.2.14** · Stand 02.11.2026 · Status: Gruppierte History mit Clear-Funktion.
 
 ## Aktueller Stand
 
@@ -26,6 +26,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.2.14
+
+- `c` oder `C` leert die persistierte Run-History atomar und setzt Cursor, Scrollposition und aufgeklappte Gruppen zurück.
+- Aktuelle Runs und die getrennte System-Snapshot-History werden nicht gelöscht.
 
 ## Neu in 2.2.13
 
