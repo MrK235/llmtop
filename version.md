@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.18 — 02.11.2026
+
+- Fettdarstellung der grauen Gruppenzeilen und des schwarzen Cursortexts entfernt, damit Terminals beide Farben nicht ungewollt aufhellen.
+
 ### 2.2.17 — 02.11.2026
 
 - Gruppenzeilen der History auf helles Grau umgestellt und Cursor mit schwarzer Schrift auf cyanfarbenem Hintergrund kontrastreicher dargestellt.

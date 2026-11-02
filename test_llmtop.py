@@ -1,3 +1,4 @@
+import curses
 import json
 import tempfile
 import threading
@@ -6,6 +7,29 @@ from pathlib import Path
 
 import llmtop_metrics as llmtop
 import llmtop_tui
+
+
+def test_history_group_and_cursor_colors_are_not_bold():
+    missing = object()
+    original_colors = getattr(curses, 'COLORS', missing)
+    original_init_pair = curses.init_pair
+    original_color_pair = curses.color_pair
+    try:
+        curses.COLORS = 8
+        curses.init_pair = lambda *_args: None
+        curses.color_pair = lambda number: number << 8
+        colors = llmtop_tui._init_colors()
+        assert colors['group'] == 6 << 8
+        assert colors['cursor'] == 7 << 8
+        assert not colors['group'] & curses.A_BOLD
+        assert not colors['cursor'] & curses.A_BOLD
+    finally:
+        if original_colors is missing:
+            del curses.COLORS
+        else:
+            curses.COLORS = original_colors
+        curses.init_pair = original_init_pair
+        curses.color_pair = original_color_pair
 
 
 def test_run_metric_detail():
@@ -369,6 +393,7 @@ def test_tui_draws_loaded_model():
 
 
 if __name__ == '__main__':
+    test_history_group_and_cursor_colors_are_not_bold()
     test_run_metric_detail()
     test_run_history_defaults_to_hundred()
     test_clear_run_history()

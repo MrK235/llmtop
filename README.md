@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.2.17** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.2.18** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -130,8 +130,9 @@ CPU, RAM, GPU-Auslastung, VRAM und Power verwenden
 pro Terminal dieselbe Balkenbreite; Label, Prozentwert und Detailwert sind
 spaltenweise ausgerichtet. Die Farbsyntax ist global: Struktur (Überschriften,
 Labels und Rahmen) ist Cyan, Auslastungs- und Temperaturstatus Grün/Gelb/Rot,
-Sekundärinfos gedimmt. History-Gruppen verwenden ein helles Grau; die aktive
-Cursorzeile erhält für besseren Kontrast schwarze Schrift auf Cyan. Im
+Sekundärinfos gedimmt. History-Gruppen verwenden neutrales Grau ohne
+Fettdarstellung; die aktive Cursorzeile erhält schwarze Schrift auf Cyan,
+ebenfalls ohne Fettdarstellung, damit Schwarz nicht zu Hellgrau aufgehellt wird. Im
 Ollama-Speicherbalken bedeuten die Farben explizit
 den Offload-Grad der GPU/VRAM-Anzeige: Grün oberhalb 55 %, Gelb bei 45–55 %
 und Rot unterhalb 45 % GPU-Anteil. CPU/RAM bleibt gedimmt grau. Beide Anteile

@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.17** · Stand 02.11.2026 · Status: Kontrastreiche History-Gruppen und Cursoranzeige.
+**Version 2.2.18** · Stand 02.11.2026 · Status: Neutrale Gruppenfarbe und schwarzer Cursortext.
 
 ## Aktueller Stand
 
@@ -26,6 +26,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Korrektur in 2.2.18
+
+- Fettdarstellung aus Gruppen- und Cursorfarbe entfernt: Gruppen erscheinen weniger hell, Cursortext bleibt tatsächlich schwarz auf Cyan.
+- Ohne Farbsupport verwendet der Cursor weiterhin inverse Darstellung, aber nicht mehr fett.
 
 ## Neu in 2.2.17
 
