@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.14** · Stand 02.11.2026 · Status: Gruppierte History mit Clear-Funktion.
+**Version 2.2.15** · Stand 02.11.2026 · Status: Eingerückte Untereinträge in History-Gruppen.
 
 ## Aktueller Stand
 
@@ -26,6 +26,10 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.2.15
+
+- In aufgeklappten History-Gruppen wird ausschließlich die Quelle der einzelnen Runs eingerückt; alle anderen Tabellenspalten bleiben ausgerichtet.
 
 ## Neu in 2.2.14
 

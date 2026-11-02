@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.2.14** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.2.15** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -173,6 +173,8 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   vor der Browser-`session_id`, damit unterschiedliche Chats nicht gemeinsam
   gruppiert werden. Die Gruppenzeile enthält die summierten Ergebniswerte;
   aufgeklappte Gruppen zeigen alle enthaltenen Runs in der bestehenden Tabelle.
+  Bei diesen Unterzeilen ist ausschließlich das Feld **Quelle** eingerückt,
+  damit die Zugehörigkeit zur übergeordneten Gruppe sichtbar bleibt.
 * **Kopfbereich**: vierzeiliges, optisch quadratisches Terminal-Logo mit
   Prompt und LLM-Kennung sowie zwei freien Spalten zum Textblock. **LLM Terminal
   Monitor** ist stets mittig in der ersten Zeile platziert; `llmtop <VERSION>`

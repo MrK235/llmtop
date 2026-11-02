@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.15 — 02.11.2026
+
+- Quellenfeld einzelner Runs in aufgeklappten History-Gruppen eingerückt, ohne die übrigen Spalten zu verschieben.
+
 ### 2.2.14 — 02.11.2026
 
 - TUI-Taste `c`/`C` zum atomaren Leeren der Run-History ergänzt; Cursor- und Gruppenzustand werden dabei zurückgesetzt.

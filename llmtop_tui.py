@@ -118,6 +118,13 @@ def aggregate_history_group(group):
     return aggregate
 
 
+def indented_history_run(run):
+    """Rückt ausschließlich die Quelle eines untergeordneten History-Runs ein."""
+    child = dict(run)
+    child["_source_label"] = "  " + source_label(run.get("source"), run.get("provider"))
+    return child
+
+
 def build_history_groups(sorted_runs):
     """Baut Gruppen in der Reihenfolge ihres ersten sortierten History-Runs."""
     groups = {}
@@ -380,7 +387,9 @@ def _draw(scr, st, host, interval):
         items = history_items
         groups = build_history_groups(sorted_runs)
         aggregate_runs = [group["aggregate"] for group in groups if group["grouped"]]
-        columns = columns or table_columns(sorted_runs + aggregate_runs, history_cell)
+        child_runs = [indented_history_run(run) for group in groups if group["grouped"]
+                      for run in group["runs"]]
+        columns = columns or table_columns(sorted_runs + aggregate_runs + child_runs, history_cell)
         total = len(sorted_runs)
         group_count = len(groups)
         data_rows = max(1, max_rows - 2)
@@ -412,7 +421,8 @@ def _draw(scr, st, host, interval):
                 run = dict(group["aggregate"])
                 run["_source_label"] = f"{marker} {run['_source_label']}"
             else:
-                run = item["run"]
+                run = (indented_history_run(item["run"])
+                       if item.get("grouped") else item["run"])
             cells = []
             for name, width in columns:
                 text = history_cell(run, name)
@@ -644,9 +654,12 @@ def _draw(scr, st, host, interval):
     # Beide Tabellen teilen eine Breitenberechnung, damit aktuelle Runs und
     # History unabhängig vom sichtbaren Ausschnitt exakt untereinander stehen.
     sorted_history = sort_run_history(runs, st["history_sort"], st["history_desc"])
-    history_aggregates = [group["aggregate"] for group in build_history_groups(sorted_history)
-                          if group["grouped"]]
-    columns = table_columns(runs + history_aggregates + grouped_runs, current_run_cell)
+    history_groups = build_history_groups(sorted_history)
+    history_aggregates = [group["aggregate"] for group in history_groups if group["grouped"]]
+    history_children = [indented_history_run(run) for group in history_groups if group["grouped"]
+                        for run in group["runs"]]
+    columns = table_columns(runs + history_aggregates + history_children + grouped_runs,
+                            current_run_cell)
     total_run_rows = max(3, min(12, h - row - history_rows - 2))
     visible_runs = max(1, total_run_rows - 1 - len(groups))
     max_run_offset = max(0, len(grouped_runs) - visible_runs)
