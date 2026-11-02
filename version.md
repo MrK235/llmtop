@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.11 — 02.11.2026
+
+- Pi-Session-IDs werden zusätzlich aus Session-Header oder Sessiondatei ermittelt, damit neue Pi-Runs auch bei älteren Laufzeitobjekten quellenintern gruppiert werden.
+
 ### 2.2.10 — 02.11.2026
 
 - Run-History quellengetrennt nach Session-, Chat- oder Message-ID gruppiert und standardmäßig eingeklappt.

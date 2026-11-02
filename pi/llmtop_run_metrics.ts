@@ -1,4 +1,4 @@
-/* llmtop 2.2.9 – globale Pi-Erweiterung für datensparsame Run-Metriken.
+/* llmtop 2.2.11 – globale Pi-Erweiterung für datensparsame Run-Metriken.
  * Installation: nach ~/.pi/agent/extensions/ kopieren und Pi neu starten oder /reload.
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -52,7 +52,14 @@ function optionalText(value: unknown): string | undefined {
 
 function sessionId(sessionManager: any): string | undefined {
   try {
-    return optionalText(sessionManager?.getSessionId?.());
+    const direct = optionalText(sessionManager?.getSessionId?.());
+    if (direct) return direct;
+    const header = sessionManager?.getHeader?.();
+    const headerId = optionalText(header?.id);
+    if (headerId) return headerId;
+    const sessionFile = optionalText(sessionManager?.getSessionFile?.());
+    const match = sessionFile?.match(/_([A-Za-z0-9][A-Za-z0-9._-]*)\.jsonl$/);
+    return match?.[1];
   } catch {
     return undefined;
   }

@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.10** · Stand 02.11.2026 · Status: Gruppierte Run-History mit Cursor-Navigation.
+**Version 2.2.11** · Stand 02.11.2026 · Status: Gruppierte Run-History mit robuster Pi-Session-ID.
 
 ## Aktueller Stand
 
@@ -26,6 +26,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.2.11
+
+- Der Pi-Adapter übernimmt die Session-ID auch bei älteren Session-Manager-Objekten zuverlässig aus Session-Header oder Sessiondatei; neue Pi-Runs werden dadurch tatsächlich gruppierbar.
+- Bereits gespeicherte Runs ohne Identitätsfeld bleiben absichtlich einzelne Runs; nach dem Adapter-Update ist für laufende Pi-Prozesse einmal `/reload` erforderlich.
 
 ## Neu in 2.2.10
 

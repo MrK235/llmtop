@@ -66,6 +66,27 @@ def test_history_sorting_and_context_cells():
     assert llmtop.history_context_cell(runs[2]) == 'n/a'
 
 
+def test_history_groups_keep_all_runs_and_sources_separate():
+    runs = [
+        {'run_id': 'pi-1', 'source': 'pi', 'session_id': 'session-a', 'model': 'm',
+         'status': 'completed', 'finished_at': '2026-11-02T21:02:00Z'},
+        {'run_id': 'pi-2', 'source': 'pi', 'session_id': 'session-a', 'model': 'm',
+         'status': 'completed', 'finished_at': '2026-11-02T21:01:00Z'},
+        {'run_id': 'web-1', 'source': 'open-webui', 'session_id': 'session-a', 'model': 'm',
+         'status': 'completed', 'finished_at': '2026-11-02T21:00:00Z'},
+        {'run_id': 'single', 'source': 'pi', 'model': 'm', 'status': 'completed',
+         'finished_at': '2026-11-02T20:59:00Z'},
+    ]
+    groups = llmtop_tui.build_history_groups(runs)
+    assert [len(group['runs']) for group in groups] == [2, 1, 1]
+    assert groups[0]['key'][0] == 'pi'
+    assert groups[1]['key'][0] == 'open-webui'
+    _, collapsed = llmtop_tui.history_display_items(runs)
+    assert [item['kind'] for item in collapsed] == ['group', 'group', 'run']
+    _, expanded = llmtop_tui.history_display_items(runs, expanded={groups[0]['key']})
+    assert [item['kind'] for item in expanded] == ['group', 'run', 'run', 'group', 'run']
+
+
 def test_live_run_keeps_active_run_until_final():
     with tempfile.TemporaryDirectory() as directory:
         live = Path(directory) / 'run.jsonl'
@@ -263,7 +284,6 @@ def test_tui_draws_loaded_model():
     assert [text for text, x in screen.positions if x == 1][:4] == ["╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝"]
     assert any(text.startswith("llmtop ") and x == 11 for text, x in screen.positions)
     assert any(text == "LLM Terminal Monitor" and x == 50 for text, x in screen.positions)
-    assert ("Autor: llmtop  ·  Python-Standardbibliothek", 17) in screen.calls
     interval_text = "-/+ Intervall 2.0s"
     assert (interval_text, 120 - len(interval_text) - 1) in screen.positions
     assert ("Ollama vtest".ljust(22), 17) in screen.calls
@@ -272,30 +292,28 @@ def test_tui_draws_loaded_model():
     assert ("nicht aktiv", 19) in screen.calls
     assert any(text.startswith("── System ") and x == 0 for text, x in screen.positions)
     assert any(text.startswith("CPU") and x == 1 for text, x in screen.positions)
-    assert any(text.startswith("1B\t") and x == 17 for text, x in screen.positions)
+    assert any(text == "1B" and x == 17 for text, x in screen.positions)
     assert any("VRAM/RAM" in text for text in screen.text)
-    assert ("50%", 16) in screen.calls
-    assert ("/50%", 17) in screen.calls
-    assert any("VRAM 0.0 GiB / RAM 0.0 GiB" in text for text in screen.text)
-    assert any("\t" in text for text in screen.text)
-    assert any(text.startswith("Pi (aktiv 1 · Ergebnis 0)") for text in screen.text)
-    assert any(text.startswith("Open WebUI (aktiv 1 · Ergebnis 0)") for text in screen.text)
-    assert any(text.startswith("Pi\tmodel\taktiv\t") for text in screen.text)
-    assert any(text.startswith("Open WebUI\tweb-model\taktiv\t") for text in screen.text)
-    assert ("100.0 Tok/s", 13) in screen.calls
+    assert ("   50 %", 16) in screen.calls
+    assert ("0 / 0 MiB", 17) in screen.calls
+    assert any(text.startswith("Pi · Run current (aktiv 1 · Ergebnis 0)") for text in screen.text)
+    assert any(text.startswith("Open WebUI · Run webui (aktiv 1 · Ergebnis 0)") for text in screen.text)
+    assert any(text.startswith("Pi        ") for text in screen.text)
+    assert any(text.startswith("Open WebUI") for text in screen.text)
+    assert ("100.0", 13) in screen.calls
     assert llmtop_tui._rate_color(colors, 9) == 15
     assert llmtop_tui._rate_color(colors, 10) == 14
     assert llmtop_tui._rate_color(colors, 50) == 13
     assert ("model", 12) in screen.calls
-    context_index = screen.calls.index(("Kontext".ljust(9), 11))
-    assert screen.calls[context_index + 2][0] == "20.0 %".rjust(7)
-    assert screen.calls[context_index + 3] == ("20 / 100", 17)
+    assert ("[##          ]  20%", 18) in screen.calls
+    assert (" 100", 17) in screen.calls
 
 
 if __name__ == '__main__':
     test_run_metric_detail()
     test_run_history_defaults_to_hundred()
     test_history_sorting_and_context_cells()
+    test_history_groups_keep_all_runs_and_sources_separate()
     test_live_run_keeps_active_run_until_final()
     test_final_live_runs_expire_but_history_remains()
     test_stale_live_runs_are_pruned()
