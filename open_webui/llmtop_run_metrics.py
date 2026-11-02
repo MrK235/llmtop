@@ -1,7 +1,7 @@
 """
 title: llmtop Run Metrics
 author: llmtop
-version: 2.1.4
+version: 2.2.9
 required_open_webui_version: 0.12.3
 description: Meldet datensparsame Provider-Runmetriken an den lokalen llmtop-Collector.
 """
@@ -113,6 +113,16 @@ class Filter:
         stable = metadata.get("message_id") or metadata.get("chat_id") or metadata.get("session_id") or "api"
         return f"{stable}:{model}"
 
+    @staticmethod
+    def _identity(metadata: Optional[dict]) -> dict[str, str]:
+        metadata = metadata or {}
+        return {name: value.strip()[:120] for name in ("session_id", "chat_id", "message_id")
+                if isinstance(value := metadata.get(name), str) and value.strip()}
+
+    @staticmethod
+    def _identity_event(run: dict) -> dict[str, str]:
+        return {name: run[name] for name in ("session_id", "chat_id", "message_id") if name in run}
+
     def _cleanup(self) -> None:
         cutoff = time.monotonic() - max(30.0, self.valves.stale_seconds)
         for key in list(self._runs):
@@ -164,7 +174,8 @@ class Filter:
         num_ctx = options.get("num_ctx")
         key = self._key(model, __metadata__)
         metadata = __metadata__ or {}
-        has_identity = any(metadata.get(name) for name in ("message_id", "chat_id", "session_id"))
+        identity = self._identity(metadata)
+        has_identity = bool(identity)
         async with self._lock:
             self._cleanup()
             queue = self._runs.get(key)
@@ -188,6 +199,7 @@ class Filter:
                     "last_request": now_mono,
                     "last_heartbeat": now_mono,
                     "provider": provider,
+                    **identity,
                 }
                 self._runs[key].append(run)
                 is_new = True
@@ -206,6 +218,7 @@ class Filter:
             "model": model,
             "started_at": now,
             "updated_at": now,
+            **self._identity_event(run),
             **{key: run[key] for key in ("context_limit", "context_limit_source") if key in run},
         })
         return body
@@ -237,7 +250,8 @@ class Filter:
         await self._send({
             "schema": 2, "event": "updated", "run_id": run["run_id"],
             "source": "open-webui", "provider": run.get("provider", "unknown"),
-            "model": run["model"], "started_at": run["started_at"], "updated_at": now, **changed,
+            "model": run["model"], "started_at": run["started_at"], "updated_at": now,
+            **self._identity_event(run), **changed,
         })
 
     async def _heartbeat(self, model: str, metadata: Optional[dict]) -> None:
@@ -254,6 +268,7 @@ class Filter:
             "schema": 2, "event": "updated", "run_id": run["run_id"],
             "source": "open-webui", "provider": run.get("provider", "unknown"),
             "model": run["model"], "started_at": run["started_at"], "updated_at": now,
+            **self._identity_event(run),
         })
 
     async def _complete(self, model: str, metadata: Optional[dict], metrics: Optional[dict]) -> None:
@@ -283,6 +298,7 @@ class Filter:
             "started_at": run["started_at"],
             "updated_at": now,
             "finished_at": now,
+            **self._identity_event(run),
             **{key: run[key] for key in ("context_limit", "context_limit_source") if key in run},
         }
         if metrics:

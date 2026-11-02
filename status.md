@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.8** · Stand 01.11.2026 · Status: Kontext-Prozentwerte stehen hinter dem Balken.
+**Version 2.2.9** · Stand 02.11.2026 · Status: Run-Identitäten für Pi und Open WebUI werden erfasst.
 
 ## Aktueller Stand
 
@@ -26,6 +26,12 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.2.9
+
+- Schema-2-Runs speichern optional `session_id`, `chat_id` und `message_id`.
+- Pi überträgt die stabile Session-ID; Open WebUI überträgt die vorhandenen Metadaten-IDs.
+- Aktuelle Runs werden anhand vorhandener Session-/Chat-IDs gruppiert und mit einer kurzen Kennung wiedererkennbar dargestellt.
 
 ## Neu in 2.2.8
 

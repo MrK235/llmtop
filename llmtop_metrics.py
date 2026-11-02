@@ -96,6 +96,10 @@ def normalize_run(run, final=False):
            "model": run["model"], "status": status}
     if isinstance(run.get("source_run_id"), str) and run["source_run_id"]:
         out["source_run_id"] = run["source_run_id"]
+    for key in ("session_id", "chat_id", "message_id"):
+        value = run.get(key)
+        if isinstance(value, str) and value.strip():
+            out[key] = value.strip()[:120]
     for key in ("started_at", "updated_at", "finished_at"):
         if _parse_time(run.get(key)):
             out[key] = run[key]
@@ -350,6 +354,36 @@ def source_label(source, provider=None):
     label = {"pi": "Pi", "open-webui": "Open WebUI", "ollama-cli": "Ollama CLI",
              "legacy": "Legacy"}.get(source, source or "?")
     return f"{label}/{provider}" if provider else label
+
+
+RUN_IDENTITY_FIELDS = ("session_id", "chat_id", "message_id")
+RUN_IDENTITY_LABELS = {"session_id": "Session", "chat_id": "Chat", "message_id": "Nachricht"}
+
+
+def run_identity(run):
+    """Liefert die stärkste vorhandene externe Identität eines Runs."""
+    for field in RUN_IDENTITY_FIELDS:
+        value = run.get(field) if isinstance(run, dict) else None
+        if isinstance(value, str) and value:
+            return field, value
+    return None, None
+
+
+def run_group_key(run):
+    """Liefert eine quelleninterne Gruppierungskennung ohne Identitäten zu raten."""
+    field, value = run_identity(run)
+    if field and value:
+        return field, value
+    return "run_id", str(run.get("run_id", ""))
+
+
+def run_identity_label(run):
+    """Liefert eine kurze, nicht-invasive Kennung für die Live-Anzeige."""
+    field, value = run_identity(run)
+    if field and value:
+        return f"{RUN_IDENTITY_LABELS[field]} {value[:8]}"
+    run_id = str(run.get("run_id", "?")) if isinstance(run, dict) else "?"
+    return f"Run {run_id[:8]}"
 
 
 def run_metric_detail(run):

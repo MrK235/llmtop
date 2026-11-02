@@ -13,7 +13,8 @@ from llmtop_metrics import (
     DEFAULT_RUN_HISTORY_LIMIT, HISTORY_COLUMNS, CollectorService, _parse_time, _token_value,
     backfill_context_limits, compact_tokens, context_values,
     history_header_label, load_run_events, load_run_history, model_for_run,
-    run_metric_detail, snapshot_record, sort_run_history, source_label, token_rate, total_tokens,
+    run_group_key, run_identity_label, run_metric_detail, snapshot_record, sort_run_history,
+    source_label, token_rate, total_tokens,
     write_history,
 )
 from llmtop_sources import (
@@ -515,15 +516,22 @@ def _draw(scr, st, host, interval):
                            if run.get("source") not in sources}))
     groups = []
     for source in sources:
-        source_runs = [run for run in active_runs if run.get("source") == source]
+        source_runs = sorted((run for run in active_runs if run.get("source") == source),
+                             key=run_sort_key, reverse=True)
         if not source_runs:
             continue
-        running = sorted((run for run in source_runs if run.get("status") not in final_statuses), key=run_sort_key)
-        finished = sorted((run for run in source_runs if run.get("status") in final_statuses), key=run_sort_key)
-        groups.append((source, running, finished))
+        identity_groups = {}
+        for run in source_runs:
+            identity_groups.setdefault(run_group_key(run), []).append(run)
+        for identity_runs in identity_groups.values():
+            running = sorted((run for run in identity_runs
+                              if run.get("status") not in final_statuses), key=run_sort_key)
+            finished = sorted((run for run in identity_runs
+                              if run.get("status") in final_statuses), key=run_sort_key)
+            groups.append((source, identity_runs[0], running, finished))
     row = section(row, "Aktuelle Runs")
-    grouped_runs = ([run for _source, running, _finished in groups for run in running] +
-                    [run for _source, _running, finished in groups for run in finished])
+    grouped_runs = ([run for _source, _identity, running, _finished in groups for run in running] +
+                    [run for _source, _identity, _running, finished in groups for run in finished])
     # Beide Tabellen teilen eine Breitenberechnung, damit aktuelle Runs und
     # History unabhängig vom sichtbaren Ausschnitt exakt untereinander stehen.
     columns = table_columns(runs + grouped_runs, current_run_cell)
@@ -538,13 +546,12 @@ def _draw(scr, st, host, interval):
             _add(scr, row, offset, history_header_label(name, st["history_sort"], st["history_desc"]),
                  colors["structure"])
         row += 1
-        visible_sources = [source for source, running, finished in groups
-                           if any(run in visible for run in running + finished)]
-        for source in visible_sources:
-            source_visible = [run for run in visible if run.get("source") == source]
-            source_all = next((item for item in groups if item[0] == source), None)
-            running, finished = source_all[1], source_all[2]
-            _add(scr, row, 0, f"{source_label(source)} (aktiv {len(running)} · Ergebnis {len(finished)})",
+        visible_groups = [(source, identity, running, finished) for source, identity, running, finished in groups
+                          if any(run in visible for run in running + finished)]
+        for source, identity, running, finished in visible_groups:
+            source_visible = [run for run in visible if run in running + finished]
+            group_label = f"{source_label(source)} · {run_identity_label(identity)}"
+            _add(scr, row, 0, f"{group_label} (aktiv {len(running)} · Ergebnis {len(finished)})",
                  colors["structure"])
             row += 1
             for run in source_visible:

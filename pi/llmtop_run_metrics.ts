@@ -1,4 +1,4 @@
-/* llmtop 2.1.5 – globale Pi-Erweiterung für datensparsame Run-Metriken.
+/* llmtop 2.2.9 – globale Pi-Erweiterung für datensparsame Run-Metriken.
  * Installation: nach ~/.pi/agent/extensions/ kopieren und Pi neu starten oder /reload.
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -12,6 +12,7 @@ type Run = {
   model: string;
   provider: string;
   started_at: string;
+  session_id?: string;
   context_limit?: number;
   metrics: Record<string, number>;
   context_reader?: () => number | undefined;
@@ -43,6 +44,18 @@ function now(): string {
 
 function text(value: unknown, fallback: string): string {
   return typeof value === "string" && value ? value.slice(0, 120) : fallback;
+}
+
+function optionalText(value: unknown): string | undefined {
+  return typeof value === "string" && value ? value.slice(0, 120) : undefined;
+}
+
+function sessionId(sessionManager: any): string | undefined {
+  try {
+    return optionalText(sessionManager?.getSessionId?.());
+  } catch {
+    return undefined;
+  }
 }
 
 function number(value: unknown): number | undefined {
@@ -175,11 +188,13 @@ export default function (pi: ExtensionAPI) {
     // Ein vorheriger, nicht sauber beendeter Agentenlauf darf nicht verwaisen.
     finish("cancelled");
     const model = ctx.model as any;
+    const currentSessionId = sessionId(ctx.sessionManager);
     const run: Run = {
       run_id: randomUUID(),
       model: text(model?.id, "unknown"),
       provider: text(model?.provider, "unknown"),
       started_at: now(),
+      ...(currentSessionId ? { session_id: currentSessionId } : {}),
       context_limit: number(model?.contextWindow ?? model?.context_window),
       metrics: {},
       context_reader: () => sessionContextTokens(ctx.sessionManager),

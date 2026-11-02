@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.2.9 — 02.11.2026
+
+- Optionale `session_id`, `chat_id` und `message_id` in Schema-2-Runs aufgenommen.
+- Pi-Session-IDs und Open-WebUI-Metadaten an Live- und History-Runs weitergegeben; aktuelle Runs nach vorhandener Identität gruppiert.
+
 ### 2.2.8 — 01.11.2026
 
 - Kontextanzeige in aktuellen Runs und History auf Balken, Prozentwert und Kontextlimit in dieser Reihenfolge umgestellt.
