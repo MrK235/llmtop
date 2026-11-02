@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.23 — 02.11.2026
+
+- Die Quellen-Spalte wird bei knapper Tabellenbreite zuletzt gekürzt und erhält dadurch möglichst die vollständige Gruppenkennung.
+
 ### 2.2.22 — 02.11.2026
 
 - Der erste ID-Block der Gruppenkennung wird vollständig bis zum ersten Bindestrich angezeigt.

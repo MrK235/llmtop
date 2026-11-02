@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.22** · Stand 02.11.2026 · Status: Vollständige erste ID-Blöcke.
+**Version 2.2.23** · Stand 02.11.2026 · Status: Quellenkennung erhält bevorzugt Tabellenbreite.
 
 ## Aktueller Stand
 

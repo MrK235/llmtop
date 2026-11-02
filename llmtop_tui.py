@@ -331,14 +331,19 @@ def _draw(scr, st, host, interval):
             widths.append(max(len(header), *(len(value) for value in values), 1))
 
         # Inhalt wird nur dann gekürzt, wenn er nicht ins Terminal passt.
-        # Die Mindestbreite schützt Überschriften und die Kontextkennung.
+        # Die Mindestbreite schützt Überschriften und die Kontextkennung. Die
+        # Quellenkennung wird zuletzt gekürzt, damit ihr verfügbarer Platz
+        # möglichst vollständig erhalten bleibt.
         minimums = [max(len(history_header_label(name, st["history_sort"], st["history_desc"])),
                         9 if name == "kontext" else 1)
                     for name in names]
         overflow = sum(widths) + len(widths) - 1 - max(1, w - 2)
         while overflow > 0:
             candidates = [index for index, width in enumerate(widths)
-                          if width > minimums[index]]
+                          if width > minimums[index] and names[index] != "quelle"]
+            if not candidates:
+                candidates = [index for index, width in enumerate(widths)
+                              if width > minimums[index]]
             if not candidates:
                 break
             index = max(candidates, key=lambda item: widths[item] - minimums[item])
