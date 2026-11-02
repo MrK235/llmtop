@@ -80,6 +80,14 @@ Tests laufen ausschließlich im temp-Verzeichnis: `python` aus `/tmp/pi/...`. Mo
 
 ## 6. Versions- und Git-Management
 
+### GitHub-Nutzung
+- Das private GitHub-Repository ist `git@github.com:MrK235/llmtop.git`.
+- Der Standard-Remote heißt `origin`; der Hauptbranch ist `master`.
+- Der Zugriff erfolgt global über SSH, bevorzugt mit `~/.ssh/github_llmtop_ed25519` und einem entsprechenden `Host github.com`-Eintrag in `~/.ssh/config`.
+- Zugangsdaten, private Schlüssel und Tokens niemals ins Repository übernehmen. GitHub-Zugriff mit `ssh -T git@github.com` prüfen.
+- Änderungen werden erst nach Prüfung committed und anschließend mit `git push` zu `origin/master` übertragen.
+- `backup/` bleibt ein lokaler Arbeitsordner und wird über `.gitignore` ausgeschlossen. `plan/` wird dagegen versioniert und nach Änderungen mit committed.
+
 - Git ist die verbindliche Grundlage für nachvollziehbare Projektstände und Vergleiche zwischen Versionen.
 - Vor Änderungen den Ausgangsstand mit `git status --short`, `git branch --show-current` und passenden Tags prüfen.
 - Nach Änderungen `git diff --check`, einen gezielten `git diff` und die vorgeschriebenen Tests ausführen.
