@@ -157,7 +157,8 @@ zeigt ausschließlich die Ergebniswerte des neuesten abgeschlossenen Runs sowie
 dessen Ausgaberate; Quelle, Kurzkennung, Modell, Status und letzter Abschluss
 bleiben ebenfalls sichtbar. Bei Pi-Sessions und Open-WebUI-Chats wird dafür der
 erste ID-Block ohne die Präfixe `Session` beziehungsweise `Chat` angezeigt. Die
-Quellenspalte erhält bei knapper Breite bevorzugt ihren vollständigen Inhalt. Fehlende Werte werden nur aus demselben
+Quellenspalte erhält bei knapper Breite bevorzugt ihren vollständigen Inhalt;
+der zweistellige Aufklappmarker wird dabei mitgerechnet. Fehlende Werte werden nur aus demselben
 Run eindeutig abgeleitet; unbekannte Werte bleiben `n/a`. Mit dem Cursor lässt sich die
 Gruppe aufklappen und zeigt dann alle einzelnen Runs. Die Persistenz und die
 Begrenzung auf 100 Runs bleiben unverändert. Mit `c` wird ausschließlich die

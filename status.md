@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.23** · Stand 02.11.2026 · Status: Quellenkennung erhält bevorzugt Tabellenbreite.
+**Version 2.2.24** · Stand 02.11.2026 · Status: Aufklappmarker in Quellenbreite berücksichtigt.
 
 ## Aktueller Stand
 

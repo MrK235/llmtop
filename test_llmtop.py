@@ -395,6 +395,14 @@ def test_tui_draws_loaded_model():
                  "schema": 2, "run_id": "history", "source": "pi", "model": "model",
                  "status": "completed", "finished_at": "2030-01-01T00:00:00Z",
                  "prompt_tokens": 2, "output_tokens": 3,
+             }, {
+                 "schema": 2, "run_id": "history-2", "source": "pi", "session_id": "01a19e38-aaaa",
+                 "model": "model", "status": "completed", "finished_at": "2029-01-01T00:00:00Z",
+                 "prompt_tokens": 2, "output_tokens": 3,
+             }, {
+                 "schema": 2, "run_id": "history-3", "source": "pi", "session_id": "01a19e38-aaaa",
+                 "model": "model", "status": "completed", "finished_at": "2028-01-01T00:00:00Z",
+                 "prompt_tokens": 2, "output_tokens": 3,
              }], "history_sort": "zeit", "history_desc": True, "history_offset": 0,
              "ollama": {"ok": True, "version": "test", "error": None, "models": [{
                  "name": "model", "size": 100, "size_vram": 50,
@@ -422,6 +430,7 @@ def test_tui_draws_loaded_model():
     assert any(text.startswith("Pi · Run current (aktiv 1 · Ergebnis 0)") for text in screen.text)
     assert any(text.startswith("Open WebUI · Run webui (aktiv 1 · Ergebnis 0)") for text in screen.text)
     assert any(text.startswith("Pi        ") for text in screen.text)
+    assert any("▸ Pi · 01a19e38" in text for text in screen.text)
     assert any(text.startswith("Open WebUI") for text in screen.text)
     assert ("100.0", 13) in screen.calls
     assert llmtop_tui._rate_color(colors, 9) == 15

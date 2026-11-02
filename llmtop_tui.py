@@ -412,7 +412,11 @@ def _draw(scr, st, host, interval):
         sorted_runs = history_runs
         items = history_items
         groups = build_history_groups(sorted_runs, st["history_sort"], st["history_desc"])
-        aggregate_runs = [group["aggregate"] for group in groups if group["grouped"]]
+        # Der Aufklappmarker wird erst beim Rendern ergänzt; für die
+        # Spaltenberechnung muss er dennoch berücksichtigt werden.
+        aggregate_runs = [dict(group["aggregate"], _source_label="▸ " +
+                               group["aggregate"]["_source_label"])
+                          for group in groups if group["grouped"]]
         child_runs = [indented_history_run(run) for group in groups if group["grouped"]
                       for run in group["runs"]]
         columns = columns or table_columns(sorted_runs + aggregate_runs + child_runs, history_cell)
@@ -681,7 +685,9 @@ def _draw(scr, st, host, interval):
     # History unabhängig vom sichtbaren Ausschnitt exakt untereinander stehen.
     sorted_history = sort_run_history(runs, st["history_sort"], st["history_desc"])
     history_groups = build_history_groups(sorted_history, st["history_sort"], st["history_desc"])
-    history_aggregates = [group["aggregate"] for group in history_groups if group["grouped"]]
+    history_aggregates = [dict(group["aggregate"], _source_label="▸ " +
+                               group["aggregate"]["_source_label"])
+                          for group in history_groups if group["grouped"]]
     history_children = [indented_history_run(run) for group in history_groups if group["grouped"]
                         for run in group["runs"]]
     columns = table_columns(runs + history_aggregates + history_children + grouped_runs,

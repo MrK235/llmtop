@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.24 — 02.11.2026
+
+- Die Breitenberechnung der Quellen-Spalte berücksichtigt nun auch den zweistelligen Aufklappmarker der Gruppenzeile.
+
 ### 2.2.23 — 02.11.2026
 
 - Die Quellen-Spalte wird bei knapper Tabellenbreite zuletzt gekürzt und erhält dadurch möglichst die vollständige Gruppenkennung.
