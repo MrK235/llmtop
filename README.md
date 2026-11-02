@@ -9,7 +9,7 @@
   </p>
 </div>
 
-![llmtop-Beispielansicht](assets/llmtop-screenshot.svg)
+![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
 > **Version 2.2.4** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
