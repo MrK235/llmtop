@@ -332,6 +332,8 @@ def token_rate(run):
     tokens = _token_value(run, "output_tokens")
     duration = _token_value(run, "eval_duration_s")
     if tokens is None or not duration:
+        duration = _token_value(run, "total_duration_s")
+    if tokens is None or not duration:
         duration = _token_value(run, "eval_duration")
     return tokens / duration if tokens is not None and duration else None
 
@@ -339,9 +341,9 @@ def token_rate(run):
 def total_tokens(run):
     prompt = _token_value(run, "prompt_tokens")
     output = _token_value(run, "output_tokens")
-    if prompt is None and output is None:
+    if prompt is None or output is None:
         return None
-    return (prompt or 0) + (output or 0)
+    return prompt + output
 
 
 def compact_tokens(value):

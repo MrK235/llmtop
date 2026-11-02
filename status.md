@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.18** · Stand 02.11.2026 · Status: Neutrale Gruppenfarbe und schwarzer Cursortext.
+**Version 2.2.19** · Stand 02.11.2026 · Status: Gruppen zeigen den neuesten abgeschlossenen Run.
 
 ## Aktueller Stand
 
@@ -53,12 +53,12 @@ Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und Hist
 ## Neu in 2.2.13
 
 - Der Pi-Adapter merkt sich die Session-ID bereits beim `session_start` und überträgt sie bei jedem Collector-Run.
-- Pi-Sessions verwenden dieselbe aggregierte Kopfzeile wie Open-WebUI-Chats: summierte Tokens, Kontext und Dauer, berechnete Rate sowie aufklappbare Einzelruns.
+- Pi-Sessions verwenden dieselbe Kopfzeile wie Open-WebUI-Chats: Werte des neuesten abgeschlossenen Runs, eindeutig abgeleitete Ergänzungen sowie aufklappbare Einzelruns.
 
 ## Neu in 2.2.12
 
 - Open-WebUI-History verwendet `chat_id` vor `session_id`; verschiedene Chats derselben Browser-Session bleiben getrennt.
-- Gruppenzeilen zeigen alle Tabellenspalten und summieren Tokens, Kontext und Dauer über den gesamten Chat; Tok/s wird aus summierter Ausgabe und Auswertungsdauer berechnet.
+- Gruppenzeilen zeigen alle Tabellenspalten des neuesten abgeschlossenen Runs. Fehlende Kontext-, Gesamt- und Ratenwerte werden nur eindeutig aus diesem Run abgeleitet; ältere Runs werden weder summiert noch zur Status- oder Modellbestimmung verwendet.
 - Aufklappen zeigt weiterhin sämtliche einzelnen Runs des Chats.
 
 ## Neu in 2.2.11

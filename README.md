@@ -153,9 +153,10 @@ Sortierdetails. Eine Leerzeile trennt die History von der Statusleiste. Die
 History gruppiert Pi-Runs nach `session_id` und Open-WebUI-Runs vorrangig nach
 `chat_id`; Session und Nachricht dienen dort nur als Fallback. Ohne diese IDs
 bleibt jeder Run einzeln. Gruppen sind zunächst eingeklappt. Ihre Tabellenzeile
-zeigt die summierten Token-, Kontext- und Dauerwerte des gesamten Chats sowie
-die daraus berechnete Ausgaberate; Quelle, Chat-Kurzkennung, Modell, Status und
-letzter Abschluss bleiben ebenfalls sichtbar. Mit dem Cursor lässt sich die
+zeigt ausschließlich die Ergebniswerte des neuesten abgeschlossenen Runs sowie
+dessen Ausgaberate; Quelle, Chat-Kurzkennung, Modell, Status und letzter
+Abschluss bleiben ebenfalls sichtbar. Fehlende Werte werden nur aus demselben
+Run eindeutig abgeleitet; unbekannte Werte bleiben `n/a`. Mit dem Cursor lässt sich die
 Gruppe aufklappen und zeigt dann alle einzelnen Runs. Die Persistenz und die
 Begrenzung auf 100 Runs bleiben unverändert. Mit `c` wird ausschließlich die
 Run-History atomar geleert; aktuelle Runs und System-Snapshots bleiben erhalten.
@@ -172,10 +173,11 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
 
 * **History**: Gruppen aus derselben Pi-Session beziehungsweise demselben
   Open-WebUI-Chat werden kompakt dargestellt. Pi-Session-Gruppen verwenden
-  dieselben summierten Tabellenwerte und dieselbe Aufklappfunktion wie Chats. Open WebUI verwendet `chat_id`
-  vor der Browser-`session_id`, damit unterschiedliche Chats nicht gemeinsam
-  gruppiert werden. Die Gruppenzeile enthält die summierten Ergebniswerte;
-  aufgeklappte Gruppen zeigen alle enthaltenen Runs in der bestehenden Tabelle.
+  dieselbe Aufklappfunktion wie Chats. Die Gruppenzeile repräsentiert den
+  neuesten abgeschlossenen Run; fehlende Werte werden nur eindeutig aus diesem
+  Run abgeleitet. Open WebUI verwendet `chat_id` vor der Browser-`session_id`,
+  damit unterschiedliche Chats nicht gemeinsam gruppiert werden. Aufgeklappte
+  Gruppen zeigen alle enthaltenen Runs in der bestehenden Tabelle.
   Bei diesen Unterzeilen steht ausschließlich das Feld **Quelle** zwei Spalten
   hinter dem Quelltext der Gruppenzeile, damit die Zugehörigkeit sichtbar bleibt.
 * **Kopfbereich**: vierzeiliges, optisch quadratisches Terminal-Logo mit
@@ -260,7 +262,7 @@ Der Installationsbefehl erkennt die private Docker-Gateway-Adresse, setzt die Fi
 
 Der dependency-freie Adapter unter `pi/llmtop_run_metrics.ts` wird beim normalen TUI-Start automatisch nach `~/.pi/agent/extensions/` aktualisiert. Nach einem Update muss eine bereits laufende llmtop-TUI einmal mit `r` neu geladen werden, damit ihr Collector die getrennten Adapterpfade übernimmt. Dabei legt llmtop die Collector-URL und den Token ausschließlich mit Dateimodus `0600` unter `$XDG_STATE_HOME/llmtop/pi-collector.json` (Fallback `~/.local/state/llmtop/`) ab; neue Pi-Prozesse lesen diese private Laufzeitdatei automatisch. Für bereits laufende Pi-Prozesse einmal `/reload` ausführen oder Pi neu starten.
 
-Er fasst alle Modell- und Tool-Folgeturns einer bearbeiteten Pi-Anfrage zu einem Live-Run zusammen. Die aktuelle Session-ID wird beim Pi-Session-Start zwischengespeichert und jedem Run mitgegeben; mehrere Ergebnisse derselben Pi-Session erscheinen dadurch als aufklappbare Gruppe mit Summenwerten. Erst wenn Pi den Agentenlauf als erledigt meldet, wird genau ein Datensatz für dessen finale Antwort in der Run-History gespeichert. Dabei werden Input-/Cache-/Ausgabetoken, Kontextlimit, Gesamtdauer und Ausgaberate übertragen. Der Session-Kontext wird während aktiver Runs aus Pi gelesen und höchstens einmal pro Sekunde als Tokenzahl aktualisiert; bekannte Provider-Usage ergänzt diese Werte. Die Session-ID wird direkt aus dem Pi-Session-Manager übernommen und bei älteren Laufzeitobjekten aus Header oder Sessiondatei ermittelt. Unvollständige Zwischenmeldungen mit `0` überschreiben bereits bekannte Tokenstände nicht. Steht weder Session-Kontext noch Usage bereit, bleiben Tokenwerte bis dahin `n/a`. Er sendet ausschließlich Quelle, Provider, Session-ID, Modell, UUID, Zeit und Nutzungsmetriken. Prompt, Antwort, Tooldaten, Sessionpfade und Credentials bleiben lokal in Pi.
+Er fasst alle Modell- und Tool-Folgeturns einer bearbeiteten Pi-Anfrage zu einem Live-Run zusammen. Die aktuelle Session-ID wird beim Pi-Session-Start zwischengespeichert und jedem Run mitgegeben; mehrere Ergebnisse derselben Pi-Session erscheinen dadurch als aufklappbare Gruppe. Die eingeklappte Gruppe zeigt den neuesten abgeschlossenen Run; erst wenn Pi den Agentenlauf als erledigt meldet, wird genau ein Datensatz für dessen finale Antwort in der Run-History gespeichert. Dabei werden Input-/Cache-/Ausgabetoken, Kontextlimit, Gesamtdauer und Ausgaberate übertragen. Der Session-Kontext wird während aktiver Runs aus Pi gelesen und höchstens einmal pro Sekunde als Tokenzahl aktualisiert; bekannte Provider-Usage ergänzt diese Werte. Die Session-ID wird direkt aus dem Pi-Session-Manager übernommen und bei älteren Laufzeitobjekten aus Header oder Sessiondatei ermittelt. Unvollständige Zwischenmeldungen mit `0` überschreiben bereits bekannte Tokenstände nicht. Steht weder Session-Kontext noch Usage bereit, bleiben Tokenwerte bis dahin `n/a`. Er sendet ausschließlich Quelle, Provider, Session-ID, Modell, UUID, Zeit und Nutzungsmetriken. Prompt, Antwort, Tooldaten, Sessionpfade und Credentials bleiben lokal in Pi.
 
 ## Bekannte Grenzen
 

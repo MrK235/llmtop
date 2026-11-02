@@ -84,32 +84,37 @@ def history_group_key(run):
     return (run.get("source", "legacy"), run_group_key(run))
 
 
+def _history_time(value):
+    return _parse_time(value) or datetime.min.replace(tzinfo=datetime.now().astimezone().tzinfo)
+
+
+def _latest_history_run(runs):
+    """Wählt den neuesten Abschluss mit stabilen Zeit- und ID-Tie-Breakern."""
+    return max(runs, key=lambda run: (_history_time(run.get("finished_at")),
+                                      _history_time(run.get("updated_at")),
+                                      _history_time(run.get("started_at")),
+                                      str(run.get("run_id", ""))))
+
+
 def aggregate_history_group(group):
-    """Fasst die sichtbaren Metriken eines Chats oder einer Session zusammen."""
-    runs = group["runs"]
-    latest = max(runs, key=lambda run: _parse_time(run.get("finished_at")) or
-                 datetime.min.replace(tzinfo=datetime.now().astimezone().tzinfo))
+    """Erzeugt die Gruppenzeile ausschließlich aus dem neuesten finalen Run."""
+    latest = _latest_history_run(group["runs"])
     aggregate = dict(latest)
     aggregate["run_id"] = f"group:{group['key']}"
-    aggregate["finished_at"] = latest.get("finished_at")
-    models = {str(run.get("model", "?")) for run in runs}
-    model_label = next(iter(models)) if len(models) == 1 else f"{len(models)} Modelle"
-    aggregate["model"] = f"{model_label} ×{len(runs)}"
-    providers = {run.get("provider") for run in runs if run.get("provider")}
-    if len(providers) != 1:
-        aggregate.pop("provider", None)
-    statuses = {run.get("status") for run in runs}
-    aggregate["status"] = ("error" if "error" in statuses else
-                           "cancelled" if "cancelled" in statuses else
-                           "completed" if statuses == {"completed"} else "running")
-    for key in ("prompt_tokens", "output_tokens", "context_tokens", "context_limit",
-                "eval_duration_s", "total_duration_s"):
-        values = [_token_value(run, key) for run in runs]
-        present = [value for value in values if value is not None]
-        if present:
-            aggregate[key] = sum(present)
-        else:
-            aggregate.pop(key, None)
+    aggregate["model"] = f"{latest.get('model', '?')} ×{len(group['runs'])}"
+
+    # Nur Werte desselben repräsentativen Runs dürfen normalisiert werden.
+    if (aggregate.get("context_tokens") is None and
+            _token_value(aggregate, "prompt_tokens") is not None and
+            _token_value(aggregate, "output_tokens") is not None):
+        aggregate["context_tokens"] = (aggregate["prompt_tokens"] +
+                                        aggregate["output_tokens"])
+    if aggregate.get("total_duration_s") is None:
+        started = _parse_time(aggregate.get("started_at"))
+        finished = _parse_time(aggregate.get("finished_at"))
+        if started and finished and finished >= started:
+            aggregate["total_duration_s"] = (finished - started).total_seconds()
+
     source = source_label(aggregate.get("source"), aggregate.get("provider"))
     if aggregate.get("source") == "open-webui":
         source = source.replace("Open WebUI", "WebUI", 1)
@@ -127,8 +132,8 @@ def indented_history_run(run):
     return child
 
 
-def build_history_groups(sorted_runs):
-    """Baut Gruppen in der Reihenfolge ihres ersten sortierten History-Runs."""
+def build_history_groups(sorted_runs, column="zeit", descending=True):
+    """Baut Gruppen nach den sichtbaren Werten ihrer neuesten Runs."""
     groups = {}
     for run in sorted_runs:
         key = history_group_key(run)
@@ -140,7 +145,12 @@ def build_history_groups(sorted_runs):
         group["grouped"] = len(group["runs"]) > 1 or field != "run_id"
         group["aggregate"] = aggregate_history_group(group)
         result.append(group)
-    return result
+    # Die Kopfzeilen und ihre Sortierung verwenden dieselben repräsentativen
+    # Werte. Die Reihenfolge der Einzelruns innerhalb einer Gruppe bleibt dabei
+    # unverändert.
+    aggregates = sort_run_history([group["aggregate"] for group in result], column, descending)
+    by_id = {id(group["aggregate"]): group for group in result}
+    return [by_id[id(aggregate)] for aggregate in aggregates]
 
 
 def history_display_items(runs, column="zeit", descending=True, expanded=()):
@@ -148,7 +158,7 @@ def history_display_items(runs, column="zeit", descending=True, expanded=()):
     sorted_runs = sort_run_history(runs, column, descending)
     expanded = set(expanded or ())
     items = []
-    for group in build_history_groups(sorted_runs):
+    for group in build_history_groups(sorted_runs, column, descending):
         group_key = group["key"]
         if group["grouped"]:
             items.append({"kind": "group", "key": ("group", group_key), "group": group})
@@ -165,7 +175,9 @@ def normalize_history_state(state):
     sorted_runs, items = history_display_items(
         state.get("run_history", []), state.get("history_sort", "zeit"),
         state.get("history_desc", True), state.get("history_expanded", ()))
-    group_keys = {group["key"] for group in build_history_groups(sorted_runs) if group["grouped"]}
+    group_keys = {group["key"] for group in build_history_groups(
+        sorted_runs, state.get("history_sort", "zeit"), state.get("history_desc", True))
+        if group["grouped"]}
     state["history_expanded"] = set(state.get("history_expanded", ())) & group_keys
     item_keys = [item["key"] for item in items]
     if state.get("history_cursor") not in item_keys:
@@ -394,7 +406,7 @@ def _draw(scr, st, host, interval):
     def draw_history_table(row, max_rows, columns=None):
         sorted_runs = history_runs
         items = history_items
-        groups = build_history_groups(sorted_runs)
+        groups = build_history_groups(sorted_runs, st["history_sort"], st["history_desc"])
         aggregate_runs = [group["aggregate"] for group in groups if group["grouped"]]
         child_runs = [indented_history_run(run) for group in groups if group["grouped"]
                       for run in group["runs"]]
@@ -663,7 +675,7 @@ def _draw(scr, st, host, interval):
     # Beide Tabellen teilen eine Breitenberechnung, damit aktuelle Runs und
     # History unabhängig vom sichtbaren Ausschnitt exakt untereinander stehen.
     sorted_history = sort_run_history(runs, st["history_sort"], st["history_desc"])
-    history_groups = build_history_groups(sorted_history)
+    history_groups = build_history_groups(sorted_history, st["history_sort"], st["history_desc"])
     history_aggregates = [group["aggregate"] for group in history_groups if group["grouped"]]
     history_children = [indented_history_run(run) for group in history_groups if group["grouped"]
                         for run in group["runs"]]

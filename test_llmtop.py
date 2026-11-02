@@ -39,7 +39,8 @@ def test_run_metric_detail():
     assert text == 'Tokens: 1.2k (Prompt 1.0k, Ausgabe 250) · 50.0 Tok/s'
     text = llmtop.run_metric_detail({'prompt_tokens': 10, 'output_tokens': 3})
     assert text == 'Tokens: 13 (Prompt 10, Ausgabe 3) · Tok/s: n/a'
-    assert 'Prompt n/a' in llmtop.run_metric_detail({'output_tokens': 3})
+    assert llmtop.run_metric_detail({'output_tokens': 3}) == 'Tokens: warten auf Provider · Tok/s: n/a'
+    assert llmtop.total_tokens({'output_tokens': 3}) is None
 
 
 def test_run_history_defaults_to_hundred():
@@ -134,24 +135,24 @@ def test_history_groups_keep_all_runs_and_sources_separate():
     assert [len(group['runs']) for group in groups] == [2, 2, 1, 1]
     assert groups[0]['key'] == ('pi', ('session_id', 'session-a'))
     pi_aggregate = groups[0]['aggregate']
-    assert pi_aggregate['prompt_tokens'] == 900
-    assert pi_aggregate['output_tokens'] == 100
-    assert pi_aggregate['context_tokens'] == 1000
-    assert pi_aggregate['context_limit'] == 4000
-    assert pi_aggregate['eval_duration_s'] == 10
-    assert pi_aggregate['total_duration_s'] == 14
+    assert pi_aggregate['prompt_tokens'] == 400
+    assert pi_aggregate['output_tokens'] == 40
+    assert pi_aggregate['context_tokens'] == 440
+    assert pi_aggregate['context_limit'] == 2000
+    assert pi_aggregate['eval_duration_s'] == 4
+    assert pi_aggregate['total_duration_s'] == 6
     assert llmtop.token_rate(pi_aggregate) == 10
     assert pi_aggregate['_source_label'] == 'Pi · Session session-'
     assert pi_aggregate['model'] == 'm ×2'
     assert groups[1]['key'] == ('open-webui', ('chat_id', 'chat-a'))
     assert groups[2]['key'] == ('open-webui', ('chat_id', 'chat-b'))
     aggregate = groups[1]['aggregate']
-    assert aggregate['prompt_tokens'] == 300
-    assert aggregate['output_tokens'] == 50
-    assert aggregate['context_tokens'] == 350
-    assert aggregate['context_limit'] == 2000
-    assert aggregate['eval_duration_s'] == 5
-    assert aggregate['total_duration_s'] == 7
+    assert aggregate['prompt_tokens'] == 100
+    assert aggregate['output_tokens'] == 20
+    assert aggregate['context_tokens'] == 120
+    assert aggregate['context_limit'] == 1000
+    assert aggregate['eval_duration_s'] == 2
+    assert aggregate['total_duration_s'] == 3
     assert llmtop.token_rate(aggregate) == 10
     assert aggregate['_source_label'] == 'WebUI · Chat chat-a'
     assert aggregate['model'] == 'm ×2'
@@ -164,6 +165,46 @@ def test_history_groups_keep_all_runs_and_sources_separate():
     _, expanded = llmtop_tui.history_display_items(runs, expanded={groups[1]['key']})
     assert [item['kind'] for item in expanded] == [
         'group', 'group', 'run', 'run', 'group', 'run']
+
+
+def test_history_group_uses_latest_run_without_cross_run_fallbacks():
+    runs = [
+        {'run_id': 'old', 'source': 'pi', 'session_id': 's', 'model': 'old-model',
+         'provider': 'old', 'status': 'error', 'finished_at': '2026-11-02T20:00:00Z',
+         'prompt_tokens': 900, 'output_tokens': 100, 'context_tokens': 1000,
+         'context_limit': 8192, 'total_duration_s': 30},
+        {'run_id': 'new', 'source': 'pi', 'session_id': 's', 'model': 'new-model',
+         'provider': 'new', 'status': 'completed', 'started_at': '2026-11-02T21:00:00Z',
+         'finished_at': '2026-11-02T21:00:05Z', 'prompt_tokens': 4,
+         'output_tokens': 6},
+    ]
+    group = llmtop_tui.build_history_groups(runs)[0]
+    aggregate = group['aggregate']
+    assert aggregate['status'] == 'completed'
+    assert aggregate['model'] == 'new-model ×2'
+    assert aggregate['provider'] == 'new'
+    assert aggregate['context_tokens'] == 10
+    assert aggregate['total_duration_s'] == 5
+    assert llmtop.total_tokens(aggregate) == 10
+    assert llmtop.token_rate(aggregate) == 1.2
+
+    incomplete = [dict(runs[1], run_id='incomplete', prompt_tokens=4,
+                       output_tokens=None)]
+    incomplete[0].pop('output_tokens')
+    single = llmtop_tui.aggregate_history_group({'key': ('pi', ('run_id', 'incomplete')),
+                                                  'runs': incomplete})
+    assert 'output_tokens' not in single
+    assert llmtop.total_tokens(single) is None
+
+
+def test_history_group_tie_breaks_on_updated_started_and_run_id():
+    base = {'source': 'open-webui', 'chat_id': 'chat', 'model': 'm', 'status': 'completed',
+            'finished_at': '2026-11-02T20:00:00Z'}
+    runs = [dict(base, run_id='a', updated_at='2026-11-02T20:01:00Z', output_tokens=1),
+            dict(base, run_id='b', updated_at='2026-11-02T20:01:00Z', output_tokens=2)]
+    assert llmtop_tui.aggregate_history_group(
+        {'key': ('open-webui', ('chat_id', 'chat')), 'runs': runs})['run_id'].startswith('group:')
+    assert llmtop_tui._latest_history_run(runs)['run_id'] == 'b'
 
 
 def test_live_run_keeps_active_run_until_final():
