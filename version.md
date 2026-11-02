@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.16 — 02.11.2026
+
+- Einrückung der Quellen-Unterzeilen um den Aufklappmarker korrigiert; der Quelltext beginnt jetzt sichtbar zwei Spalten hinter der Gruppenquelle.
+
 ### 2.2.15 — 02.11.2026
 
 - Quellenfeld einzelner Runs in aufgeklappten History-Gruppen eingerückt, ohne die übrigen Spalten zu verschieben.

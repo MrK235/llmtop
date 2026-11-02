@@ -132,7 +132,7 @@ def test_history_groups_keep_all_runs_and_sources_separate():
     assert aggregate['_source_label'] == 'WebUI · Chat chat-a'
     assert aggregate['model'] == 'm ×2'
     child = llmtop_tui.indented_history_run(runs[2])
-    assert child['_source_label'] == '  Open WebUI'
+    assert child['_source_label'] == '    Open WebUI'
     assert child['model'] == runs[2]['model']
     assert '_source_label' not in runs[2]
     _, collapsed = llmtop_tui.history_display_items(runs)

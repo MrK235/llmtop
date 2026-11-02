@@ -121,7 +121,9 @@ def aggregate_history_group(group):
 def indented_history_run(run):
     """Rückt ausschließlich die Quelle eines untergeordneten History-Runs ein."""
     child = dict(run)
-    child["_source_label"] = "  " + source_label(run.get("source"), run.get("provider"))
+    # Die Gruppenzeile beginnt bereits mit dem zweistelligen Aufklappmarker.
+    # Vier Leerzeichen setzen den eigentlichen Quelltext zwei Spalten dahinter.
+    child["_source_label"] = "    " + source_label(run.get("source"), run.get("provider"))
     return child
 
 
