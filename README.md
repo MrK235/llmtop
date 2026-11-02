@@ -32,7 +32,7 @@ Die Version wird im TUI-Kopf, in der ersten Zeile von `--once` und über
 | `version.md` | Versionsschema, Versionsanzeige, Changelog |
 | `pi/llmtop_run_metrics.ts` | optionaler globaler Pi-Adapter für lokale und Cloud-Provider |
 | `assets/llmtop-logo.svg` | Projektlogo im aktuellen TUI-Stil |
-| `assets/llmtop-screenshot.svg` | Beispielansicht der TUI |
+| `assets/llmtop-screenshot.png` | Beispielansicht der TUI |
 | `.gitignore` | lokale Python-Artefakte und Backups ausschließen |
 | `plan/` | akzeptierte Arbeitspläne (Plan-Mode-Artefakte) |
 
