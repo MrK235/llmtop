@@ -143,7 +143,7 @@ def test_history_groups_keep_all_runs_and_sources_separate():
     assert pi_aggregate['eval_duration_s'] == 4
     assert pi_aggregate['total_duration_s'] == 6
     assert llmtop.token_rate(pi_aggregate) == 10
-    assert pi_aggregate['_source_label'] == 'Pi · session-'
+    assert pi_aggregate['_source_label'] == 'Pi · session'
     assert pi_aggregate['model'] == 'm ×2'
     assert groups[1]['key'] == ('open-webui', ('chat_id', 'chat-a'))
     assert groups[2]['key'] == ('open-webui', ('chat_id', 'chat-b'))
@@ -155,7 +155,7 @@ def test_history_groups_keep_all_runs_and_sources_separate():
     assert aggregate['eval_duration_s'] == 2
     assert aggregate['total_duration_s'] == 3
     assert llmtop.token_rate(aggregate) == 10
-    assert aggregate['_source_label'] == 'WebUI · chat-a'
+    assert aggregate['_source_label'] == 'WebUI · chat'
     assert aggregate['model'] == 'm ×2'
     child = llmtop_tui.indented_history_run(runs[2])
     assert child['_source_label'] == '    Open WebUI'

@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.22 — 02.11.2026
+
+- Der erste ID-Block der Gruppenkennung wird vollständig bis zum ersten Bindestrich angezeigt.
+
 ### 2.2.21 — 02.11.2026
 
 - Gruppenzeilen zeigen bei Pi-Session- und Open-WebUI-Chat-IDs nur den ersten ID-Block ohne die Präfixe „Session“ beziehungsweise „Chat“.

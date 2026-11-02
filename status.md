@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.21** · Stand 02.11.2026 · Status: Kompakte Gruppenkennungen.
+**Version 2.2.22** · Stand 02.11.2026 · Status: Vollständige erste ID-Blöcke.
 
 ## Aktueller Stand
 
