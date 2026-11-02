@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.20** · Stand 02.11.2026 · Status: Graue History-Gruppenzeilen.
+**Version 2.2.21** · Stand 02.11.2026 · Status: Kompakte Gruppenkennungen.
 
 ## Aktueller Stand
 

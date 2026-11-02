@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.21 — 02.11.2026
+
+- Gruppenzeilen zeigen bei Pi-Session- und Open-WebUI-Chat-IDs nur den ersten ID-Block ohne die Präfixe „Session“ beziehungsweise „Chat“.
+
 ### 2.2.20 — 02.11.2026
 
 - History-Gruppenzeilen werden wieder gedimmt grau dargestellt, ohne Fettdarstellung.

@@ -154,8 +154,9 @@ History gruppiert Pi-Runs nach `session_id` und Open-WebUI-Runs vorrangig nach
 `chat_id`; Session und Nachricht dienen dort nur als Fallback. Ohne diese IDs
 bleibt jeder Run einzeln. Gruppen sind zunächst eingeklappt. Ihre Tabellenzeile
 zeigt ausschließlich die Ergebniswerte des neuesten abgeschlossenen Runs sowie
-dessen Ausgaberate; Quelle, Chat-Kurzkennung, Modell, Status und letzter
-Abschluss bleiben ebenfalls sichtbar. Fehlende Werte werden nur aus demselben
+dessen Ausgaberate; Quelle, Kurzkennung, Modell, Status und letzter Abschluss
+bleiben ebenfalls sichtbar. Bei Pi-Sessions und Open-WebUI-Chats wird dafür der
+erste ID-Block ohne die Präfixe `Session` beziehungsweise `Chat` angezeigt. Fehlende Werte werden nur aus demselben
 Run eindeutig abgeleitet; unbekannte Werte bleiben `n/a`. Mit dem Cursor lässt sich die
 Gruppe aufklappen und zeigt dann alle einzelnen Runs. Die Persistenz und die
 Begrenzung auf 100 Runs bleiben unverändert. Mit `c` wird ausschließlich die

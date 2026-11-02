@@ -396,6 +396,10 @@ def run_identity_label(run):
     """Liefert eine kurze, nicht-invasive Kennung für die Live-Anzeige."""
     field, value = run_identity(run)
     if field and value:
+        # Bei den fachlichen Gruppenkennungen reicht der erste UUID-Block;
+        # die redundanten Begriffe Session und Chat stehen nicht in der Zeile.
+        if field in ("session_id", "chat_id"):
+            return value[:8]
         return f"{RUN_IDENTITY_LABELS[field]} {value[:8]}"
     run_id = str(run.get("run_id", "?")) if isinstance(run, dict) else "?"
     return f"Run {run_id[:8]}"
