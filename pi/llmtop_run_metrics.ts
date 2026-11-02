@@ -1,4 +1,4 @@
-/* llmtop 2.2.12 – globale Pi-Erweiterung für datensparsame Run-Metriken.
+/* llmtop 2.2.13 – globale Pi-Erweiterung für datensparsame Run-Metriken.
  * Installation: nach ~/.pi/agent/extensions/ kopieren und Pi neu starten oder /reload.
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -37,6 +37,7 @@ function collectorConfig(): { url?: string; token?: string } {
 const collector = collectorConfig();
 // Ein Agentenlauf umfasst alle Modellturns einer Nutzeranfrage in einer Pi-Session.
 let active: Run | undefined;
+let currentSessionId: string | undefined;
 
 function now(): string {
   return new Date().toISOString();
@@ -165,6 +166,10 @@ function send(event: Record<string, unknown>): void {
 }
 
 export default function (pi: ExtensionAPI) {
+  pi.on("session_start", (_event, ctx) => {
+    currentSessionId = sessionId(ctx.sessionManager);
+  });
+
   const progress = (run: Run, force = false) => {
     const current = Date.now();
     const contextTokens = run.context_reader?.();
@@ -195,7 +200,7 @@ export default function (pi: ExtensionAPI) {
     // Ein vorheriger, nicht sauber beendeter Agentenlauf darf nicht verwaisen.
     finish("cancelled");
     const model = ctx.model as any;
-    const currentSessionId = sessionId(ctx.sessionManager);
+    currentSessionId = sessionId(ctx.sessionManager) || currentSessionId;
     const run: Run = {
       run_id: randomUUID(),
       model: text(model?.id, "unknown"),

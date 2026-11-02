@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.2.13 — 02.11.2026
+
+- Pi-Session-ID beim Session-Start im Adapter zwischengespeichert und an alle Collector-Runs weitergegeben.
+- Aggregierte Gruppenwerte und aufklappbare Einzelruns für Pi-Sessions durch Regressionstests abgesichert.
+
 ### 2.2.12 — 02.11.2026
 
 - Open-WebUI-History chatweise statt browser-sessionweit gruppiert.
