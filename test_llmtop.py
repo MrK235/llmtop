@@ -300,8 +300,8 @@ def test_tui_draws_loaded_model():
         def refresh(self):
             pass
 
-    colors = {name: 0 for name in ("structure", "secondary", "model_name",
-                                    "context_label", "status_green", "status_yellow",
+    colors = {name: 0 for name in ("structure", "secondary", "group", "cursor",
+                                    "model_name", "context_label", "status_green", "status_yellow",
                                     "rate_green", "rate_yellow", "rate_error", "error",
                                     "offload_good", "offload_mixed", "offload_cpu")}
     colors["model_name"] = 12
@@ -311,6 +311,8 @@ def test_tui_draws_loaded_model():
     colors["rate_error"] = 15
     colors["status_green"] = 18
     colors["error"] = 19
+    colors["group"] = 20
+    colors["cursor"] = 21
     colors["offload_mixed"] = 16
     colors["secondary"] = 17
     state = {"colors": colors, "help": False, "cpu": 10.0,
@@ -362,6 +364,8 @@ def test_tui_draws_loaded_model():
     assert ("model", 12) in screen.calls
     assert ("[##          ]  20%", 18) in screen.calls
     assert (" 100", 17) in screen.calls
+    assert any(text.startswith("01.01 00:00") and attr == 21
+               for text, attr in screen.calls)
 
 
 if __name__ == '__main__':

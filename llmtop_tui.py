@@ -176,6 +176,7 @@ def normalize_history_state(state):
 def _init_colors():
     """Zentrale Farbrollen: Struktur, Status, Offload und Sekundärtext."""
     c = {"structure": curses.A_BOLD, "secondary": curses.A_DIM,
+         "group": curses.A_BOLD, "cursor": curses.A_REVERSE | curses.A_BOLD,
          "model_name": curses.A_DIM | curses.A_UNDERLINE, "context_label": curses.A_BOLD,
          "status_green": curses.A_BOLD, "status_yellow": curses.A_BOLD,
          "rate_green": 0, "rate_yellow": 0, "rate_error": 0,
@@ -187,6 +188,8 @@ def _init_colors():
         curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)
         curses.init_pair(4, curses.COLOR_CYAN, curses.COLOR_BLACK)
         curses.init_pair(5, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
+        curses.init_pair(6, curses.COLOR_WHITE, curses.COLOR_BLACK)
+        curses.init_pair(7, curses.COLOR_BLACK, curses.COLOR_CYAN)
         c["status_green"] = curses.color_pair(1) | curses.A_BOLD
         c["context_label"] = curses.color_pair(4) | curses.A_BOLD
         c["status_yellow"] = curses.color_pair(2) | curses.A_BOLD
@@ -195,6 +198,8 @@ def _init_colors():
         c["rate_error"] = curses.color_pair(3)
         c["error"] = curses.color_pair(3) | curses.A_BOLD
         c["structure"] = curses.color_pair(4) | curses.A_BOLD
+        c["group"] = curses.color_pair(6) | curses.A_BOLD
+        c["cursor"] = curses.color_pair(7) | curses.A_BOLD
         c["offload_good"] = curses.color_pair(1) | curses.A_BOLD
         c["offload_mixed"] = curses.color_pair(2) | curses.A_BOLD
         c["offload_cpu"] = curses.color_pair(3) | curses.A_BOLD
@@ -210,7 +215,7 @@ def _draw(scr, st, host, interval):
         return
     colors = st["colors"]
     history_runs, history_items = normalize_history_state(st)
-    cursor_attr = colors["structure"] | curses.A_REVERSE
+    cursor_attr = colors["cursor"]
     label_w = 9
     bar_w = max(8, min(24, w - 50))
 
@@ -429,7 +434,7 @@ def _draw(scr, st, host, interval):
             for name, width in columns:
                 text = history_cell(run, name)
                 cells.append(text[:width].ljust(width))
-            attr = cursor_attr if active else (colors["structure"] if item["kind"] == "group"
+            attr = cursor_attr if active else (colors["group"] if item["kind"] == "group"
                                                 else colors["secondary"])
             _add(scr, row, 0, " ".join(cells), attr)
             row += 1

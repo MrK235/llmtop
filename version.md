@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.17 — 02.11.2026
+
+- Gruppenzeilen der History auf helles Grau umgestellt und Cursor mit schwarzer Schrift auf cyanfarbenem Hintergrund kontrastreicher dargestellt.
+
 ### 2.2.16 — 02.11.2026
 
 - Einrückung der Quellen-Unterzeilen um den Aufklappmarker korrigiert; der Quelltext beginnt jetzt sichtbar zwei Spalten hinter der Gruppenquelle.
