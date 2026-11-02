@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.2.25 — 02.11.2026
+
+- Run-History von 100 auf bis zu 500 abgeschlossene Einträge erweitert.
+- Statuszeile auf `q quit`, `r reload`, `c clear`, `Enter ▴/▾` und Cursorsteuerung korrigiert.
+
 ### 2.2.24 — 02.11.2026
 
 - Die Breitenberechnung der Quellen-Spalte berücksichtigt nun auch den zweistelligen Aufklappmarker der Gruppenzeile.

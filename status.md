@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.24** · Stand 02.11.2026 · Status: Aufklappmarker in Quellenbreite berücksichtigt.
+**Version 2.2.25** · Stand 02.11.2026 · Status: Run-History mit bis zu 500 Einträgen.
 
 ## Aktueller Stand
 
@@ -15,7 +15,7 @@ gedimmt. Ollama-Modelle zeigen einen geteilten Speicherbalken im gleichen
 Raster wie die Sensoren: GPU/VRAM ist Grün oberhalb 55 %, Gelb bei 45–55 %
 und Rot darunter; CPU/RAM bleibt gedimmt grau. Beide Anteile verwenden `#`.
 CPU-Power wird nicht angezeigt, weil auf diesem Host keine zugängliche,
-verlässliche Quelle existiert. History speichert begrenzte, datensparsame JSONL-Snapshots mit UTC-Zeitstempeln. Die Run-History hält bis zu 100 abgeschlossene Runs als scrollbare und sortierbare Tabelle vor; instrumentierte Runs enthalten optional Kontexttoken und Kontextlimit. Die TUI gruppiert diese Anzeige quellengetrennt nach Session-, Chat- oder Message-ID, lässt Gruppen per Cursor aufklappen und zeigt beim Aufklappen weiterhin jeden einzelnen Run.
+verlässliche Quelle existiert. History speichert begrenzte, datensparsame JSONL-Snapshots mit UTC-Zeitstempeln. Die Run-History hält bis zu 500 abgeschlossene Runs als scrollbare und sortierbare Tabelle vor; instrumentierte Runs enthalten optional Kontexttoken und Kontextlimit. Die TUI gruppiert diese Anzeige quellengetrennt nach Session-, Chat- oder Message-ID, lässt Gruppen per Cursor aufklappen und zeigt beim Aufklappen weiterhin jeden einzelnen Run.
 Aktive Run-Metriken können über einen token-geschützten lokalen HTTP-Collector
 (`POST /v1/runs`) geliefert werden. Er verwaltet mehrere parallele Runs,
 dedupliziert finale Einträge nach Quelle und Run-ID und zeigt die Quelle in TUI
@@ -70,7 +70,7 @@ Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und Hist
 
 - Die Run-History gruppiert Runs quellengetrennt nach `session_id`, ersatzweise `chat_id` und danach `message_id`.
 - Gruppen sind standardmäßig eingeklappt, zeigen Anzahl, Kurzkennung und letzten Abschluss und lassen sich per Cursor, Enter, Leertaste oder Links/Rechts öffnen.
-- Einzelne Runs ohne stabile Identität bleiben einzeln; Persistenz, Sortierung und die Begrenzung auf 100 Runs bleiben unverändert.
+- Einzelne Runs ohne stabile Identität bleiben einzeln; Persistenz und Sortierung bleiben unverändert.
 
 ## Neu in 2.2.9
 

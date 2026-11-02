@@ -144,7 +144,7 @@ sichtbaren Spalte richtet sich dynamisch nach Überschrift und Inhalt; aktuelle
 Runs und History nutzen dabei dieselben Spaltenbreiten. Die History berücksichtigt
 dafür stets ihre gesamte Liste. Die Kontextspalte
 zeigt den Fortschritt zuerst als farbigen Balken, danach den rechtsbündigen Prozentwert und nur das graue Kontextlimit. **History** zeigt
-eine scrollbare Tabelle mit bis zu 100 abgeschlossenen instrumentierten Runs.
+eine scrollbare Tabelle mit bis zu 500 abgeschlossenen instrumentierten Runs.
 Sie kann nach Abschlusszeit, Quelle, Modell, Status, Tokens, Kontextverbrauch,
 Ausgaberate und Dauer sortiert werden. Die aktive Sortierspalte ist im
 Tabellenkopf exakt über die Länge ihres Textes unterstrichen und mit `▾`
@@ -161,13 +161,13 @@ Quellenspalte erhält bei knapper Breite bevorzugt ihren vollständigen Inhalt;
 der zweistellige Aufklappmarker wird dabei mitgerechnet. Fehlende Werte werden nur aus demselben
 Run eindeutig abgeleitet; unbekannte Werte bleiben `n/a`. Mit dem Cursor lässt sich die
 Gruppe aufklappen und zeigt dann alle einzelnen Runs. Die Persistenz und die
-Begrenzung auf 100 Runs bleiben unverändert. Mit `c` wird ausschließlich die
+Begrenzung auf 500 Runs bleiben unverändert. Mit `c` wird ausschließlich die
 Run-History atomar geleert; aktuelle Runs und System-Snapshots bleiben erhalten.
 Kontext wird nach dem prozentualen Verbrauch sortiert, nicht nach der absoluten
 Tokengröße. Die Kontextspalte zeigt Prozentwert, Fortschrittsbalken und danach
 nur das Limit im Format `[######      ] 42% 16.4k`; fehlende Providerwerte
 bleiben `n/a`. Die Daten bleiben
-als begrenzte JSONL-Datei gespeichert; eine Datenbank ist bei 100 Einträgen
+als begrenzte JSONL-Datei gespeichert; eine Datenbank ist bei 500 Einträgen
 nicht nötig. Zusätzlich speichert llmtop lokale, begrenzte System-Snapshots. Der
 Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
 `LLMTOP_RUN_HISTORY_FILE` oder `XDG_STATE_HOME` angepasst werden.

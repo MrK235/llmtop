@@ -48,7 +48,7 @@ def test_run_history_defaults_to_hundred():
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / 'runs.jsonl'
         records = []
-        for index in range(102):
+        for index in range(502):
             stamp = f'2026-10-31T18:{index % 60:02d}:00Z'
             records.append({
                 'schema': 2, 'run_id': str(index), 'source': 'open-webui',
@@ -58,7 +58,7 @@ def test_run_history_defaults_to_hundred():
             })
         path.write_text(''.join(json.dumps(record) + '\n' for record in records))
         result = llmtop.load_run_history(path)
-        assert len(result) == 100
+        assert len(result) == 500
 
 
 def test_clear_run_history():
@@ -417,6 +417,8 @@ def test_tui_draws_loaded_model():
     assert any(text == "LLM Terminal Monitor" and x == 50 for text, x in screen.positions)
     interval_text = "-/+ Intervall 2.0s"
     assert (interval_text, 120 - len(interval_text) - 1) in screen.positions
+    assert any(text.startswith("q quit  r reload  c clear  Enter ▴/▾  ↑↓ Cursor")
+               for text in screen.text)
     assert ("Ollama vtest".ljust(22), 17) in screen.calls
     assert ("verbunden", 18) in screen.calls
     assert ("Open-WebUI Collector".ljust(22), 17) in screen.calls
