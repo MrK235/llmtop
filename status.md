@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.26** · Stand 02.11.2026 · Status: Kompakte Statuszeile mit Return-Hinweis.
+**Version 2.2.27** · Stand 02.11.2026 · Status: Graue Fußzeile und reduzierter Kopfbereich.
 
 ## Aktueller Stand
 

@@ -414,11 +414,15 @@ def test_tui_draws_loaded_model():
     assert any(text.startswith("llmtop ") for text in screen.text)
     assert [text for text, x in screen.positions if x == 1][:4] == ["╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝"]
     assert any(text.startswith("llmtop ") and x == 11 for text, x in screen.positions)
-    assert any(text == "LLM Terminal Monitor" and x == 50 for text, x in screen.positions)
-    interval_text = "-/+ Intervall 2.0s"
+    assert not any(text == "LLM Terminal Monitor" for text in screen.text)
+    interval_text = "-/+ intervall 2.0s"
     assert (interval_text, 120 - len(interval_text) - 1) in screen.positions
-    assert any(text.startswith("q quit   r reload   c clear   ▴▾ Return   ↑↓ Cursor")
+    assert any(text.startswith("q quit   r reload   c clear   ▴▾ return   ↑↓ cursor")
                for text in screen.text)
+    assert ("▴", colors["structure"]) in screen.calls
+    assert ("▾", colors["structure"]) in screen.calls
+    assert ("↑", colors["structure"]) in screen.calls
+    assert ("↓", colors["structure"]) in screen.calls
     assert ("Ollama vtest".ljust(22), 17) in screen.calls
     assert ("verbunden", 18) in screen.calls
     assert ("Open-WebUI Collector".ljust(22), 17) in screen.calls

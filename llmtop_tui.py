@@ -284,8 +284,6 @@ def _draw(scr, st, host, interval):
         # Das Logo kombiniert einen Terminal-Prompt mit einer LLM-Kennung.
         # Zwei freie Spalten trennen das Logo vom Textblock.
         x = 11
-        title = "LLM Terminal Monitor"
-        _add(scr, 0, max(0, (w - len(title)) // 2), title, colors["secondary"], indent=False)
         if w >= 72:
             label_width = 22
             _add(scr, 0, x, f"llmtop {VERSION}", colors["structure"], indent=False)
@@ -307,11 +305,18 @@ def _draw(scr, st, host, interval):
             _add(scr, 3, x + len(compact_label), pi_short, pi_attr, indent=False)
 
     def draw_footer(text):
-        """Zeichnet Navigation links und Intervall-Steuerung rechtsbündig."""
-        interval_text = f"-/+ Intervall {interval:.1f}s"
+        """Zeichnet graue Navigation; Steuersymbole bleiben strukturiert."""
+        interval_text = f"-/+ intervall {interval:.1f}s"
         interval_x = max(0, w - len(interval_text) - 1)
-        _add(scr, h - 1, 0, text[:max(0, interval_x - 1)], colors["structure"], indent=False)
-        _add(scr, h - 1, interval_x, interval_text, colors["structure"], indent=False)
+
+        def footer_part(value, x):
+            _add(scr, h - 1, x, value, colors["secondary"], indent=False)
+            for offset, char in enumerate(value):
+                if char in "▴▾↑↓-/+":
+                    _add(scr, h - 1, x + offset, char, colors["structure"], indent=False)
+
+        footer_part(text[:max(0, interval_x - 1)], 0)
+        footer_part(interval_text, interval_x)
 
     def table_columns(runs, cell):
         """Ermittelt Breiten aus allen Zeilen der jeweiligen Tabelle."""
@@ -519,7 +524,7 @@ def _draw(scr, st, host, interval):
                 row += 1
         if row < h - 2:
             draw_history_table(row, h - row - 2)
-        draw_footer("q quit   r reload   c clear   ▴▾ Return   ↑↓ Cursor   h Hilfe")
+        draw_footer("q quit   r reload   c clear   ▴▾ return   ↑↓ cursor   h hilfe")
         scr.refresh()
         return
 
@@ -731,7 +736,7 @@ def _draw(scr, st, host, interval):
     row += 1
     draw_history_table(row, h - row - 2, columns)
 
-    draw_footer("q quit   r reload   c clear   ▴▾ Return   ↑↓ Cursor")
+    draw_footer("q quit   r reload   c clear   ▴▾ return   ↑↓ cursor")
     if st["help"]:
         sources = ", ".join(sorted(set(g.get("source", "?") for g in st["gpus"]))) or "keine"
         box = ["Hilfe", "", "q  Q  beenden", "r  Programm neu laden",

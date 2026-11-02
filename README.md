@@ -115,10 +115,10 @@ Datenbank-Fallback kann `LLMTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 ## TUI-Layout
 
 Ein vierzeiliger Kopfbereich zeigt ein optisch quadratisches Terminal-Logo mit
-Prompt und LLM-Kennung. Der Schriftzug **LLM Terminal Monitor** steht stets
-mittig in der ersten Zeile; zwei Zeichen trennen Logo und Produkttext.
-Ollama-, Open-WebUI-Collector- und Pi-Adapter-Status. Die rechtsbündige Statusleiste enthält das Intervall
-und die Legende `-/+`. Eine Leerzeile trennt ihn von den Messwerten. Die
+Prompt und LLM-Kennung; zwei Zeichen trennen Logo und Produkttext. Ollama-,
+Open-WebUI-Collector- und Pi-Adapter-Status folgen rechts davon. Die
+rechtsbündige Statusleiste enthält das Intervall und die Legende `-/+`.
+Navigationstext ist gedimmt grau, Steuersymbole bleiben Cyan. Eine Leerzeile trennt ihn von den Messwerten. Die
 Vollbildansicht
 gliedert sich danach von oben nach unten in **System**, **GPU**,
 **Geladene Modelle**, **Aktuelle Runs** und **History**. Bereichslinien beginnen am linken Rand und laufen

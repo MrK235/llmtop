@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.27 — 02.11.2026
+
+- Fußzeilentext auf Kleinbuchstaben und gedimmtes Grau umgestellt; Steuersymbole bleiben Cyan. Den mittigen Schriftzug „LLM Terminal Monitor“ aus dem Kopfbereich entfernt.
+
 ### 2.2.26 — 02.11.2026
 
 - Statuszeile zeigt `▴▾ Return` statt `Enter ▴/▾`; die Einträge sind etwas weiter getrennt.
