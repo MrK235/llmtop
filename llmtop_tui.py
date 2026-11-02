@@ -155,6 +155,10 @@ def _draw(scr, st, host, interval):
         collector_state = "aktiv" if collector_active else "nicht aktiv"
         collector_short = "OK" if collector_active else "OFF"
         collector_attr = colors["status_green"] if collector_active else colors["error"]
+        pi_active = bool(st.get("pi_adapter_active"))
+        pi_state = "aktiv" if pi_active else "nicht aktiv"
+        pi_short = "OK" if pi_active else "OFF"
+        pi_attr = colors["status_green"] if pi_active else colors["error"]
         icon = tuple(PIXEL_ICON) if isinstance(PIXEL_ICON, (tuple, list)) else (PIXEL_ICON,) * 4
         icon = (icon + (icon[-1],) * 4)[:4]
         for row, pixel in enumerate(icon):
@@ -174,15 +178,17 @@ def _draw(scr, st, host, interval):
             _add(scr, 1, x + label_width, ollama_state, ollama_attr, indent=False)
             _add(scr, 2, x, "Open-WebUI Collector".ljust(label_width), colors["secondary"], indent=False)
             _add(scr, 2, x + label_width, collector_state, collector_attr, indent=False)
-            _add(scr, 3, x, "Autor: llmtop  ·  Python-Standardbibliothek",
-                 colors["secondary"], indent=False)
+            _add(scr, 3, x, "Pi Adapter".ljust(label_width), colors["secondary"], indent=False)
+            _add(scr, 3, x + label_width, pi_state, pi_attr, indent=False)
         else:
             ollama_label = f"Ollama v{version} "
             _add(scr, 1, x, ollama_label, colors["secondary"], indent=False)
             _add(scr, 1, x + len(ollama_label), ollama_short, ollama_attr, indent=False)
             _add(scr, 2, x, "OW Collector ", colors["secondary"], indent=False)
             _add(scr, 2, x + 13, collector_short, collector_attr, indent=False)
-            _add(scr, 3, x, f"llmtop {VERSION}", colors["secondary"], indent=False)
+            compact_label = f"llmtop {VERSION} · Pi "
+            _add(scr, 3, x, compact_label, colors["secondary"], indent=False)
+            _add(scr, 3, x + len(compact_label), pi_short, pi_attr, indent=False)
 
     def draw_footer(text):
         """Zeichnet Navigation links und Intervall-Steuerung rechtsbündig."""
@@ -592,7 +598,7 @@ def _draw(scr, st, host, interval):
 
 
 
-def _run_tui(host, interval, use_nvidia, version, pixel_icon):
+def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=False):
     """Fuehrt curses im Hauptthread und die Erfassung im Hintergrund aus."""
     global VERSION, PIXEL_ICON
     VERSION = version
@@ -604,8 +610,8 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon):
              "cpu": None, "cpu_temp": None, "cpu_temp_source": None,
              "gpus": [], "gpu_err": None, "ram": (None, None, None),
              "history_ok": None, "runs": [], "run_history": [],
-             "collector_status": collector.status(), "history_sort": "zeit",
-             "history_desc": True, "history_offset": 0, "run_offset": 0,
+             "collector_status": collector.status(), "pi_adapter_active": pi_adapter_active,
+             "history_sort": "zeit", "history_desc": True, "history_offset": 0, "run_offset": 0,
              "run_focus": False}
     lock = threading.Lock()
     stop = threading.Event()

@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.7 — 01.11.2026
+
+- Pi-Adapter-Status in die Kopfzeile integriert; die Autoren- und Python-Standardbibliothekszeile entfernt.
+
 ### 2.2.6 — 01.11.2026
 
 - Geladene Modelle verwenden eine gemeinsame Metadaten-Startspalte und feste Spalten für Parametergröße, Quantisierung, Kontext und Runner.

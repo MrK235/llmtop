@@ -5,7 +5,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.2.6"  # Single Source of Truth; History in version.md
+VERSION = "2.2.7"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -143,11 +143,12 @@ def main(argv=None):
         return 1
     # Adapter bleiben ohne lokale Collector-Konfiguration No-ops. Der Pi-Adapter
     # wird global aktualisiert und erhält private Laufzeitdaten für neue Pi-Prozesse.
-    ensure_pi_adapter()
+    pi_adapter_active = ensure_pi_adapter()
     from threading import Thread
     Thread(target=ensure_open_webui_adapter, name="llmtop-open-webui", daemon=True).start()
     from llmtop_tui import _run_tui
-    return _run_tui(host, max(0.2, args.interval), not args.no_nvidia, VERSION, PIXEL_ICON)
+    return _run_tui(host, max(0.2, args.interval), not args.no_nvidia, VERSION,
+                    PIXEL_ICON, pi_adapter_active)
 
 
 if __name__ == "__main__":

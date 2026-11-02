@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.2.6** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.2.7** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -113,8 +113,7 @@ Datenbank-Fallback kann `LLMTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 Ein vierzeiliger Kopfbereich zeigt ein optisch quadratisches Terminal-Logo mit
 Prompt und LLM-Kennung. Der Schriftzug **LLM Terminal Monitor** steht stets
 mittig in der ersten Zeile; zwei Zeichen trennen Logo und Produkttext.
-Ollama- und Open-WebUI-Collector-Status
-sowie Autor und Technik. Die rechtsbündige Statusleiste enthält das Intervall
+Ollama-, Open-WebUI-Collector- und Pi-Adapter-Status. Die rechtsbündige Statusleiste enthält das Intervall
 und die Legende `-/+`. Eine Leerzeile trennt ihn von den Messwerten. Die
 Vollbildansicht
 gliedert sich danach von oben nach unten in **System**, **GPU**,
@@ -159,10 +158,9 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   Prompt und LLM-Kennung sowie zwei freien Spalten zum Textblock. **LLM Terminal
   Monitor** ist stets mittig in der ersten Zeile platziert; `llmtop <VERSION>`
   und Produktname,
-  `Ollama v<VERSION>` mit Erreichbarkeit (`/api/version`) sowie **Open-WebUI
-  Collector**-Status (`aktiv` / `nicht aktiv`). Eine Leerzeile
-  folgt vor den Messwerten. Die vierte Zeile nennt Autor und
-  Python-Standardbibliothek. Rechts unten steht `-/+ Intervall <SEKUNDEN>` als
+  `Ollama v<VERSION>` mit Erreichbarkeit (`/api/version`), **Open-WebUI
+  Collector**-Status sowie **Pi Adapter**-Status (`aktiv` / `nicht aktiv`). Eine Leerzeile
+  folgt vor den Messwerten. Rechts unten steht `-/+ Intervall <SEKUNDEN>` als
   Anzeige und Legende. Namen und Metadaten sind
   gedimmt grau; verbundene/aktive Stati sind Grün und OFFLINE/nicht aktive
   Stati Rot. Bei 40 Spalten werden die Verbindungsstati als `Ollama OK/OFF` und
