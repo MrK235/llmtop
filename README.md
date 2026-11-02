@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.2.9** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.2.10** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -106,7 +106,10 @@ Datenbank-Fallback kann `LLMTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 | `Tab` / `Shift-Tab` | nächste / vorherige Sortierspalte der Run-History |
 | `s` / `S` | Sortierrichtung der Run-History umschalten |
 | `a` / `A` | Fokus zwischen aktuellen Runs und Run-History wechseln |
-| `↑` / `↓`, `Bild↑` / `Bild↓`, `Pos1` / `Ende` | fokussierten Run-Bereich scrollen |
+| `Enter` / `Leertaste` | markierte History-Gruppe auf- oder zuklappen |
+| `←` / `→` | markierte History-Gruppe zu- oder aufklappen |
+| `↑` / `↓`, `Bild↑` / `Bild↓` | Cursor im fokussierten Bereich bewegen |
+| `Pos1` / `Ende` | ersten/letzten sichtbaren History-Eintrag markieren |
 
 ## TUI-Layout
 
@@ -142,7 +145,12 @@ Sie kann nach Abschlusszeit, Quelle, Modell, Status, Tokens, Kontextverbrauch,
 Ausgaberate und Dauer sortiert werden. Die aktive Sortierspalte ist im
 Tabellenkopf exakt über die Länge ihres Textes unterstrichen und mit `▾`
 beziehungsweise `▴` markiert; die History-Überschrift bleibt frei von
-Sortierdetails. Eine Leerzeile trennt die History von der Statusleiste.
+Sortierdetails. Eine Leerzeile trennt die History von der Statusleiste. Die
+History gruppiert Runs quellengetrennt nach `session_id`, ersatzweise `chat_id`
+und danach `message_id`; ohne diese IDs bleibt jeder Run einzeln. Gruppen sind
+zunächst eingeklappt, zeigen Anzahl, Kurzkennung und letzten Abschluss, und
+lassen sich mit dem Cursor auf- und zuklappen. Die Persistenz und die
+Begrenzung auf 100 Runs bleiben unverändert.
 Kontext wird nach dem prozentualen Verbrauch sortiert, nicht nach der absoluten
 Tokengröße. Die Kontextspalte zeigt Prozentwert, Fortschrittsbalken und danach
 nur das Limit im Format `[######      ] 42% 16.4k`; fehlende Providerwerte
@@ -154,6 +162,11 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
 
 ## Angezeigte Werte
 
+* **History**: Gruppen aus derselben Pi-Session beziehungsweise Open-WebUI-
+  Session, Chat oder Nachricht werden kompakt dargestellt. Die Anzeige
+  verwendet nur kurze IDs; fehlende Identitäten führen nicht zu spekulativer
+  Zusammenlegung.
+  Aufgeklappte Gruppen zeigen alle enthaltenen Runs in der bestehenden Tabelle.
 * **Kopfbereich**: vierzeiliges, optisch quadratisches Terminal-Logo mit
   Prompt und LLM-Kennung sowie zwei freien Spalten zum Textblock. **LLM Terminal
   Monitor** ist stets mittig in der ersten Zeile platziert; `llmtop <VERSION>`

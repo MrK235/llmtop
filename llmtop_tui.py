@@ -79,6 +79,72 @@ def _rate_color(colors, rate):
     return colors["rate_green"]
 
 
+def history_group_key(run):
+    """Liefert den quellengetrennten, stabilen Schlüssel einer History-Gruppe."""
+    return (run.get("source", "legacy"), run_group_key(run))
+
+
+def build_history_groups(sorted_runs):
+    """Baut Gruppen in der Reihenfolge ihres ersten sortierten History-Runs."""
+    groups = {}
+    for run in sorted_runs:
+        key = history_group_key(run)
+        group = groups.setdefault(key, {"key": key, "runs": [], "first": run})
+        group["runs"].append(run)
+    result = []
+    for group in groups.values():
+        field, _value = group["key"][1]
+        group["grouped"] = len(group["runs"]) > 1 or field != "run_id"
+        result.append(group)
+    return result
+
+
+def history_group_label(group, compact=False):
+    """Erzeugt eine kurze Gruppenkennung ohne Run-Inhalte zu übernehmen."""
+    first = group["first"]
+    source = source_label(first.get("source"), first.get("provider"))
+    identity = run_identity_label(first)
+    timestamps = [_parse_time(run.get("finished_at")) for run in group["runs"]]
+    finished = max((stamp for stamp in timestamps if stamp), default=None)
+    if finished:
+        stamp = finished.strftime("%H:%M" if compact else "%d.%m %H:%M")
+    else:
+        stamp = "n/a"
+    count = len(group["runs"])
+    noun = "Run" if count == 1 else "Runs"
+    return f"{source} · {identity} ({count} {noun} · zuletzt {stamp})"
+
+
+def history_display_items(runs, column="zeit", descending=True, expanded=()):
+    """Liefert den sichtbaren History-Strom aus Gruppen- und Run-Zeilen."""
+    sorted_runs = sort_run_history(runs, column, descending)
+    expanded = set(expanded or ())
+    items = []
+    for group in build_history_groups(sorted_runs):
+        group_key = group["key"]
+        if group["grouped"]:
+            items.append({"kind": "group", "key": ("group", group_key), "group": group})
+            if group_key not in expanded:
+                continue
+        for run in group["runs"]:
+            items.append({"kind": "run", "key": ("run", group_key, run.get("run_id")),
+                          "group_key": group_key, "grouped": group["grouped"], "run": run})
+    return sorted_runs, items
+
+
+def normalize_history_state(state):
+    """Korrigiert Cursor, aufgeklappte Gruppen und leere History-Zustände."""
+    sorted_runs, items = history_display_items(
+        state.get("run_history", []), state.get("history_sort", "zeit"),
+        state.get("history_desc", True), state.get("history_expanded", ()))
+    group_keys = {group["key"] for group in build_history_groups(sorted_runs) if group["grouped"]}
+    state["history_expanded"] = set(state.get("history_expanded", ())) & group_keys
+    item_keys = [item["key"] for item in items]
+    if state.get("history_cursor") not in item_keys:
+        state["history_cursor"] = item_keys[0] if item_keys else None
+    return sorted_runs, items
+
+
 def _init_colors():
     """Zentrale Farbrollen: Struktur, Status, Offload und Sekundärtext."""
     c = {"structure": curses.A_BOLD, "secondary": curses.A_DIM,
@@ -115,6 +181,8 @@ def _draw(scr, st, host, interval):
         scr.refresh()
         return
     colors = st["colors"]
+    history_runs, history_items = normalize_history_state(st)
+    cursor_attr = colors["structure"] | curses.A_REVERSE
     label_w = 9
     bar_w = max(8, min(24, w - 50))
 
@@ -289,16 +357,26 @@ def _draw(scr, st, host, interval):
             _add(scr, row, limit_x, limit[:max(0, x + width - limit_x)], colors["secondary"])
 
     def draw_history_table(row, max_rows, columns=None):
-        sorted_runs = sort_run_history(st.get("run_history", []), st["history_sort"],
-                                       st["history_desc"])
+        sorted_runs = history_runs
+        items = history_items
         columns = columns or table_columns(sorted_runs, history_cell)
         total = len(sorted_runs)
+        groups = build_history_groups(sorted_runs)
+        group_count = len(groups)
         data_rows = max(1, max_rows - 2)
-        show_position = total > data_rows and data_rows >= 2
+        show_position = len(items) > data_rows and data_rows >= 2
         visible = data_rows - 1 if show_position else data_rows
-        max_offset = max(0, total - visible)
-        st["history_offset"] = min(max(0, st["history_offset"]), max_offset)
-        row = section(row, f"History ({total}/{DEFAULT_RUN_HISTORY_LIMIT})")
+        max_offset = max(0, len(items) - visible)
+        cursor_keys = [item["key"] for item in items]
+        cursor_index = cursor_keys.index(st["history_cursor"]) if st.get("history_cursor") in cursor_keys else 0
+        offset = min(max(0, st.get("history_offset", 0)), max_offset)
+        if items:
+            if cursor_index < offset:
+                offset = cursor_index
+            elif cursor_index >= offset + visible:
+                offset = cursor_index - visible + 1
+        st["history_offset"] = offset
+        row = section(row, f"History ({total}/{DEFAULT_RUN_HISTORY_LIMIT} Runs · {group_count} Gruppen)")
         x = 0
         for name, width in columns:
             label = history_header_label(name, st["history_sort"], st["history_desc"])
@@ -306,19 +384,30 @@ def _draw(scr, st, host, interval):
             _add(scr, row, x, label[:width], attr)
             x += width + 1
         row += 1
-        for item in sorted_runs[st["history_offset"]:st["history_offset"] + visible]:
+        for item in items[offset:offset + visible]:
+            active = item["key"] == st.get("history_cursor")
+            if item["kind"] == "group":
+                group = item["group"]
+                marker = "▾" if group["key"] in st.get("history_expanded", set()) else "▸"
+                attr = cursor_attr if active else colors["structure"]
+                _add(scr, row, 0, f"{marker} {history_group_label(group, compact=w < 80)}", attr)
+                row += 1
+                continue
+            run = item["run"]
             cells = []
             for name, width in columns:
-                text = history_cell(item, name)
+                text = history_cell(run, name)
                 cells.append(text[:width].ljust(width))
-            _add(scr, row, 0, " ".join(cells), colors["secondary"])
+            attr = cursor_attr if active else colors["secondary"]
+            _add(scr, row, 0, " ".join(cells), attr)
             row += 1
         if not sorted_runs:
             _add(scr, row, 0, "Keine abgeschlossenen instrumentierten Runs", colors["secondary"])
             row += 1
         elif show_position:
-            _add(scr, row, 0, f"Zeilen {st['history_offset'] + 1}-{min(total, st['history_offset'] + visible)} von {total}",
-                 colors["secondary"])
+            _add(scr, row, 0,
+                 f"Einträge {offset + 1}-{min(len(items), offset + visible)} von {len(items)} · "
+                 f"{total} Runs · {group_count} Gruppen", colors["secondary"])
             row += 1
         return row
 
@@ -370,7 +459,7 @@ def _draw(scr, st, host, interval):
                 row += 1
         if row < h - 2:
             draw_history_table(row, h - row - 2)
-        draw_footer("q quit  Tab/s sortieren  ↑↓ scrollen  h Hilfe")
+        draw_footer("q quit  a Fokus  Enter/Leertaste auf/zu  ↑↓ Cursor  h Hilfe")
         scr.refresh()
         return
 
@@ -574,7 +663,7 @@ def _draw(scr, st, host, interval):
     row += 1
     draw_history_table(row, h - row - 2, columns)
 
-    draw_footer("q quit  r neu laden  a Runs/History  Tab/s sortieren  ↑↓ scrollen")
+    draw_footer("q quit  r neu laden  a Runs/History  Enter auf/zu  ↑↓ Cursor")
     if st["help"]:
         sources = ", ".join(sorted(set(g.get("source", "?") for g in st["gpus"]))) or "keine"
         box = ["Hilfe", "", "q  Q  beenden", "r  Programm neu laden",
@@ -582,7 +671,9 @@ def _draw(scr, st, host, interval):
                "+  Intervall verdoppeln (max 60s)",
                "a  Aktuelle Runs oder History fokussieren",
                "Tab / Shift-Tab  History-Spalte wechseln", "s  History-Sortierrichtung",
-               "↑/↓ Bild↑/Bild↓ Pos1/Ende  fokussierten Bereich scrollen", "",
+               "Enter / Leertaste  Gruppe auf- oder zuklappen",
+               "←/→  Gruppe zu- oder aufklappen", "↑/↓ Bild↑/Bild↓  Cursor bewegen",
+               "Pos1/Ende  erster/letzter History-Eintrag", "",
                "System / GPU / Ollama / History", "GPU-Quelle: " + sources]
         bh = len(box) + 2
         bw = max(len(b) for b in box) + 4
@@ -613,7 +704,8 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
              "gpus": [], "gpu_err": None, "ram": (None, None, None),
              "history_ok": None, "runs": [], "run_history": [],
              "collector_status": collector.status(), "pi_adapter_active": pi_adapter_active,
-             "history_sort": "zeit", "history_desc": True, "history_offset": 0, "run_offset": 0,
+             "history_sort": "zeit", "history_desc": True, "history_offset": 0,
+             "history_cursor": None, "history_expanded": set(), "run_offset": 0,
              "run_focus": False}
     lock = threading.Lock()
     stop = threading.Event()
@@ -658,6 +750,10 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
             with lock:
                 view = dict(state)
             _draw(scr, view, host, interval)
+            with lock:
+                state["history_offset"] = view.get("history_offset", 0)
+                state["history_cursor"] = view.get("history_cursor")
+                state["history_expanded"] = view.get("history_expanded", set())
             scr.timeout(250)
             key = scr.getch()
             if key == -1:
@@ -667,6 +763,7 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
             if key in (ord("r"), ord("R")):
                 return "reload"
             with lock:
+                normalize_history_state(state)
                 if key in (ord("h"), ord("H")):
                     state["help"] = not state["help"]
                 elif key in (ord("+"), ord("=")):
@@ -681,30 +778,65 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
                     index = HISTORY_COLUMNS.index(state["history_sort"])
                     state["history_sort"] = HISTORY_COLUMNS[(index + 1) % len(HISTORY_COLUMNS)]
                     state["history_offset"] = 0
+                    state["history_cursor"] = None
                 elif key == curses.KEY_BTAB:
                     index = HISTORY_COLUMNS.index(state["history_sort"])
                     state["history_sort"] = HISTORY_COLUMNS[(index - 1) % len(HISTORY_COLUMNS)]
                     state["history_offset"] = 0
+                    state["history_cursor"] = None
                 elif key in (ord("s"), ord("S")):
                     state["history_desc"] = not state["history_desc"]
                     state["history_offset"] = 0
-                elif key == curses.KEY_UP:
-                    target = "run_offset" if state["run_focus"] else "history_offset"
-                    state[target] = max(0, state[target] - 1)
-                elif key == curses.KEY_DOWN:
-                    target = "run_offset" if state["run_focus"] else "history_offset"
-                    state[target] += 1
-                elif key == curses.KEY_PPAGE:
-                    target = "run_offset" if state["run_focus"] else "history_offset"
-                    state[target] = max(0, state[target] - 5)
-                elif key == curses.KEY_NPAGE:
-                    target = "run_offset" if state["run_focus"] else "history_offset"
-                    state[target] += 5
-                elif key == curses.KEY_HOME:
-                    state["run_offset" if state["run_focus"] else "history_offset"] = 0
-                elif key == curses.KEY_END:
-                    target = "run_offset" if state["run_focus"] else "history_offset"
-                    state[target] = max(0, (len(state["runs"]) if state["run_focus"] else len(state["run_history"])) - 1)
+                    state["history_cursor"] = None
+                elif key in (10, 13, getattr(curses, "KEY_ENTER", 343), ord(" ")):
+                    if not state["run_focus"]:
+                        _sorted, items = normalize_history_state(state)
+                        selected = next((item for item in items
+                                         if item["key"] == state.get("history_cursor")), None)
+                        if selected and selected["kind"] == "group":
+                            group_key = selected["group"]["key"]
+                            if group_key in state["history_expanded"]:
+                                state["history_expanded"].discard(group_key)
+                            else:
+                                state["history_expanded"].add(group_key)
+                elif key in (curses.KEY_LEFT, curses.KEY_RIGHT):
+                    if not state["run_focus"]:
+                        _sorted, items = normalize_history_state(state)
+                        selected = next((item for item in items
+                                         if item["key"] == state.get("history_cursor")), None)
+                        if selected:
+                            group_key = selected.get("group_key") or selected.get("group", {}).get("key")
+                            if group_key:
+                                if key == curses.KEY_LEFT:
+                                    state["history_expanded"].discard(group_key)
+                                    if selected["kind"] == "run" and selected.get("grouped"):
+                                        state["history_cursor"] = ("group", group_key)
+                                else:
+                                    state["history_expanded"].add(group_key)
+                elif key in (curses.KEY_UP, curses.KEY_DOWN, curses.KEY_PPAGE, curses.KEY_NPAGE):
+                    if state["run_focus"]:
+                        delta = {curses.KEY_UP: -1, curses.KEY_DOWN: 1,
+                                 curses.KEY_PPAGE: -5, curses.KEY_NPAGE: 5}[key]
+                        state["run_offset"] = max(0, state["run_offset"] + delta)
+                    else:
+                        _sorted, items = normalize_history_state(state)
+                        if items:
+                            keys = [item["key"] for item in items]
+                            index = keys.index(state["history_cursor"])
+                            delta = {curses.KEY_UP: -1, curses.KEY_DOWN: 1,
+                                     curses.KEY_PPAGE: -5, curses.KEY_NPAGE: 5}[key]
+                            state["history_cursor"] = keys[max(0, min(len(keys) - 1, index + delta))]
+                elif key in (curses.KEY_HOME, curses.KEY_END):
+                    if state["run_focus"]:
+                        target = "run_offset"
+                        if key == curses.KEY_HOME:
+                            state[target] = 0
+                        else:
+                            state[target] = max(0, len(state["runs"]) - 1)
+                    else:
+                        _sorted, items = normalize_history_state(state)
+                        if items:
+                            state["history_cursor"] = items[0 if key == curses.KEY_HOME else -1]["key"]
         return 0
 
     try:

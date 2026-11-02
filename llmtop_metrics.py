@@ -364,8 +364,8 @@ def run_identity(run):
     """Liefert die stärkste vorhandene externe Identität eines Runs."""
     for field in RUN_IDENTITY_FIELDS:
         value = run.get(field) if isinstance(run, dict) else None
-        if isinstance(value, str) and value:
-            return field, value
+        if isinstance(value, str) and value.strip():
+            return field, value.strip()
     return None, None
 
 

@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.2.10 — 02.11.2026
+
+- Run-History quellengetrennt nach Session-, Chat- oder Message-ID gruppiert und standardmäßig eingeklappt.
+- Cursor-Navigation, Enter/Leertaste sowie Links/Rechts zum Auf- und Zuklappen ergänzt; aufgeklappte Gruppen behalten alle Einzelruns und die bestehende Sortierung.
+
 ### 2.2.9 — 02.11.2026
 
 - Optionale `session_id`, `chat_id` und `message_id` in Schema-2-Runs aufgenommen.
