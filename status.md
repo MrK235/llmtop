@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.4** · Stand 01.11.2026 · Status: Kontextspalten zeigen nur noch ihr Limit.
+**Version 2.2.5** · Stand 01.11.2026 · Status: Kontextbalken bleiben bei jeder Prozentstellenzahl ausgerichtet.
 
 ## Aktueller Stand
 
@@ -26,6 +26,10 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.2.5
+
+- Prozentwerte in aktuellen Runs und History sind fest vier Zeichen breit und rechtsbündig; dadurch beginnt der Kontextbalken unabhängig von ein-, zwei- oder dreistelligen Werten an derselben Stelle.
 
 ## Neu in 2.2.4
 

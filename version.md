@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.5 — 01.11.2026
+
+- Prozentwerte in aktuellen Runs und History rechtsbündig auf vier Zeichen ausgerichtet, damit die Kontextbalken unabhängig von ihrer Stellenzahl fluchten.
+
 ### 2.2.4 — 01.11.2026
 
 - Kontextspalten auf Prozent, Balken und maximales Kontextlimit reduziert.

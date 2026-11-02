@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.2.4** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.2.5** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -137,7 +137,7 @@ Zeit, Quelle, Modell, Status, Tokens, Kontext, Tok/s und Dauer. Die Breite jeder
 sichtbaren Spalte richtet sich dynamisch nach Überschrift und Inhalt; aktuelle
 Runs und History nutzen dabei dieselben Spaltenbreiten. Die History berücksichtigt
 dafür stets ihre gesamte Liste. Die Kontextspalte
-zeigt den Fortschritt als farbigen Prozent-/Balkenwert sowie danach nur das graue Kontextlimit. **History** zeigt
+zeigt den Fortschritt als farbigen Prozent-/Balkenwert sowie danach nur das graue Kontextlimit; der Prozentwert ist fest vier Zeichen breit und rechtsbündig, damit der Balken unabhängig von seiner Stellenzahl fluchtet. **History** zeigt
 eine scrollbare Tabelle mit bis zu 100 abgeschlossenen instrumentierten Runs.
 Sie kann nach Abschlusszeit, Quelle, Modell, Status, Tokens, Kontextverbrauch,
 Ausgaberate und Dauer sortiert werden. Die aktive Sortierspalte ist im
