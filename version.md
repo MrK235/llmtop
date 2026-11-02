@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.26 — 02.11.2026
+
+- Statuszeile zeigt `▴▾ Return` statt `Enter ▴/▾`; die Einträge sind etwas weiter getrennt.
+
 ### 2.2.25 — 02.11.2026
 
 - Run-History von 100 auf bis zu 500 abgeschlossene Einträge erweitert.

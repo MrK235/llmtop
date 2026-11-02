@@ -519,7 +519,7 @@ def _draw(scr, st, host, interval):
                 row += 1
         if row < h - 2:
             draw_history_table(row, h - row - 2)
-        draw_footer("q quit  r reload  c clear  Enter ▴/▾  ↑↓ Cursor  h Hilfe")
+        draw_footer("q quit   r reload   c clear   ▴▾ Return   ↑↓ Cursor   h Hilfe")
         scr.refresh()
         return
 
@@ -731,7 +731,7 @@ def _draw(scr, st, host, interval):
     row += 1
     draw_history_table(row, h - row - 2, columns)
 
-    draw_footer("q quit  r reload  c clear  Enter ▴/▾  ↑↓ Cursor")
+    draw_footer("q quit   r reload   c clear   ▴▾ Return   ↑↓ Cursor")
     if st["help"]:
         sources = ", ".join(sorted(set(g.get("source", "?") for g in st["gpus"]))) or "keine"
         box = ["Hilfe", "", "q  Q  beenden", "r  Programm neu laden",

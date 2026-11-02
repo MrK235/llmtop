@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.25** · Stand 02.11.2026 · Status: Run-History mit bis zu 500 Einträgen.
+**Version 2.2.26** · Stand 02.11.2026 · Status: Kompakte Statuszeile mit Return-Hinweis.
 
 ## Aktueller Stand
 

@@ -417,7 +417,7 @@ def test_tui_draws_loaded_model():
     assert any(text == "LLM Terminal Monitor" and x == 50 for text, x in screen.positions)
     interval_text = "-/+ Intervall 2.0s"
     assert (interval_text, 120 - len(interval_text) - 1) in screen.positions
-    assert any(text.startswith("q quit  r reload  c clear  Enter ▴/▾  ↑↓ Cursor")
+    assert any(text.startswith("q quit   r reload   c clear   ▴▾ Return   ↑↓ Cursor")
                for text in screen.text)
     assert ("Ollama vtest".ljust(22), 17) in screen.calls
     assert ("verbunden", 18) in screen.calls
