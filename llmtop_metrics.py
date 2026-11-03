@@ -1020,8 +1020,9 @@ def read_request_payload(value):
     return payload
 
 
-def snapshot_record(host, ollama, cpu, ram, gpus, gpu_error, run=None):
+def snapshot_record(host, ollama, cpu, ram, gpus, gpu_error, run=None, cpu_power=None):
     """Erzeugt ein datensparsames, JSON-serialisierbares History-Ereignis."""
+    cpu_power = cpu_power or {"watt": None, "limit": None, "source": "n/a"}
     return {
         "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "source": "llmtop",
@@ -1030,6 +1031,9 @@ def snapshot_record(host, ollama, cpu, ram, gpus, gpu_error, run=None):
         "ollama_ok": bool(ollama.get("ok")),
         "models": ollama.get("models", []),
         "cpu_percent": cpu,
+        "cpu_power_watt": cpu_power.get("watt"),
+        "cpu_power_limit": cpu_power.get("limit"),
+        "cpu_power_source": cpu_power.get("source"),
         "ram": {"percent": ram[0], "total_gib": ram[1], "available_gib": ram[2]},
         "gpus": gpus,
         "errors": ([ollama["error"]] if ollama.get("error") else []) +

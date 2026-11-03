@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.2.36** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.2.37** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -208,7 +208,12 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   Refreshes, dazu nutzbare logische Kernanzahl und Temperatur
   aus hwmon oder generischen Thermal-Zones (`k10temp`, `coretemp`, `zenpower`,
   `x86_pkg_temp`, `cpu_thermal`, `acpitz`), sofern verfügbar.
-* **RAM**: Auslastung `%`, Größe `GiB`, Zeile direkt nach CPU-Balken. Primär
+* **CPU-Power**: CPU-Package-/SoC-Leistung aus dynamisch erkannten
+  powercap-/RAPL-Zonen, CPU-hwmon oder optional TUXEDO Control Center über
+  D-Bus. Die erste RAPL-Messung bleibt bis zum zweiten Zählerstand `n/a`;
+  Quelle und echte Leistungsgrenze werden angezeigt. GPU-hwmon wird nicht als
+  CPU-Power verwendet.
+* **RAM**: Auslastung `%`, Größe `GiB`, Zeile nach den CPU-Systemwerten. Primär
   `/proc/meminfo`; bei einer endlichen cgroup-v1/v2-Grenze werden effektiver
   Verbrauch und verfügbares Limit des Prozesses angezeigt.
 * **GPU**: Alle erkannten DRM-GPUs werden zusammengeführt und in TUI sowie

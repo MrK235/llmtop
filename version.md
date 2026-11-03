@@ -12,6 +12,12 @@ gebracht.
 
 ## Changelog
 
+### 2.2.37 — 03.11.2026
+
+- CPU-Package-Power über dynamische powercap-/RAPL-Zonen mit Zählerüberlaufbehandlung ergänzt.
+- CPU-nahe hwmon-Leistungsquellen werden von GPU-hwmon getrennt; TUXEDO Control Center ist ein optionaler, rein lesender D-Bus-Fallback.
+- CPU-Power wird in `--once`, TUI und System-Snapshots mit Quelle und echter Leistungsgrenze angezeigt.
+
 ### 2.2.36 — 03.11.2026
 
 - cgroup-Mounts werden dynamisch aus `/proc/self/mountinfo` und `/proc/self/cgroup` ermittelt.

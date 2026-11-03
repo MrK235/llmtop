@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.36** · Stand 03.11.2026 · Status: Erweiterte Linux-Sensor-Fallbacks.
+**Version 2.2.37** · Stand 03.11.2026 · Status: CPU-Power mit RAPL- und TCC-Fallbacks.
 
 ## Aktueller Stand
 
@@ -19,8 +19,11 @@ Statuswerte und Temperaturen verwenden Grün/Gelb/Rot, Sekundärinfos sind
 gedimmt. Ollama-Modelle zeigen einen geteilten Speicherbalken im gleichen
 Raster wie die Sensoren: GPU/VRAM ist Grün oberhalb 55 %, Gelb bei 45–55 %
 und Rot darunter; CPU/RAM bleibt gedimmt grau. Beide Anteile verwenden `#`.
-CPU-Power wird nicht angezeigt, weil auf diesem Host keine zugängliche,
-verlässliche Quelle existiert. History speichert begrenzte, datensparsame JSONL-Snapshots mit UTC-Zeitstempeln. Die Run-History hält bis zu 500 abgeschlossene Runs als scrollbare und sortierbare Tabelle vor; instrumentierte Runs enthalten optional Kontexttoken und Kontextlimit. Die TUI gruppiert diese Anzeige quellengetrennt nach Session-, Chat- oder Message-ID, lässt Gruppen per Cursor aufklappen und zeigt beim Aufklappen weiterhin jeden einzelnen Run.
+CPU-Power wird über dynamische powercap-/RAPL-Zonen, eindeutig zugeordnete
+CPU-hwmon-Geräte und optional TUXEDO Control Center per lesendem D-Bus-Fallback
+gemessen. Fehlende Berechtigungen oder Zählerstände bleiben als `n/a` sichtbar;
+GPU-hwmon wird nicht als CPU-Power übernommen. History speichert begrenzte,
+datensparsame JSONL-Snapshots mit UTC-Zeitstempeln. Die Run-History hält bis zu 500 abgeschlossene Runs als scrollbare und sortierbare Tabelle vor; instrumentierte Runs enthalten optional Kontexttoken und Kontextlimit. Die TUI gruppiert diese Anzeige quellengetrennt nach Session-, Chat- oder Message-ID, lässt Gruppen per Cursor aufklappen und zeigt beim Aufklappen weiterhin jeden einzelnen Run.
 Aktive Run-Metriken können über einen token-geschützten lokalen HTTP-Collector
 (`POST /v1/runs`) geliefert werden. Er verwaltet mehrere parallele Runs,
 dedupliziert finale Einträge nach Quelle und Run-ID und zeigt die Quelle in TUI
@@ -31,6 +34,12 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.2.37
+
+- CPU-Package-Power nutzt dynamische powercap-/RAPL-Zonen mit Zählerüberlaufbehandlung.
+- CPU-nahe hwmon-Leistungswerte werden von GPU-hwmon getrennt; TUXEDO Control Center bleibt ein optionaler, rein lesender D-Bus-Fallback.
+- CPU-Power erscheint in `--once`, TUI und System-Snapshots mit Quelle und echter Leistungsgrenze.
 
 ## Neu in 2.2.36
 

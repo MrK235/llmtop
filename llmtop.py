@@ -5,7 +5,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.2.36"  # Single Source of Truth; History in version.md
+VERSION = "2.2.37"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -18,7 +18,7 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
                               source_label, token_rate, write_history)
     from llmtop_sources import (GPU_POWER_DISPLAY_SCALE_W, bar, collect_gpus,
                               collect_ollama, cpu_count, cpu_name, cpu_percent,
-                              cpu_temperature, get_ram_pct,
+                              cpu_temperature, collect_cpu_power, get_ram_pct,
                               model_lines, read_cpu_totals)
     lines = []
     st = collect_ollama(host)
@@ -32,10 +32,23 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
     if st["error"]:
         lines.append(f"Fehler: {st['error']}")
     prev = read_cpu_totals()
+    cpu_power = collect_cpu_power()
     import time
     time.sleep(cpu_measure)
     cpu = cpu_percent(prev, read_cpu_totals())
+    cpu_power = collect_cpu_power()
     lines.append(f"CPU {bar(cpu, 20)} {cpu:.1f}%" if cpu is not None else "CPU (Messung)")
+    power_watt = cpu_power.get("watt")
+    power_limit = cpu_power.get("limit")
+    power_source = cpu_power.get("source", "keine CPU-Powerquelle")
+    if power_watt is not None and power_limit and power_limit > 0:
+        power_pct = min(100.0, 100.0 * power_watt / power_limit)
+        lines.append(f"CPU Power {bar(power_pct, 20)} {power_pct:.1f}%  "
+                     f"{power_watt:.1f} W / {power_limit:.1f} W ({power_source})")
+    elif power_watt is not None:
+        lines.append(f"CPU Power {bar(None, 20)} {power_watt:.1f} W  ({power_source}; keine Grenze)")
+    else:
+        lines.append(f"CPU Power {bar(None, 20)} n/a  ({power_source})")
     lines.append(f"CPU {cpu_name()}  ·  Kerne {cpu_count()}")
     cpu_temp, cpu_temp_source = cpu_temperature()
     if cpu_temp is not None:
@@ -73,7 +86,8 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
                 lines.extend(model_lines(m))
         else:
             lines.append("Kein Modell geladen (/api/ps ist leer)")
-    history_ok = write_history(snapshot_record(host, st, cpu, ram_data or (None, None, None), gpus, gerr, run))
+    history_ok = write_history(snapshot_record(
+        host, st, cpu, ram_data or (None, None, None), gpus, gerr, run, cpu_power))
     if active_runs:
         for item in active_runs:
             detail = run_metric_detail(item)

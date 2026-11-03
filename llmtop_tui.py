@@ -18,8 +18,8 @@ from llmtop_metrics import (
     write_history,
 )
 from llmtop_sources import (
-    GPU_POWER_DISPLAY_SCALE_W, bar, collect_gpus, collect_ollama, cpu_count,
-    cpu_name, cpu_percent, cpu_temperature, get_ram_pct, read_cpu_totals,
+    GPU_POWER_DISPLAY_SCALE_W, bar, collect_cpu_power, collect_gpus, collect_ollama,
+    cpu_count, cpu_name, cpu_percent, cpu_temperature, get_ram_pct, read_cpu_totals,
 )
 def _add(scr, y, x, text, attr=0, indent=True):
     """Zeichnet normalen Inhalt mit einem linken Leerzeichen-Rand."""
@@ -484,6 +484,16 @@ def _draw(scr, st, host, interval):
         cpu = st["cpu"]
         cpu_value = f"{cpu:.1f} %" if cpu is not None else "n/a"
         row = sensor(row, "CPU", cpu, cpu_value)
+        power_watt = st.get("cpu_power_watt")
+        power_limit = st.get("cpu_power_limit")
+        power_pct = (min(100.0, 100.0 * power_watt / power_limit)
+                     if power_watt is not None and power_limit and power_limit > 0 else None)
+        power_value = (f"{power_pct:.1f} %" if power_pct is not None else
+                       f"{power_watt:.1f} W" if power_watt is not None else "n/a")
+        power_detail = st.get("cpu_power_source") or "keine CPU-Powerquelle"
+        if power_watt is not None and power_limit and power_limit > 0:
+            power_detail = f"{power_watt:.1f} W / {power_limit:.1f} W  ·  {power_detail}"
+        row = sensor(row, "CPU Power", power_pct, power_value, power_detail)
         ram_pct, ram_total, ram_avail = st["ram"]
         ram_value = f"{ram_pct:.1f} %" if ram_pct is not None else "n/a"
         row = sensor(row, "RAM", ram_pct, ram_value)
@@ -598,6 +608,16 @@ def _draw(scr, st, host, interval):
     cpu_accent = f"{cpu_temp:.1f} °C" if cpu_temp is not None else "n/a"
     row = sensor(row, "CPU", cpu, cpu_value, cpu_detail, accent=cpu_accent,
                  accent_attr=_temp_color(colors, cpu_temp))
+    power_watt = st.get("cpu_power_watt")
+    power_limit = st.get("cpu_power_limit")
+    power_pct = (min(100.0, 100.0 * power_watt / power_limit)
+                 if power_watt is not None and power_limit and power_limit > 0 else None)
+    power_value = (f"{power_pct:.1f} %" if power_pct is not None else
+                   f"{power_watt:.1f} W" if power_watt is not None else "n/a")
+    power_detail = st.get("cpu_power_source") or "keine CPU-Powerquelle"
+    if power_watt is not None and power_limit and power_limit > 0:
+        power_detail = f"{power_watt:.1f} W / {power_limit:.1f} W  ·  {power_detail}"
+    row = sensor(row, "CPU Power", power_pct, power_value, power_detail)
     ram_pct, ram_total, ram_avail = st["ram"]
     ram_value = f"{ram_pct:.1f} %" if ram_pct is not None else "n/a"
     ram_detail = (f"{ram_avail:.1f} / {ram_total:.1f} GiB frei"
@@ -782,7 +802,9 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
     collector.start()
     state = {"colors": None, "help": False, "prev_cpu": read_cpu_totals(),
              "ollama": {"ok": False, "version": None, "models": [], "error": "Messung"},
-             "cpu": None, "cpu_temp": None, "cpu_temp_source": None,
+             "cpu": None, "cpu_power_watt": None, "cpu_power_limit": None,
+             "cpu_power_source": "keine CPU-Powerquelle",
+             "cpu_temp": None, "cpu_temp_source": None,
              "gpus": [], "gpu_err": None, "ram": (None, None, None),
              "history_ok": None, "runs": [], "run_history": [],
              "collector_status": collector.status(), "pi_adapter_active": pi_adapter_active,
@@ -804,6 +826,7 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
             run_history = load_run_history()
             backfill_context_limits(run_history, ollama.get("models", []))
             gpus, gpu_err = collect_gpus(use_nvidia)
+            cpu_power = collect_cpu_power()
             cur = read_cpu_totals()
             with lock:
                 previous = state["prev_cpu"]
@@ -811,11 +834,16 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
             ram = get_ram_pct()
             cpu_temp, cpu_temp_source = cpu_temperature()
             history_ok = write_history(snapshot_record(
-                host, ollama, cpu, ram, gpus, gpu_err, runs[0] if runs else None))
+                host, ollama, cpu, ram, gpus, gpu_err, runs[0] if runs else None,
+                cpu_power))
             with lock:
                 state.update({"ollama": ollama, "runs": runs,
                               "gpus": gpus, "gpu_err": gpu_err, "prev_cpu": cur,
-                              "cpu": cpu, "ram": ram, "cpu_temp": cpu_temp,
+                              "cpu": cpu, "ram": ram,
+                              "cpu_power_watt": cpu_power.get("watt"),
+                              "cpu_power_limit": cpu_power.get("limit"),
+                              "cpu_power_source": cpu_power.get("source"),
+                              "cpu_temp": cpu_temp,
                               "cpu_temp_source": cpu_temp_source, "history_ok": history_ok,
                               "collector_status": collector.status()})
                 if history_generation == state["history_generation"]:

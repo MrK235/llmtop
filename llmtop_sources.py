@@ -2,10 +2,13 @@
 import csv
 import glob
 import io
+import math
 import os
 import re
+import shlex
 import shutil
 import subprocess
+import time
 from datetime import datetime
 import urllib.request
 import json
@@ -143,6 +146,201 @@ def _temperature_score(name, label):
     if name in ("acpitz", "acpi_thermal_rel"):
         return 10
     return 0
+
+
+def _power_value(path):
+    """Liest einen hwmon-/powercap-Wert und verwirft ungültige Werte."""
+    value = _read_float(path)
+    return value if value is not None and value >= 0 else None
+
+
+def _power_limit_watt(directory):
+    """Liest die erste plausible Leistungsgrenze eines Sensorverzeichnisses."""
+    paths = []
+    for pattern in ("constraint*_power_limit_uw", "power*_cap", "power*_max",
+                    "power*_rated_max", "power_limit_uw"):
+        paths.extend(sorted(glob.glob(os.path.join(directory, pattern))))
+    for path in paths:
+        value = _power_value(path)
+        if value is not None and value > 0:
+            return value * 1e-6
+    return None
+
+
+def _powercap_zones():
+    """Findet powercap-Zonen ohne eine feste Intel-Verzeichnisstruktur."""
+    zones = []
+    seen = set()
+    for root in ("/sys/class/powercap", "/sys/devices/virtual/powercap"):
+        if not os.path.isdir(root):
+            continue
+        for directory, subdirs, files in os.walk(root):
+            if "energy_uj" not in files and "power_uw" not in files:
+                continue
+            real = os.path.realpath(directory)
+            if real in seen:
+                continue
+            seen.add(real)
+            name = _read_text(os.path.join(directory, "name")) or os.path.basename(directory)
+            zones.append((directory, name))
+    def priority(item):
+        name = item[1].lower()
+        if name == "package-0":
+            return (0, name)
+        if re.search(r"(?:package|socket)(?:[-_]?[0-9]+)?$", name):
+            return (1, name)
+        if "package" in name or "socket" in name:
+            return (2, name)
+        return (3, name)
+    return sorted(zones, key=priority)
+
+
+_CPU_POWER_SAMPLES = {}
+
+
+def _rapl_cpu_power():
+    """Liest CPU-Package-Leistung direkt aus powercap/RAPL."""
+    zones = _powercap_zones()
+    for directory, name in zones:
+        direct = _power_value(os.path.join(directory, "power_uw"))
+        limit = _power_limit_watt(directory)
+        source = f"RAPL {name}"
+        if direct is not None:
+            return {"watt": direct * 1e-6, "limit": limit, "source": source}
+        energy = _power_value(os.path.join(directory, "energy_uj"))
+        if energy is None:
+            continue
+        now = time.monotonic()
+        key = os.path.realpath(directory)
+        prior = _CPU_POWER_SAMPLES.get(key)
+        _CPU_POWER_SAMPLES[key] = (energy, now)
+        if prior is None:
+            return {"watt": None, "limit": limit, "source": source}
+        old_energy, old_time = prior
+        elapsed = now - old_time
+        if elapsed <= 0:
+            return {"watt": None, "limit": limit, "source": source}
+        delta = energy - old_energy
+        if delta < 0:
+            maximum = _power_value(os.path.join(directory, "max_energy_range_uj"))
+            if maximum is None or maximum <= 0:
+                return {"watt": None, "limit": limit, "source": source}
+            delta = (maximum - old_energy) + energy
+        if delta < 0:
+            return {"watt": None, "limit": limit, "source": source}
+        watt = delta / elapsed / 1_000_000.0
+        # Ein beschädigter Zähler darf weder negative noch offensichtlich
+        # unrealistische CPU-Leistung in die Anzeige bringen.
+        if watt > 10000.0:
+            return {"watt": None, "limit": limit, "source": source}
+        return {"watt": watt, "limit": limit, "source": source}
+    return None
+
+
+def _hwmon_cpu_power():
+    """Liest CPU-nahe hwmon-Leistung, ohne GPU-hwmon zu übernehmen."""
+    gpu_words = ("amdgpu", "nvidia", "nouveau", "radeon", "gpu", "drm", "i915", "xe")
+    cpu_names = ("coretemp", "k10temp", "zenpower", "zenpower3", "cpu", "package", "soc")
+    candidates = []
+    for hwmon in sorted(glob.glob("/sys/class/hwmon/hwmon*")):
+        real = os.path.realpath(hwmon).lower()
+        name = (_read_text(os.path.join(hwmon, "name")) or "").lower()
+        labels = []
+        for label_path in sorted(glob.glob(os.path.join(hwmon, "power*_label"))):
+            label = _read_text(label_path)
+            if label:
+                labels.append(label.lower())
+        text = " ".join((real, name, *labels))
+        if any(word in text for word in gpu_words):
+            continue
+        explicit_cpu = (name in cpu_names or any(word in text for word in
+                        ("cpu", "package", "socket", "core", "soc")))
+        if not explicit_cpu:
+            continue
+        for pattern in ("power*_input", "power*_average"):
+            for path in sorted(glob.glob(os.path.join(hwmon, pattern))):
+                value = _power_value(path)
+                if value is None:
+                    continue
+                number = re.search(r"power(\d+)_", os.path.basename(path))
+                label = (_read_text(path.replace("_input", "_label").replace("_average", "_label"))
+                         or (f"power{number.group(1)}" if number else "power"))
+                score = 2 if name in cpu_names else 1
+                candidates.append((score, value * 1e-6, _power_limit_watt(hwmon),
+                                   f"hwmon {name or 'cpu'}/{label}"))
+    if candidates:
+        _score, watt, limit, source = max(candidates, key=lambda item: item[0])
+        return {"watt": watt, "limit": limit, "source": source}
+    return None
+
+
+def _tcc_json_output(output):
+    """Extrahiert das JSON-String-Ergebnis von busctl oder dbus-send."""
+    try:
+        values = shlex.split(output.strip())
+    except ValueError:
+        values = []
+    candidates = values + [output.strip()]
+    for value in candidates:
+        if value.startswith("{"):
+            try:
+                parsed = json.loads(value)
+            except (TypeError, ValueError):
+                continue
+            if isinstance(parsed, dict):
+                return parsed
+    return None
+
+
+def _tcc_cpu_power():
+    """Optionaler, rein lesender TUXEDO-Control-Center-Fallback."""
+    service = "com.tuxedocomputers.tccd"
+    path = "/com/tuxedocomputers/tccd"
+    interface = service
+    busctl = shutil.which("busctl")
+    dbus_send = shutil.which("dbus-send")
+    if not busctl and not dbus_send:
+        return None
+    try:
+        if busctl:
+            status = subprocess.run([busctl, "--system", "--no-pager", "status", service],
+                                    capture_output=True, text=True, timeout=1.0)
+            if status.returncode != 0:
+                return None
+            command = [busctl, "--system", "--no-pager", "call", service, path,
+                       interface, "GetCpuPowerValuesJSON"]
+        else:
+            command = [dbus_send, "--system", "--print-reply", "--dest=" + service,
+                       path, interface + ".GetCpuPowerValuesJSON"]
+        result = subprocess.run(command, capture_output=True, text=True, timeout=1.0)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode != 0:
+        return None
+    values = _tcc_json_output(result.stdout)
+    if not values:
+        return None
+    watt = values.get("powerDraw")
+    limit = values.get("maxPowerLimit")
+    try:
+        watt = float(watt)
+        limit = float(limit) if limit is not None else None
+    except (TypeError, ValueError):
+        return None
+    if (not math.isfinite(watt) or watt < 0 or watt > 10000 or
+            (limit is not None and (not math.isfinite(limit) or limit <= 0 or limit > 10000))):
+        return None
+    return {"watt": watt, "limit": limit, "source": "TCC D-Bus"}
+
+
+def collect_cpu_power():
+    """Liefert CPU-Package-Power und Quelle über die definierte Fallback-Kette."""
+    for reader in (_rapl_cpu_power, _hwmon_cpu_power, _tcc_cpu_power):
+        result = reader()
+        if result is not None:
+            return {"watt": result.get("watt"), "limit": result.get("limit"),
+                    "source": result.get("source") or "CPU-Power"}
+    return {"watt": None, "limit": None, "source": "keine CPU-Powerquelle"}
 
 
 def cpu_temperature():
