@@ -197,6 +197,7 @@ def _init_colors():
     c = {"structure": curses.A_BOLD, "secondary": curses.A_DIM,
          "group": curses.A_NORMAL, "cursor": curses.A_REVERSE,
          "model_name": curses.A_DIM | curses.A_UNDERLINE, "context_label": curses.A_BOLD,
+         "bar_bracket": curses.A_NORMAL,
          "status_green": curses.A_BOLD, "status_yellow": curses.A_BOLD,
          "status_amber": curses.A_BOLD, "status_orange": curses.A_BOLD,
          "rate_green": 0, "rate_yellow": 0, "rate_error": 0,
@@ -211,6 +212,7 @@ def _init_colors():
         curses.init_pair(6, curses.COLOR_WHITE, curses.COLOR_BLACK)
         curses.init_pair(7, curses.COLOR_BLACK, curses.COLOR_CYAN)
         c["status_green"] = curses.color_pair(1) | curses.A_BOLD
+        c["bar_bracket"] = curses.color_pair(1)
         c["context_label"] = curses.color_pair(4) | curses.A_BOLD
         c["status_yellow"] = curses.color_pair(2) | curses.A_BOLD
         # 256-Farbterminals erhalten Orange und ein nur wenig helleres Amber.
@@ -262,14 +264,22 @@ def _draw(scr, st, host, interval):
                 "cancelled": "abgebrochen", "error": "Fehler"}.get(
                     str(run.get("status", "unknown")), str(run.get("status", "unknown")))
 
+    def draw_meter(row, x, pct, width, fill_attr):
+        """Zeichnet den Inhalt farbig, die Klammern konstant grün und normal."""
+        meter = bar(pct, width)
+        _add(scr, row, x, "[", colors["bar_bracket"])
+        _add(scr, row, x + 1, meter[1:-1], fill_attr)
+        _add(scr, row, x + len(meter) - 1, "]", colors["bar_bracket"])
+        return meter
+
     def sensor(row, label, pct, value, detail="", value_attr=None, accent="", accent_attr=None,
                meter_attr=None):
         x = 0
         _add(scr, row, x, label.ljust(label_w), colors["structure"])
         x += label_w
         attr = _util_color(colors, pct)
-        meter = bar(pct, bar_w)
-        _add(scr, row, x, meter, meter_attr if meter_attr is not None else attr)
+        meter = draw_meter(row, x, pct, bar_w,
+                           meter_attr if meter_attr is not None else attr)
         x += len(meter) + 1
         _add(scr, row, x, value.rjust(7), value_attr if value_attr is not None else attr)
         x += 8
@@ -425,11 +435,12 @@ def _draw(scr, st, host, interval):
             _add(scr, row, x, "n/a".ljust(width), colors["secondary"])
             return
         pct_text = f"{pct:.0f}%" if pct is not None else "n/a"
-        meter = bar(pct, 12)
+        meter = draw_meter(row, x, pct, 12, _util_color(colors, pct))
         percentage = f" {pct_text.rjust(4)}"
         limit = f" {compact_tokens(limit) if limit is not None else 'n/a'}"
         available = max(0, width - len(meter) - len(percentage) - len(limit))
-        _add(scr, row, x, (meter + percentage)[:width], _util_color(colors, pct))
+        _add(scr, row, x + len(meter), percentage[:max(0, width - len(meter))],
+             _util_color(colors, pct))
         limit_x = x + len(meter) + len(percentage) + available
         if limit_x < x + width:
             _add(scr, row, limit_x, limit[:max(0, x + width - limit_x)], colors["secondary"])
@@ -485,7 +496,13 @@ def _draw(scr, st, host, interval):
                 cells.append(text[:width].ljust(width))
             attr = cursor_attr if active else (colors["group"] if item["kind"] == "group"
                                                 else colors["secondary"])
-            _add(scr, row, 0, " ".join(cells), attr)
+            x = 0
+            for index, (name, width) in enumerate(columns):
+                if name == "kontext":
+                    draw_live_context_cell(row, x, width, run)
+                else:
+                    _add(scr, row, x, cells[index], attr)
+                x += width + 1
             row += 1
         if not sorted_runs:
             _add(scr, row, 0, "Keine abgeschlossenen instrumentierten Runs", colors["secondary"])
@@ -601,17 +618,17 @@ def _draw(scr, st, host, interval):
         _add(scr, row, x, "VRAM/RAM ".ljust(label_w), colors["structure"])
         x += label_w
         if gpu_pct is None:
-            _add(scr, row, x, "[", colors["structure"])
+            _add(scr, row, x, "[", colors["bar_bracket"])
             _add(scr, row, x + 1, " " * bar_w, colors["secondary"])
-            _add(scr, row, x + bar_w + 1, "]", colors["structure"])
+            _add(scr, row, x + bar_w + 1, "]", colors["bar_bracket"])
         else:
             gpu_width = max(0, min(bar_w, int(round(gpu_pct * bar_w / 100.0))))
             cpu_width = bar_w - gpu_width
             gpu_attr = _offload_color(colors, gpu_pct)
-            _add(scr, row, x, "[", colors["structure"])
+            _add(scr, row, x, "[", colors["bar_bracket"])
             _add(scr, row, x + 1, "#" * gpu_width, gpu_attr)
             _add(scr, row, x + 1 + gpu_width, "#" * cpu_width, colors["secondary"])
-            _add(scr, row, x + bar_w + 1, "]", colors["structure"])
+            _add(scr, row, x + bar_w + 1, "]", colors["bar_bracket"])
         x += len(bar(None, bar_w)) + 1
         if gpu_pct is None:
             _add(scr, row, x, "n/a".rjust(7), colors["secondary"])

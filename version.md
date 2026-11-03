@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.24 — 03.11.2026
+
+- Klammern aller Auslastungs-, Kontext- und Modellbalken grün und normal statt
+  statusabhängig oder fett dargestellt.
+
 ### 2.3.23 — 03.11.2026
 
 - Die helle mittlere Balkenstufe verwendet nun ein dezentes Amber (Farbwert
