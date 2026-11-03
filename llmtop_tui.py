@@ -502,6 +502,10 @@ def _draw(scr, st, host, interval):
                 cells.append(text[:width].ljust(width))
             attr = cursor_attr if active else (colors["group"] if item["kind"] == "group"
                                                 else colors["secondary"])
+            # Die Zwischenräume zwischen Spalten brauchen ebenfalls den
+            # Cursorhintergrund, sonst wirkt die aktive Zeile unterbrochen.
+            if active:
+                _add(scr, row, 0, " " * len(" ".join(cells)), attr)
             # History-Kontext bleibt statusgrau; die aktive Cursorzeile bleibt
             # für eine durchgehende Hervorhebung vollständig markiert.
             x = 0

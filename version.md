@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.28 — 03.11.2026
+
+- Zwischenräume der History-Spalten erhalten bei der aktiven Zeile ebenfalls
+  den Cursorhintergrund; die Hervorhebung ist dadurch durchgehend.
+
 ### 2.3.27 — 03.11.2026
 
 - Die aktive History-Cursorzeile wird wieder durchgehend hervorgehoben; der
