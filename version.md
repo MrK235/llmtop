@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.2 — 03.11.2026
+
+- CPU-Power vor dem Balken auf `Power` verkürzt.
+- Balken und Wert verwenden bei echter Leistungsgrenze dynamische Grün-/Gelb-/Rot-Farben; gültige Werte ohne Grenze werden grün hervorgehoben.
+
 ### 2.3.1 — 03.11.2026
 
 - CPU-Power-Wert und Balken werden im TUI auch ohne Leistungsgrenze farbig hervorgehoben; eine künstliche Prozentgrenze bleibt deaktiviert.

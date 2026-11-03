@@ -5,7 +5,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.3.1"  # Single Source of Truth; History in version.md
+VERSION = "2.3.2"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -43,12 +43,12 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
     power_source = cpu_power.get("source", "keine CPU-Powerquelle")
     if power_watt is not None and power_limit and power_limit > 0:
         power_pct = min(100.0, 100.0 * power_watt / power_limit)
-        lines.append(f"CPU Power {bar(power_pct, 20)} {power_pct:.1f}%  "
+        lines.append(f"Power {bar(power_pct, 20)} {power_pct:.1f}%  "
                      f"{power_watt:.1f} W / {power_limit:.1f} W ({power_source})")
     elif power_watt is not None:
-        lines.append(f"CPU Power {bar(None, 20)} {power_watt:.1f} W  ({power_source}; keine Grenze)")
+        lines.append(f"Power {bar(None, 20)} {power_watt:.1f} W  ({power_source}; keine Grenze)")
     else:
-        lines.append(f"CPU Power {bar(None, 20)} n/a  ({power_source})")
+        lines.append(f"Power {bar(None, 20)} n/a  ({power_source})")
     lines.append(f"CPU {cpu_name()}  ·  Kerne {cpu_count()}")
     cpu_temp, cpu_temp_source = cpu_temperature()
     if cpu_temp is not None:

@@ -501,8 +501,8 @@ def _draw(scr, st, host, interval):
         if power_watt is None and rapl_status and rapl_status != "nicht aktiviert":
             power_detail += f"  ·  {rapl_status}"
         power_attr = (_util_color(colors, power_pct) if power_pct is not None else
-                      colors["structure"] if power_watt is not None else colors["secondary"])
-        row = sensor(row, "CPU Power", power_pct, power_value, power_detail,
+                      colors["status_green"] if power_watt is not None else colors["secondary"])
+        row = sensor(row, "Power", power_pct, power_value, power_detail,
                      value_attr=power_attr, meter_attr=power_attr)
         ram_pct, ram_total, ram_avail = st["ram"]
         ram_value = f"{ram_pct:.1f} %" if ram_pct is not None else "n/a"
@@ -631,8 +631,8 @@ def _draw(scr, st, host, interval):
     if power_watt is None and rapl_status and rapl_status != "nicht aktiviert":
         power_detail += f"  ·  {rapl_status}"
     power_attr = (_util_color(colors, power_pct) if power_pct is not None else
-                  colors["structure"] if power_watt is not None else colors["secondary"])
-    row = sensor(row, "CPU Power", power_pct, power_value, power_detail,
+                  colors["status_green"] if power_watt is not None else colors["secondary"])
+    row = sensor(row, "Power", power_pct, power_value, power_detail,
                  value_attr=power_attr, meter_attr=power_attr)
     ram_pct, ram_total, ram_avail = st["ram"]
     ram_value = f"{ram_pct:.1f} %" if ram_pct is not None else "n/a"
