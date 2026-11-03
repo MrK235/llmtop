@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.20 — 03.11.2026
+
+- TCC-D-Bus vor dem optionalen sudo-RAPL-Helper priorisiert, wenn der Dienst gültige CPU-Powerwerte liefert.
+
 ### 2.3.19 — 03.11.2026
 
 - CPU-hwmon vor den optionalen sudo-RAPL-Helper in die Fallback-Reihenfolge eingeordnet.

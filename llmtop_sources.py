@@ -473,16 +473,15 @@ def collect_cpu_power(privileged_reader=None):
     if result is not None:
         return {"watt": result.get("watt"), "limit": result.get("limit"),
                 "source": result.get("source") or "CPU-hwmon"}
+    result = _tcc_cpu_power()
+    if result is not None:
+        return {"watt": result.get("watt"), "limit": result.get("limit"),
+                "source": result.get("source") or "TCC D-Bus"}
     if privileged_reader is not None:
         result = privileged_reader.sample()
         if result is not None:
             return {"watt": result.get("watt"), "limit": result.get("limit"),
                     "source": result.get("source") or "RAPL (sudo)"}
-    for reader in (_tcc_cpu_power,):
-        result = reader()
-        if result is not None:
-            return {"watt": result.get("watt"), "limit": result.get("limit"),
-                    "source": result.get("source") or "CPU-Power"}
     return {"watt": None, "limit": None, "source": "keine CPU-Powerquelle"}
 
 
