@@ -12,9 +12,13 @@ gebracht.
 
 ## Changelog
 
+### 2.2.34 — 03.11.2026
+
+- Die Load-Anzeige wurde aus der CPU-Modellzeile entfernt; sichtbar bleiben Modellname und nutzbare Kernanzahl.
+
 ### 2.2.33 — 03.11.2026
 
-- CPU-Modellnamen aus `/proc/cpuinfo` werden neben Load und Kernanzahl angezeigt.
+- CPU-Modellnamen aus `/proc/cpuinfo` werden neben der nutzbaren Kernanzahl angezeigt.
 
 ### 2.2.32 — 03.11.2026
 

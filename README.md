@@ -204,8 +204,7 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   `size_vram` / `size` → Aufteilung GPU % / CPU %. Der Ollama-Bereich ist in
   „Aktuelle Runs“ und „Geladene Modelle“ unterteilt.
 * **CPU**: Modellname aus `/proc/cpuinfo`, Gesamt-% aus `/proc/stat`-Differenz
-  zwischen zwei Refreshes, dazu Load Average (`/proc/loadavg`), nutzbare
-  logische Kernanzahl und Temperatur
+  zwischen zwei Refreshes, dazu nutzbare logische Kernanzahl und Temperatur
   aus hwmon oder generischen Thermal-Zones (`k10temp`, `coretemp`, `zenpower`,
   `x86_pkg_temp`, `cpu_thermal`, `acpitz`), sofern verfügbar.
 * **RAM**: Auslastung `%`, Größe `GiB`, Zeile direkt nach CPU-Balken. Primär

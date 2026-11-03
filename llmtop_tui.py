@@ -19,7 +19,7 @@ from llmtop_metrics import (
 )
 from llmtop_sources import (
     GPU_POWER_DISPLAY_SCALE_W, bar, collect_gpus, collect_ollama, cpu_count,
-    cpu_name, cpu_percent, cpu_temperature, get_ram_pct, loadavg, read_cpu_totals,
+    cpu_name, cpu_percent, cpu_temperature, get_ram_pct, read_cpu_totals,
 )
 def _add(scr, y, x, text, attr=0, indent=True):
     """Zeichnet normalen Inhalt mit einem linken Leerzeichen-Rand."""
@@ -594,7 +594,7 @@ def _draw(scr, st, host, interval):
     cpu_value = f"{cpu:.1f} %" if cpu is not None else "n/a"
     cpu_temp = st["cpu_temp"]
     cpu_source = st["cpu_temp_source"] or "keine Quelle"
-    cpu_detail = f"{cpu_name()}  ·  Load {loadavg()[0]}  •  {cpu_count()} Kerne  ·  Temp "
+    cpu_detail = f"{cpu_name()}  •  {cpu_count()} Kerne  ·  Temp "
     cpu_accent = f"{cpu_temp:.1f} °C" if cpu_temp is not None else "n/a"
     row = sensor(row, "CPU", cpu, cpu_value, cpu_detail, accent=cpu_accent,
                  accent_attr=_temp_color(colors, cpu_temp))

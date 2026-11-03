@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.33** · Stand 03.11.2026 · Status: Herstellerübergreifende GPU- und Sensor-Fallbacks.
+**Version 2.2.34** · Stand 03.11.2026 · Status: Herstellerübergreifende GPU- und Sensor-Fallbacks.
 
 ## Aktueller Stand
 
@@ -32,9 +32,13 @@ gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
 
+## Korrektur in 2.2.34
+
+- Die Load-Anzeige wurde aus der CPU-Modellzeile entfernt; sichtbar bleiben Modellname und nutzbare Kernanzahl.
+
 ## Neu in 2.2.33
 
-- CPU-Modellnamen aus `/proc/cpuinfo` werden neben Load und Kernanzahl angezeigt.
+- CPU-Modellnamen aus `/proc/cpuinfo` werden neben der nutzbaren Kernanzahl angezeigt.
 
 ## Korrektur in 2.2.32
 
