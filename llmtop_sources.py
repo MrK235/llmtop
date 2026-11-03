@@ -104,6 +104,20 @@ def cpu_count():
         return os.cpu_count() or 1
 
 
+def cpu_name():
+    """Liest den vom Kernel gemeldeten CPU-Modellnamen."""
+    keys = ("model name", "Model name", "Hardware", "Processor", "cpu model")
+    try:
+        with open("/proc/cpuinfo", encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                key, separator, value = line.partition(":")
+                if separator and key.strip() in keys and value.strip():
+                    return " ".join(value.split())
+    except OSError:
+        pass
+    return "unbekannte CPU"
+
+
 def _to_int(text):
     try:
         return int(text)

@@ -5,7 +5,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.2.32"  # Single Source of Truth; History in version.md
+VERSION = "2.2.33"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -17,8 +17,8 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
                               model_for_run, run_metric_detail, snapshot_record,
                               source_label, token_rate, write_history)
     from llmtop_sources import (GPU_POWER_DISPLAY_SCALE_W, bar, collect_gpus,
-                              collect_ollama, cpu_count, cpu_percent, cpu_temperature,
-                              get_ram_pct, loadavg,
+                              collect_ollama, cpu_count, cpu_name, cpu_percent,
+                              cpu_temperature, get_ram_pct, loadavg,
                               model_lines, read_cpu_totals)
     lines = []
     st = collect_ollama(host)
@@ -36,7 +36,7 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
     time.sleep(cpu_measure)
     cpu = cpu_percent(prev, read_cpu_totals())
     lines.append(f"CPU {bar(cpu, 20)} {cpu:.1f}%" if cpu is not None else "CPU (Messung)")
-    lines.append(f"Load {loadavg()[0]}  Kerne {cpu_count()}")
+    lines.append(f"CPU {cpu_name()}  ·  Load {loadavg()[0]}  ·  Kerne {cpu_count()}")
     cpu_temp, cpu_temp_source = cpu_temperature()
     if cpu_temp is not None:
         lines.append(f"CPU Temp {cpu_temp:.1f} °C ({cpu_temp_source})")

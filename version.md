@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.33 — 03.11.2026
+
+- CPU-Modellnamen aus `/proc/cpuinfo` werden neben Load und Kernanzahl angezeigt.
+
 ### 2.2.32 — 03.11.2026
 
 - DRM-GPUs verwenden den Modellnamen aus `product_name` oder der lokalen PCI-ID-Datenbank statt der technischen `cardN`-Bezeichnung.
