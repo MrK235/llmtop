@@ -430,10 +430,10 @@ def _draw(scr, st, host, interval):
             return stamp.strftime("%d.%m %H:%M") if stamp else "n/a"
         return history_cell(run, column)
 
-    def draw_history_context_cell(row, x, width, run):
-        """Zeichnet den History-Kontext vollständig grau, auch beim Cursor."""
+    def draw_history_context_cell(row, x, width, run, row_attr):
+        """Hält den History-Kontext statusgrau und übernimmt die Cursorhervorhebung."""
         text = history_cell(run, "kontext")
-        _add(scr, row, x, text[:width].ljust(width), colors["secondary"])
+        _add(scr, row, x, text[:width].ljust(width), row_attr)
 
     def draw_live_context_cell(row, x, width, run):
         used, limit, pct = context_values(run, model_for_run(run, oll.get("models", [])))
@@ -502,12 +502,12 @@ def _draw(scr, st, host, interval):
                 cells.append(text[:width].ljust(width))
             attr = cursor_attr if active else (colors["group"] if item["kind"] == "group"
                                                 else colors["secondary"])
-            # History-Kontext bleibt vollständig grau und übernimmt weder
-            # Live-Farben noch die Cursor-Hervorhebung.
+            # History-Kontext bleibt statusgrau; die aktive Cursorzeile bleibt
+            # für eine durchgehende Hervorhebung vollständig markiert.
             x = 0
             for index, (name, width) in enumerate(columns):
                 if name == "kontext":
-                    draw_history_context_cell(row, x, width, run)
+                    draw_history_context_cell(row, x, width, run, attr)
                 else:
                     _add(scr, row, x, cells[index], attr)
                 x += width + 1

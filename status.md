@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.26** · Stand 03.11.2026 · Status: Cyanfarbene Balkenklammern, vollständig grauer History-Kontext.
+**Version 2.3.27** · Stand 03.11.2026 · Status: Durchgehende Cursorzeile mit grauem History-Kontext.
 
 ## Aktueller Stand
 
@@ -18,7 +18,8 @@ Power-Prozentanzeige wird nur bei echter gemeldeter Leistungsgrenze berechnet. S
 Statuswerte und Temperaturen verwenden Grün/Gelb/Rot, Sekundärinfos sind
 gedimmt. Auslastungsbalken verwenden Grün unter 30 %, Amber von 30 bis 59 %,
 Orange von 60 bis 90 % und Rot über 90 %. Balkenklammern sind außerhalb der
-History normal cyan; der gesamte History-Kontext bleibt grau, auch bei aktiver Cursorzeile. Ollama-Modelle zeigen einen geteilten Speicherbalken im gleichen
+History normal cyan; der History-Kontext bleibt statusgrau und übernimmt bei
+aktiver Cursorzeile deren durchgehende Hervorhebung. Ollama-Modelle zeigen einen geteilten Speicherbalken im gleichen
 Raster wie die Sensoren: GPU/VRAM ist Grün oberhalb 55 %, Gelb bei 45–55 %
 und Rot darunter; CPU/RAM bleibt gedimmt grau. Beide Anteile verwenden `#`.
 CPU-Power wird über dynamische powercap-/RAPL-Zonen, eindeutig zugeordnete
@@ -36,6 +37,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.27
+
+- Die aktive History-Cursorzeile wird wieder durchgehend hervorgehoben; der
+  Kontext bleibt dabei statusgrau und wechselt nicht in eine Live-Auslastungsfarbe.
 
 ## Neu in 2.3.26
 

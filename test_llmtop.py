@@ -449,7 +449,8 @@ def test_tui_draws_loaded_model():
     assert ("]", 22) in screen.calls
     assert ("  20%", 18) in screen.calls
     assert (" 100", 17) in screen.calls
-    assert ("[            ]  n/a n/a", 17) in screen.calls
+    assert ("[            ]  n/a n/a", 20) in screen.calls
+    assert ("n/a                    ", 21) in screen.calls
     assert any(text.startswith("01.01 00:00") and attr == 21
                for text, attr in screen.calls)
 

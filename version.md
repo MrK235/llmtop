@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.27 — 03.11.2026
+
+- Die aktive History-Cursorzeile wird wieder durchgehend hervorgehoben; der
+  Kontext bleibt dabei statusgrau und wechselt nicht in eine Live-Auslastungsfarbe.
+
 ### 2.3.26 — 03.11.2026
 
 - History-Kontext vollständig grau gezeichnet, auch bei aktiver Cursorzeile.

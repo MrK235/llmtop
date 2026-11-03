@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.26** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.3.27** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -136,7 +136,8 @@ Temperaturstatus verwendet weiterhin Grün/Gelb/Rot. Auf 256-Farbterminals
 sind Amber und Orange getrennte Farbtöne; mit 8 Standardfarben werden sie
 über die Darstellung unterschieden. Sekundärinfos sind gedimmt.
 Balkenklammern sind außerhalb der History immer normal dargestelltes Cyan;
-Kontextzellen in der History bleiben vollständig grau. History-Gruppen verwenden neutrales Grau ohne
+Kontextzellen in der History bleiben statusgrau; die aktive Cursorzeile bleibt
+durchgehend hervorgehoben. History-Gruppen verwenden neutrales Grau ohne
 Fettdarstellung; die aktive Cursorzeile erhält schwarze Schrift auf Cyan,
 ebenfalls ohne Fettdarstellung, damit Schwarz nicht zu Hellgrau aufgehellt wird. Im
 Ollama-Speicherbalken bedeuten die Farben explizit
@@ -150,7 +151,8 @@ sichtbaren Spalte richtet sich dynamisch nach Überschrift und Inhalt; aktuelle
 Runs und History nutzen dabei dieselben Spaltenbreiten. Die History berücksichtigt
 dafür stets ihre gesamte Liste. Die Kontextspalte der aktuellen Runs zeigt den Fortschritt zuerst als farbigen
 Balken, danach den rechtsbündigen Prozentwert und nur das graue Kontextlimit;
-in der History bleibt die gesamte Kontextzelle grau. **History** zeigt
+in der History bleibt die Kontextzelle statusgrau und übernimmt bei der aktiven
+Zeile weiterhin die durchgehende Cursor-Hervorhebung. **History** zeigt
 eine scrollbare Tabelle mit bis zu 500 abgeschlossenen instrumentierten Runs.
 Sie kann nach Abschlusszeit, Quelle, Modell, Status, Tokens, Kontextverbrauch,
 Ausgaberate und Dauer sortiert werden. Die aktive Sortierspalte ist im
