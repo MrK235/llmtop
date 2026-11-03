@@ -12,7 +12,7 @@ gebracht.
 
 ## Changelog
 
-### 2.3.4 — 03.11.2026
+### 2.3.04 — 03.11.2026
 
 - TUI-Hinweis `x: sudo aktivieren` sowie Fußzeile `x sudo` ergänzt.
 - Die Aktivierung des privilegierten RAPL-Lesers von `p` auf `x` umgestellt.
