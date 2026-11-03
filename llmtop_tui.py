@@ -60,7 +60,7 @@ def _util_color(colors, pct):
     if pct >= 60:
         return colors["status_orange"]
     if pct >= 30:
-        return colors["status_light_orange"]
+        return colors["status_amber"]
     return colors["status_green"]
 
 
@@ -198,7 +198,7 @@ def _init_colors():
          "group": curses.A_NORMAL, "cursor": curses.A_REVERSE,
          "model_name": curses.A_DIM | curses.A_UNDERLINE, "context_label": curses.A_BOLD,
          "status_green": curses.A_BOLD, "status_yellow": curses.A_BOLD,
-         "status_light_orange": curses.A_BOLD, "status_orange": curses.A_BOLD,
+         "status_amber": curses.A_BOLD, "status_orange": curses.A_BOLD,
          "rate_green": 0, "rate_yellow": 0, "rate_error": 0,
          "error": curses.A_BOLD, "offload_good": curses.A_BOLD,
          "offload_mixed": curses.A_BOLD, "offload_cpu": curses.A_BOLD}
@@ -213,14 +213,14 @@ def _init_colors():
         c["status_green"] = curses.color_pair(1) | curses.A_BOLD
         c["context_label"] = curses.color_pair(4) | curses.A_BOLD
         c["status_yellow"] = curses.color_pair(2) | curses.A_BOLD
-        # 256-Farbterminals erhalten zwei echte Orange-Abstufungen. Im
-        # 8-Farb-Fallback unterscheiden sich beide über die Fettdarstellung.
-        c["status_light_orange"] = curses.color_pair(2) | curses.A_BOLD
+        # 256-Farbterminals erhalten Orange und ein nur wenig helleres Amber.
+        # Im 8-Farb-Fallback unterscheiden sich beide über die Fettdarstellung.
+        c["status_amber"] = curses.color_pair(2) | curses.A_BOLD
         c["status_orange"] = curses.color_pair(2)
         if curses.COLORS >= 256:
-            curses.init_pair(8, 223, curses.COLOR_BLACK)
+            curses.init_pair(8, 214, curses.COLOR_BLACK)
             curses.init_pair(9, 208, curses.COLOR_BLACK)
-            c["status_light_orange"] = curses.color_pair(8) | curses.A_BOLD
+            c["status_amber"] = curses.color_pair(8) | curses.A_BOLD
             c["status_orange"] = curses.color_pair(9) | curses.A_BOLD
         c["rate_green"] = curses.color_pair(1)
         c["rate_yellow"] = curses.color_pair(2)

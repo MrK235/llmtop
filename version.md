@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.23 — 03.11.2026
+
+- Die helle mittlere Balkenstufe verwendet nun ein dezentes Amber (Farbwert
+  214) statt des zu hellen Orange-Tons.
+
 ### 2.3.22 — 03.11.2026
 
 - Auslastungsbalken verwenden vier Stufen: Grün unter 30 %, Hell-Orange von

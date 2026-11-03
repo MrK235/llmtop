@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.22** · Stand 03.11.2026 · Status: Vier abgestufte Balkenfarben.
+**Version 2.3.23** · Stand 03.11.2026 · Status: Dezentes Amber statt Hell-Orange.
 
 ## Aktueller Stand
 
@@ -17,7 +17,7 @@ zugeordnete hwmon-Geräte ergänzt. Fehlende Einzelwerte bleiben `n/a`; eine
 Power-Prozentanzeige wird nur bei echter gemeldeter Leistungsgrenze berechnet. Struktur ist Cyan,
 Statuswerte und Temperaturen verwenden Grün/Gelb/Rot, Sekundärinfos sind
 gedimmt. Auslastungsbalken bleiben unter 30 % grün, sind von 30 bis 59 %
-hell-orange, von 60 bis 90 % orange und über 90 % rot. Ollama-Modelle zeigen einen geteilten Speicherbalken im gleichen
+amber, von 60 bis 90 % orange und über 90 % rot. Ollama-Modelle zeigen einen geteilten Speicherbalken im gleichen
 Raster wie die Sensoren: GPU/VRAM ist Grün oberhalb 55 %, Gelb bei 45–55 %
 und Rot darunter; CPU/RAM bleibt gedimmt grau. Beide Anteile verwenden `#`.
 CPU-Power wird über dynamische powercap-/RAPL-Zonen, eindeutig zugeordnete
@@ -35,6 +35,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.23
+
+- Die helle mittlere Balkenstufe verwendet nun ein nur wenig helleres Amber
+  statt des zu hellen Orange-Tons.
 
 ## Neu in 2.3.22
 
