@@ -8,6 +8,8 @@ import re
 import shlex
 import shutil
 import subprocess
+import sys
+import threading
 import time
 from datetime import datetime
 import urllib.request
@@ -198,6 +200,146 @@ def _powercap_zones():
 _CPU_POWER_SAMPLES = {}
 
 
+def _counter_power(energy, timestamp, prior, maximum):
+    """Berechnet Watt aus zwei monotonen Energiezählerständen."""
+    if prior is None:
+        return None
+    old_energy, old_timestamp = prior
+    elapsed = timestamp - old_timestamp
+    if elapsed <= 0 or energy < 0 or old_energy < 0:
+        return None
+    delta = energy - old_energy
+    if delta < 0:
+        if maximum is None or maximum <= 0 or old_energy > maximum or energy > maximum:
+            return None
+        delta = (maximum - old_energy) + energy
+    if delta < 0:
+        return None
+    watt = delta / elapsed / 1_000_000.0
+    return watt if math.isfinite(watt) and watt <= 10000.0 else None
+
+
+class PrivilegedRaplReader:
+    """Liest RAPL-Zähler über einen ausdrücklich gestarteten Root-Helper."""
+
+    def __init__(self, process):
+        self.process = process
+        self._lock = threading.Lock()
+        self._latest = None
+        self._sequence = 0
+        self._last_sequence = 0
+        self._prior = None
+        self._thread = threading.Thread(target=self._read_output,
+                                        name="llmtop-rapl-helper", daemon=True)
+
+    @classmethod
+    def start(cls, script_path):
+        script_path = os.path.abspath(script_path)
+        command = [sys.executable, script_path, "--rapl-helper"]
+        if os.geteuid() != 0:
+            sudo = shutil.which("sudo")
+            if not sudo:
+                raise OSError("sudo nicht gefunden")
+            command.insert(0, sudo)
+            command.insert(1, "-n")
+        process = subprocess.Popen(
+            command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            text=True, bufsize=1, close_fds=True)
+        time.sleep(0.05)
+        if process.poll() is not None:
+            raise OSError("privilegierter RAPL-Helper konnte nicht gestartet werden")
+        reader = cls(process)
+        reader._thread.start()
+        return reader
+
+    def _read_output(self):
+        try:
+            for line in self.process.stdout:
+                try:
+                    item = json.loads(line)
+                except (TypeError, ValueError):
+                    continue
+                if not isinstance(item, dict):
+                    continue
+                energy = item.get("energy_uj")
+                timestamp = item.get("timestamp")
+                try:
+                    energy = float(energy)
+                    timestamp = float(timestamp)
+                except (TypeError, ValueError):
+                    continue
+                if not math.isfinite(energy) or not math.isfinite(timestamp) or energy < 0:
+                    continue
+                maximum = item.get("max_energy_range_uj")
+                limit = item.get("limit_watt")
+                try:
+                    maximum = float(maximum) if maximum is not None else None
+                    limit = float(limit) if limit is not None else None
+                except (TypeError, ValueError):
+                    continue
+                if (maximum is not None and (not math.isfinite(maximum) or maximum <= 0) or
+                        limit is not None and (not math.isfinite(limit) or limit <= 0)):
+                    continue
+                name = str(item.get("name") or "package-0")[:80]
+                with self._lock:
+                    self._sequence += 1
+                    self._latest = (self._sequence, energy, timestamp, maximum, limit, name)
+        except (OSError, ValueError, TypeError):
+            pass
+
+    def sample(self):
+        with self._lock:
+            item = self._latest
+        if item is None:
+            return None
+        sequence, energy, timestamp, maximum, limit, name = item
+        source = f"RAPL (sudo) {name}"
+        if sequence == self._last_sequence:
+            return {"watt": None, "limit": limit, "source": source}
+        self._last_sequence = sequence
+        watt = _counter_power(energy, timestamp, self._prior, maximum)
+        self._prior = (energy, timestamp)
+        return {"watt": watt, "limit": limit, "source": source}
+
+    def stop(self):
+        process = self.process
+        if process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=0.5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=0.5)
+        try:
+            process.stdout.close()
+        except (AttributeError, OSError):
+            pass
+
+
+def run_rapl_helper(interval=0.5):
+    """Gibt privilegierte RAPL-Messpunkte als JSONL aus."""
+    try:
+        while True:
+            zones = _powercap_zones()
+            record = None
+            for directory, name in zones:
+                energy = _power_value(os.path.join(directory, "energy_uj"))
+                if energy is None:
+                    continue
+                maximum = _power_value(os.path.join(directory, "max_energy_range_uj"))
+                record = {"timestamp": time.monotonic(), "name": name,
+                          "energy_uj": energy, "max_energy_range_uj": maximum,
+                          "limit_watt": _power_limit_watt(directory)}
+                break
+            if record is not None:
+                sys.stdout.write(json.dumps(record, separators=(",", ":")) + "\n")
+                sys.stdout.flush()
+            time.sleep(max(0.2, float(interval)))
+    except (BrokenPipeError, KeyboardInterrupt):
+        return 0
+    return 0
+
+
 def _rapl_cpu_power():
     """Liest CPU-Package-Leistung direkt aus powercap/RAPL."""
     zones = _powercap_zones()
@@ -216,23 +358,8 @@ def _rapl_cpu_power():
         _CPU_POWER_SAMPLES[key] = (energy, now)
         if prior is None:
             return {"watt": None, "limit": limit, "source": source}
-        old_energy, old_time = prior
-        elapsed = now - old_time
-        if elapsed <= 0:
-            return {"watt": None, "limit": limit, "source": source}
-        delta = energy - old_energy
-        if delta < 0:
-            maximum = _power_value(os.path.join(directory, "max_energy_range_uj"))
-            if maximum is None or maximum <= 0:
-                return {"watt": None, "limit": limit, "source": source}
-            delta = (maximum - old_energy) + energy
-        if delta < 0:
-            return {"watt": None, "limit": limit, "source": source}
-        watt = delta / elapsed / 1_000_000.0
-        # Ein beschädigter Zähler darf weder negative noch offensichtlich
-        # unrealistische CPU-Leistung in die Anzeige bringen.
-        if watt > 10000.0:
-            return {"watt": None, "limit": limit, "source": source}
+        maximum = _power_value(os.path.join(directory, "max_energy_range_uj"))
+        watt = _counter_power(energy, now, prior, maximum)
         return {"watt": watt, "limit": limit, "source": source}
     return None
 
@@ -333,9 +460,19 @@ def _tcc_cpu_power():
     return {"watt": watt, "limit": limit, "source": "TCC D-Bus"}
 
 
-def collect_cpu_power():
+def collect_cpu_power(privileged_reader=None):
     """Liefert CPU-Package-Power und Quelle über die definierte Fallback-Kette."""
-    for reader in (_rapl_cpu_power, _hwmon_cpu_power, _tcc_cpu_power):
+    for reader in (_rapl_cpu_power,):
+        result = reader()
+        if result is not None:
+            return {"watt": result.get("watt"), "limit": result.get("limit"),
+                    "source": result.get("source") or "CPU-Power"}
+    if privileged_reader is not None:
+        result = privileged_reader.sample()
+        if result is not None:
+            return {"watt": result.get("watt"), "limit": result.get("limit"),
+                    "source": result.get("source") or "RAPL (sudo)"}
+    for reader in (_hwmon_cpu_power, _tcc_cpu_power):
         result = reader()
         if result is not None:
             return {"watt": result.get("watt"), "limit": result.get("limit"),

@@ -12,6 +12,12 @@ gebracht.
 
 ## Changelog
 
+### 2.3.0 — 03.11.2026
+
+- TUI-Taste `p`/`P` aktiviert nach sichtbarer `sudo -v`-Bestätigung einen begrenzten, nur lesenden RAPL-Helper.
+- CPU-Power kann dadurch während einer laufenden Sitzung ohne llmtop-Neustart aus root-lesbaren RAPL-Zählern berechnet werden.
+- Der Helper verwendet eine feste Argumentliste, JSONL über stdout und wird beim Beenden der TUI beendet.
+
 ### 2.2.37 — 03.11.2026
 
 - CPU-Package-Power über dynamische powercap-/RAPL-Zonen mit Zählerüberlaufbehandlung ergänzt.

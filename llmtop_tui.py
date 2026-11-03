@@ -1,6 +1,8 @@
 """curses-Oberflaeche fuer llmtop."""
 import curses
 import os
+import shutil
+import subprocess
 import sys
 import threading
 import time
@@ -18,8 +20,9 @@ from llmtop_metrics import (
     write_history,
 )
 from llmtop_sources import (
-    GPU_POWER_DISPLAY_SCALE_W, bar, collect_cpu_power, collect_gpus, collect_ollama,
-    cpu_count, cpu_name, cpu_percent, cpu_temperature, get_ram_pct, read_cpu_totals,
+    GPU_POWER_DISPLAY_SCALE_W, PrivilegedRaplReader, bar, collect_cpu_power,
+    collect_gpus, collect_ollama, cpu_count, cpu_name, cpu_percent,
+    cpu_temperature, get_ram_pct, read_cpu_totals,
 )
 def _add(scr, y, x, text, attr=0, indent=True):
     """Zeichnet normalen Inhalt mit einem linken Leerzeichen-Rand."""
@@ -493,6 +496,9 @@ def _draw(scr, st, host, interval):
         power_detail = st.get("cpu_power_source") or "keine CPU-Powerquelle"
         if power_watt is not None and power_limit and power_limit > 0:
             power_detail = f"{power_watt:.1f} W / {power_limit:.1f} W  ·  {power_detail}"
+        rapl_status = st.get("rapl_status")
+        if power_watt is None and rapl_status and rapl_status != "nicht aktiviert":
+            power_detail += f"  ·  {rapl_status}"
         row = sensor(row, "CPU Power", power_pct, power_value, power_detail)
         ram_pct, ram_total, ram_avail = st["ram"]
         ram_value = f"{ram_pct:.1f} %" if ram_pct is not None else "n/a"
@@ -534,7 +540,7 @@ def _draw(scr, st, host, interval):
                 row += 1
         if row < h - 2:
             draw_history_table(row, h - row - 2)
-        draw_footer("q quit   r reload   c clear   ▴▾ return   ↑↓ cursor   h hilfe")
+        draw_footer("q quit   r reload   p rapl   c clear   ▴▾ return   ↑↓ cursor   h hilfe")
         scr.refresh()
         return
 
@@ -617,6 +623,9 @@ def _draw(scr, st, host, interval):
     power_detail = st.get("cpu_power_source") or "keine CPU-Powerquelle"
     if power_watt is not None and power_limit and power_limit > 0:
         power_detail = f"{power_watt:.1f} W / {power_limit:.1f} W  ·  {power_detail}"
+    rapl_status = st.get("rapl_status")
+    if power_watt is None and rapl_status and rapl_status != "nicht aktiviert":
+        power_detail += f"  ·  {rapl_status}"
     row = sensor(row, "CPU Power", power_pct, power_value, power_detail)
     ram_pct, ram_total, ram_avail = st["ram"]
     ram_value = f"{ram_pct:.1f} %" if ram_pct is not None else "n/a"
@@ -764,7 +773,7 @@ def _draw(scr, st, host, interval):
     row += 1
     draw_history_table(row, h - row - 2, columns)
 
-    draw_footer("q quit   r reload   c clear   ▴▾ return   ↑↓ cursor")
+    draw_footer("q quit   r reload   p rapl   c clear   ▴▾ return   ↑↓ cursor")
     if st["help"]:
         sources = ", ".join(sorted(set(g.get("source", "?") for g in st["gpus"]))) or "keine"
         box = ["Hilfe", "", "q  Q  beenden", "r  Programm neu laden",
@@ -775,7 +784,8 @@ def _draw(scr, st, host, interval):
                "Tab / Shift-Tab  History-Spalte wechseln", "s  History-Sortierrichtung",
                "Enter / Leertaste  Gruppe auf- oder zuklappen",
                "←/→  Gruppe zu- oder aufklappen", "↑/↓ Bild↑/Bild↓  Cursor bewegen",
-               "Pos1/Ende  erster/letzter History-Eintrag", "",
+               "Pos1/Ende  erster/letzter History-Eintrag",
+               "p  RAPL-Leser mit sudo aktivieren", "",
                "System / GPU / Ollama / History", "GPU-Quelle: " + sources]
         bh = len(box) + 2
         bw = max(len(b) for b in box) + 4
@@ -804,6 +814,7 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
              "ollama": {"ok": False, "version": None, "models": [], "error": "Messung"},
              "cpu": None, "cpu_power_watt": None, "cpu_power_limit": None,
              "cpu_power_source": "keine CPU-Powerquelle",
+             "rapl_reader": None, "rapl_status": "nicht aktiviert",
              "cpu_temp": None, "cpu_temp_source": None,
              "gpus": [], "gpu_err": None, "ram": (None, None, None),
              "history_ok": None, "runs": [], "run_history": [],
@@ -826,7 +837,9 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
             run_history = load_run_history()
             backfill_context_limits(run_history, ollama.get("models", []))
             gpus, gpu_err = collect_gpus(use_nvidia)
-            cpu_power = collect_cpu_power()
+            with lock:
+                rapl_reader = state.get("rapl_reader")
+            cpu_power = collect_cpu_power(rapl_reader)
             cur = read_cpu_totals()
             with lock:
                 previous = state["prev_cpu"]
@@ -855,6 +868,46 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
     worker = threading.Thread(target=sample, name="llmtop-sampler", daemon=True)
     worker.start()
 
+    def activate_rapl(scr):
+        """Authentifiziert sudo sichtbar und startet den begrenzten Helper."""
+        with lock:
+            if state.get("rapl_reader") is not None:
+                state["rapl_status"] = "bereits aktiv"
+                return
+            state["rapl_status"] = "Authentifizierung läuft"
+        sudo = shutil.which("sudo")
+        suspended = False
+        try:
+            if os.geteuid() != 0 and not sudo:
+                raise OSError("sudo nicht gefunden")
+            curses.def_prog_mode()
+            curses.endwin()
+            suspended = True
+            print("llmtop: privilegierten RAPL-Leser aktivieren (sudo -v)", flush=True)
+            if os.geteuid() != 0:
+                result = subprocess.run([sudo, "-v"], timeout=120)
+                if result.returncode != 0:
+                    raise PermissionError("sudo-Authentifizierung abgelehnt")
+            script = os.path.join(os.path.dirname(__file__), "llmtop.py")
+            reader = PrivilegedRaplReader.start(script)
+            with lock:
+                state["rapl_reader"] = reader
+                state["rapl_status"] = "aktiviert, Messung folgt"
+            print("llmtop: RAPL-Leser aktiviert; zurück zur TUI.", flush=True)
+        except (OSError, PermissionError, subprocess.SubprocessError) as exc:
+            with lock:
+                state["rapl_status"] = f"Fehler: {exc}"
+            print(f"llmtop: RAPL-Leser nicht aktiviert: {exc}", file=sys.stderr, flush=True)
+        finally:
+            if suspended:
+                try:
+                    curses.reset_prog_mode()
+                    scr.keypad(True)
+                    scr.clear()
+                    scr.refresh()
+                except curses.error:
+                    pass
+
     def session(scr):
         nonlocal interval
         curses.curs_set(0)
@@ -877,6 +930,10 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
                 return 0
             if key in (ord("r"), ord("R")):
                 return "reload"
+            if key in (ord("p"), ord("P")):
+                activate_rapl(scr)
+                refresh.set()
+                continue
             with lock:
                 normalize_history_state(state)
                 if key in (ord("c"), ord("C")):
@@ -968,6 +1025,10 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
         stop.set()
         refresh.set()
         worker.join(timeout=0.2)
+        with lock:
+            rapl_reader = state.get("rapl_reader")
+        if rapl_reader is not None:
+            rapl_reader.stop()
         collector.stop()
     if result == "reload":
         os.execv(sys.executable, [sys.executable, *sys.argv])

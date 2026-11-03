@@ -5,7 +5,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.2.37"  # Single Source of Truth; History in version.md
+VERSION = "2.3.0"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -121,7 +121,11 @@ def main(argv=None):
     ap.add_argument("--collector-port", type=int, help="Collector-Port (Default 11435)")
     ap.add_argument("--once", action="store_true", help="ein Einzel-Snapshot, kein Vollbild")
     ap.add_argument("--no-nvidia", action="store_true", help="nvidia-smi nicht verwenden")
+    ap.add_argument("--rapl-helper", action="store_true", help=argparse.SUPPRESS)
     args = ap.parse_args(argv)
+    if args.rapl_helper:
+        from llmtop_sources import run_rapl_helper
+        return run_rapl_helper()
     from llmtop_sources import normalize_host
     host = normalize_host(args.host)
     from llmtop_metrics import (emit_run_event, ensure_open_webui_adapter,

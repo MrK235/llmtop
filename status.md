@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.37** · Stand 03.11.2026 · Status: CPU-Power mit RAPL- und TCC-Fallbacks.
+**Version 2.3.0** · Stand 03.11.2026 · Status: Privilegierter RAPL-Leser ohne Neustart.
 
 ## Aktueller Stand
 
@@ -34,6 +34,12 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.0
+
+- Die TUI-Taste `p`/`P` startet nach expliziter `sudo -v`-Bestätigung einen begrenzten Root-Helper für nur lesende RAPL-Zähler.
+- Die laufende llmtop-Sitzung bleibt erhalten; der Helper liefert JSONL-Messpunkte und wird beim Beenden beendet.
+- Ohne explizite Aktivierung bleiben sudo und Root-Prozesse unberührt; bei Fehlern bleiben die bisherigen CPU-Power-Fallbacks aktiv.
 
 ## Neu in 2.2.37
 

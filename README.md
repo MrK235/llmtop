@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.2.37** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.3.0** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -100,6 +100,7 @@ Datenbank-Fallback kann `LLMTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 |-------|---------|
 | `q` / `Q` | beenden |
 | `r` / `R` | Programm mit denselben Optionen neu laden |
+| `p` / `P` | privilegierten RAPL-Leser nach expliziter sudo-Bestätigung aktivieren |
 | `h` / `H` | Hilfe ein/aus (wird ignoriert, wenn das Overlay nicht ins Terminal passt) |
 | `-` | Intervall halbieren (min. 0,2 s) |
 | `+` / `=` | Intervall verdoppeln (max. 60 s) |
@@ -212,7 +213,9 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   powercap-/RAPL-Zonen, CPU-hwmon oder optional TUXEDO Control Center über
   D-Bus. Die erste RAPL-Messung bleibt bis zum zweiten Zählerstand `n/a`;
   Quelle und echte Leistungsgrenze werden angezeigt. GPU-hwmon wird nicht als
-  CPU-Power verwendet.
+  CPU-Power verwendet. Wenn RAPL nur für root lesbar ist, aktiviert `p`/`P` in
+  der TUI nach einer sichtbaren `sudo -v`-Abfrage einen begrenzten RAPL-Helper,
+  ohne llmtop neu zu starten.
 * **RAM**: Auslastung `%`, Größe `GiB`, Zeile nach den CPU-Systemwerten. Primär
   `/proc/meminfo`; bei einer endlichen cgroup-v1/v2-Grenze werden effektiver
   Verbrauch und verfügbares Limit des Prozesses angezeigt.
