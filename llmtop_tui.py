@@ -805,31 +805,40 @@ def _draw(scr, st, host, interval):
         power_source = short_source(st.get("cpu_power_source"), 26)
         temp_source = short_source(st.get("cpu_temp_source"), 26)
         host_source = short_source(host.replace("http://", "").replace("https://", ""), 26)
-        box = ["Hilfe",
-               "Bedienung: q Ende · r Neu laden · h Help",
-               "x sudo CPU-Power · c History löschen",
-               "+/- Intervall · a Fokus aktuelle Runs/History",
-               "Tab/Shift-Tab Sort · s Richtung",
-               "↑↓/Bild↑↓ Cursor · Pos1/Ende Anfang/Ende",
-               "Enter/Space Gruppe · ←/→ Gruppe zu/auf",
-               "",
-               "Sensorquellen",
-               f"CPU Power: {power_source}",
-               f"CPU Temp: {temp_source}",
-               "CPU/RAM: /proc/stat · meminfo/cgroup",
-               f"GPU: {short_source(gpu_sources)}",
-               f"Ollama: {host_source}"]
+        power_status = st.get("rapl_status")
+        if power_status and power_status != "nicht aktiviert":
+            power_source = f"{power_source} · {short_source(power_status, 20)}"
+        box = [
+            ("Bedienung", colors["structure"]),
+            ("  q  Ende        r  Neu laden        h  Help", colors["secondary"]),
+            ("  x  sudo CPU-Power    c  History löschen", colors["secondary"]),
+            ("  +/- Intervall    a  Fokus Runs/History", colors["secondary"]),
+            ("  Tab/Shift-Tab Sortierung    s Richtung", colors["secondary"]),
+            ("  ↑↓/Bild↑↓ Cursor    Pos1/Ende Anfang/Ende", colors["secondary"]),
+            ("  Enter/Space Gruppe    ←/→ Gruppe zu/auf", colors["secondary"]),
+            ("", colors["secondary"]),
+            ("Sensorquellen", colors["structure"]),
+            (f"  {'CPU Power':<12} {power_source}", colors["secondary"]),
+            (f"  {'CPU Temp':<12} {temp_source}", colors["secondary"]),
+            ("  CPU/RAM      /proc/stat · meminfo/cgroup", colors["secondary"]),
+            (f"  {'GPU':<12} {short_source(gpu_sources)}", colors["secondary"]),
+            (f"  {'Ollama':<12} {host_source}", colors["secondary"]),
+        ]
+        content_width = max(len(text) for text, _attr in box)
+        bw = min(w - 2, max(36, content_width + 4))
         bh = len(box) + 2
-        bw = max(len(b) for b in box) + 4
         y0 = max(1, (h - bh) // 2)
         x0 = max(0, (w - bw) // 2)
-        if bw <= w and y0 + bh <= h - 1:
-            for j in range(bh):
-                if j == 0 or j == bh - 1:
-                    _add(scr, y0 + j, x0, "+" + "-" * (bw - 2) + "+", colors["structure"], indent=False)
-                else:
-                    text = box[j - 1]
-                    _add(scr, y0 + j, x0, "| " + text.ljust(bw - 4) + " |", colors["structure"], indent=False)
+        if bw >= 8 and y0 + bh <= h - 1:
+            inner_width = bw - 2
+            title = " Hilfe "
+            top = "╭" + title + "─" * max(0, inner_width - len(title)) + "╮"
+            bottom = "╰" + "─" * inner_width + "╯"
+            _add(scr, y0, x0, top[:bw], colors["structure"], indent=False)
+            for j, (text, attr) in enumerate(box, 1):
+                body = text[:max(0, inner_width - 2)].ljust(max(0, inner_width - 2))
+                _add(scr, y0 + j, x0, "│ " + body + " │", attr, indent=False)
+            _add(scr, y0 + bh - 1, x0, bottom[:bw], colors["structure"], indent=False)
     scr.refresh()
 
 

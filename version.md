@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.08 — 03.11.2026
+
+- Help-Overlay optisch mit Titelrahmen, Bedienungs- und Sensorquellenbereichen sowie ausgerichteten Quellwerten neu gestaltet.
+
 ### 2.3.07 — 03.11.2026
 
 - Help-Seite in Bedienungs- und Sensorquellenübersicht neu strukturiert.
