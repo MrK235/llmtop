@@ -828,12 +828,16 @@ def _draw(scr, st, host, interval):
             ("Tab/Shift-Tab", "Sortierspalte"),
             ("s/S", "Sortierrichtung"),
         )
+        collector_source = short_source(st.get("collector_status", "nicht aktiv"), source_limit)
+        pi_source = "aktiv" if st.get("pi_adapter_active") else "nicht aktiv"
         source_rows = (
             ("CPU Power", power_source),
             ("CPU Temp", temp_source),
             ("CPU/RAM", "/proc/stat + meminfo"),
             ("GPU", short_source(gpu_sources, source_limit)),
             ("Ollama", host_source),
+            ("Open WebUI", f"Collector {collector_source}"),
+            ("Pi Adapter", pi_source),
         )
         box = [("Bedienung", colors["structure"])]
         box.extend((f"  {key:<{key_width}} {action}", colors["secondary"])

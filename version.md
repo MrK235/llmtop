@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.16 — 03.11.2026
+
+- Help-Overlay um Open-WebUI-Collector und Pi-Adapter als aktuelle Datenquellen erweitert.
+
 ### 2.3.15 — 03.11.2026
 
 - Bedienungseinträge im Help-Overlay sinnvoll sortiert und mit verständlicheren Aktionen beschrieben.
