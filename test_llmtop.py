@@ -446,7 +446,7 @@ def test_tui_draws_loaded_model():
     assert llmtop_tui._rate_color(colors, 50) == 13
     assert ("model", 12) in screen.calls
     assert ("[", 22) in screen.calls
-    assert ("██          ", 18) in screen.calls
+    assert ("##          ", 18) in screen.calls
     assert ("]", 22) in screen.calls
     assert ("  20%", 18) in screen.calls
     assert (" 100", 17) in screen.calls

@@ -12,11 +12,6 @@ gebracht.
 
 ## Changelog
 
-### 2.3.31 — 03.11.2026
-
-- Balken verwenden für gefüllte Anteile das voll ausgefüllte Zeichen `█` statt
-  `#`; leere Anteile bleiben als Leerzeichen sichtbar.
-
 ### 2.3.30 — 03.11.2026
 
 - Die zusätzliche Breite eingerückter Zeitfelder wird auch bei der gemeinsamen

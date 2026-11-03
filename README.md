@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.31** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.3.30** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -143,7 +143,7 @@ ebenfalls ohne Fettdarstellung, damit Schwarz nicht zu Hellgrau aufgehellt wird.
 Ollama-Speicherbalken bedeuten die Farben explizit
 den Offload-Grad der GPU/VRAM-Anzeige: Grün oberhalb 55 %, Gelb bei 45–55 %
 und Rot unterhalb 45 % GPU-Anteil. CPU/RAM bleibt gedimmt grau. Beide Anteile
-nutzen voll ausgefüllte `█`-Segmente und zeigen zusätzlich Textwerte. Eine
+nutzen `#` und zeigen zusätzlich Textwerte. Eine
 Leerzeile trennt System, GPU, geladene Modelle, aktuelle Runs und History.
 **Aktuelle Runs** und **History** verwenden dieselben Spalten und Werte für
 Zeit, Quelle, Modell, Status, Tokens, Kontext, Tok/s und Dauer. Die Breite jeder
@@ -174,7 +174,7 @@ Begrenzung auf 500 Runs bleiben unverändert. Mit `c` wird ausschließlich die
 Run-History atomar geleert; aktuelle Runs und System-Snapshots bleiben erhalten.
 Kontext wird nach dem prozentualen Verbrauch sortiert, nicht nach der absoluten
 Tokengröße. Die Kontextspalte zeigt Prozentwert, Fortschrittsbalken und danach
-nur das Limit im Format `[██████      ] 42% 16.4k`; fehlende Providerwerte
+nur das Limit im Format `[######      ] 42% 16.4k`; fehlende Providerwerte
 bleiben `n/a`. Die Daten bleiben
 als begrenzte JSONL-Datei gespeichert; eine Datenbank ist bei 500 Einträgen
 nicht nötig. Zusätzlich speichert llmtop lokale, begrenzte System-Snapshots. Der
@@ -251,7 +251,7 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   115-W-Darstellungsskala; eine Power-Prozentanzeige gibt es nur bei gemeldeter
   echter Leistungsgrenze.
 * **VRAM**: VRAM-Auslastung `%` und Größe in MiB
-  (`VRAM [██████████  ] 96.5 %  7864 / 8151 MiB`). Im Ollama-Bereich zeigt ein
+  (`VRAM [##########  ] 96.5 %  7864 / 8151 MiB`). Im Ollama-Bereich zeigt ein
   geteilter Balken die Modellaufteilung als „VRAM/RAM“: Der Modellname ist
   grau und unterstrichen; die folgenden Modellinformationen beginnen an einer
   verkürzten festen Tabulatorposition. Auch Quelle, Modell, Status und Metriken aktueller
