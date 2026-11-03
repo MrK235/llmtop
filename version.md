@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.22 — 03.11.2026
+
+- Auslastungsbalken verwenden vier Stufen: Grün unter 30 %, Hell-Orange von
+  30 bis 59 %, Orange von 60 bis 90 % und Rot über 90 %.
+
 ### 2.3.21 — 03.11.2026
 
 - Auslastungsbalken verwenden Grün unter 40 %, Gelb/Orange von 40 bis unter
