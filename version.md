@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.30 — 03.11.2026
+
+- Die zusätzliche Breite eingerückter Zeitfelder wird auch bei der gemeinsamen
+  Tabellenberechnung berücksichtigt; Uhrzeiten werden nicht mehr abgeschnitten.
+
 ### 2.3.29 — 03.11.2026
 
 - Zeitfeld aufgeklappter History-Unterzeilen innerhalb der eigenen Spalte um

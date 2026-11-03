@@ -432,7 +432,8 @@ def _draw(scr, st, host, interval):
     def current_run_cell(run, column):
         if column == "zeit":
             stamp = _parse_time(run.get("finished_at") or run.get("started_at"))
-            return stamp.strftime("%d.%m %H:%M") if stamp else "n/a"
+            value = stamp.strftime("%d.%m %H:%M") if stamp else "n/a"
+            return "  " + value if run.get("_history_child") else value
         return history_cell(run, column)
 
     def draw_history_context_cell(row, x, width, run, row_attr):

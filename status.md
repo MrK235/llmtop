@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.29** · Stand 03.11.2026 · Status: Eingerücktes Zeitfeld in aufgeklappten History-Gruppen.
+**Version 2.3.30** · Stand 03.11.2026 · Status: Vollständiges, eingerücktes Zeitfeld in History-Unterzeilen.
 
 ## Aktueller Stand
 
@@ -37,6 +37,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.30
+
+- Die zusätzliche Breite der eingerückten Zeitfelder wird jetzt auch bei der
+  gemeinsamen Tabellenberechnung berücksichtigt; Uhrzeiten werden nicht mehr abgeschnitten.
 
 ## Neu in 2.3.29
 
