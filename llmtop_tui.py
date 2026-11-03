@@ -810,14 +810,21 @@ def _draw(scr, st, host, interval):
             power_source = f"{power_source} · {short_source(power_status, 20)}"
         bw = min(w - 2, 50)
         body_width = max(0, bw - 4)
-        key_width = 11
+        key_width = 14
         source_limit = max(8, body_width - key_width - 3)
         control_rows = (
-            ("q/Q h/H r/R", "Ende Help Neu"),
-            ("x/X c/C", "sudo History"),
-            ("+/- a/A Tab", "Intervall Fokus Sort"),
-            ("s/S", "Richtung"),
-            ("↑/↓ ←/→", "Cursor Gruppe auf/zu"),
+            ("q/Q", "Beenden"),
+            ("r/R", "Neu laden"),
+            ("x/X", "sudo CPU-Power"),
+            ("c/C", "History löschen"),
+            ("h/H", "Help ein/aus"),
+            ("+/-", "Intervall"),
+            ("a/A", "Fokus Runs/History"),
+            ("Tab/Shift-Tab", "Sortierung"),
+            ("s/S", "Sortierrichtung"),
+            ("↑/↓", "Cursor"),
+            ("Bild↑/Bild↓", "Scrollen"),
+            ("←/→", "Gruppe auf/zu"),
             ("Pos1", "Anfang"),
             ("Ende", "Ende"),
         )

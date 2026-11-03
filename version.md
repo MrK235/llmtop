@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.14 — 03.11.2026
+
+- Jeder Bedienungseintrag steht im Help-Overlay in einer eigenen Schlüssel-/Aktionszeile.
+
 ### 2.3.13 — 03.11.2026
 
 - Help-Bedienung und Sensorquellen auf feste Schlüssel-/Wertspalten umgestellt, damit die Abstände auch bei 40 Spalten stimmen.
