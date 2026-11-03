@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.32 — 03.11.2026
+
+- DRM-GPUs verwenden den Modellnamen aus `product_name` oder der lokalen PCI-ID-Datenbank statt der technischen `cardN`-Bezeichnung.
+
 ### 2.2.31 — 03.11.2026
 
 - Mehrere GPUs werden in TUI und `--once` durch sichtbare Trennzeilen klar voneinander getrennt.

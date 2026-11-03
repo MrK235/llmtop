@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.2.31** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.2.32** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -211,7 +211,9 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   `/proc/meminfo`; bei einer endlichen cgroup-v1/v2-Grenze werden effektiver
   Verbrauch und verfügbares Limit des Prozesses angezeigt.
 * **GPU**: Alle erkannten DRM-GPUs werden zusammengeführt und in TUI sowie
-  `--once` durch sichtbare Trennzeilen voneinander abgegrenzt. NVIDIA verwendet
+  `--once` durch sichtbare Trennzeilen voneinander abgegrenzt. Modellnamen
+  werden aus `product_name` oder der lokalen PCI-ID-Datenbank ermittelt;
+  NVIDIA verwendet
   bevorzugt `nvidia-smi` und ordnet die Werte über die PCI-Bus-ID zu; AMD nutzt
   amdgpu-sysfs, Intel i915/xe bekannte GT-Auslastungsdateien. Temperatur,
   VRAM und Power kommen ergänzend aus der zugeordneten hwmon-Schnittstelle.

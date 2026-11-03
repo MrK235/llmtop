@@ -237,6 +237,35 @@ def _normalize_pci_id(value):
     return f"{domain:04x}:{match.group(2)}:{match.group(3)}.{match.group(4)}"
 
 
+def _pci_short_id(value):
+    value = (value or "").strip().lower()
+    if value.startswith("0x"):
+        value = value[2:]
+    return value.zfill(4) if re.fullmatch(r"[0-9a-f]{1,4}", value) else None
+
+
+def _pci_device_name(device):
+    vendor_id = _pci_short_id(_read_text(os.path.join(device, "vendor")))
+    device_id = _pci_short_id(_read_text(os.path.join(device, "device")))
+    if not vendor_id or not device_id:
+        return None
+    for database in ("/usr/share/hwdata/pci.ids", "/usr/share/misc/pci.ids",
+                     "/usr/share/pci.ids"):
+        try:
+            with open(database, encoding="utf-8", errors="replace") as fh:
+                vendor_match = False
+                for line in fh:
+                    if line.startswith(vendor_id + " "):
+                        vendor_match = True
+                    elif not line.startswith("\t") and line.strip() and not line.startswith("#"):
+                        vendor_match = False
+                    elif vendor_match and line.startswith("\t" + device_id + " "):
+                        return line.split(None, 1)[1].strip()
+        except OSError:
+            continue
+    return None
+
+
 def _nvidia_command():
     command = shutil.which("nvidia-smi")
     if command:
@@ -388,7 +417,13 @@ def sysfs_gpus():
         mem_used, mem_total, vram_pct = _read_vram(device)
         temp_c, temp_source, power_watt, power_limit = _gpu_hwmon_values(device)
         pci_id = _normalize_pci_id(os.path.basename(os.path.realpath(device)))
-        name = _read_text(os.path.join(device, "product_name")) or f"{vendor} {os.path.basename(card)}"
+        pci_name = _pci_device_name(device)
+        vendor_short = vendor_id[2:] if vendor_id.startswith("0x") else vendor_id
+        fallback_id = ":".join(filter(None, (vendor_short,
+                                                _pci_short_id(_read_text(os.path.join(device, "device"))))))
+        name = (_read_text(os.path.join(device, "product_name")) or
+                (f"{vendor} {pci_name}" if pci_name else None) or
+                (f"{vendor} GPU ({fallback_id})" if fallback_id else f"{vendor} GPU"))
         gpus.append({
             "name": name, "util": busy, "mem_used": mem_used, "mem_total": mem_total,
             "vram_pct": vram_pct, "power_watt": power_watt, "power_limit": power_limit,
