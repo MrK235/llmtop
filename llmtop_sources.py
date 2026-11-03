@@ -112,7 +112,9 @@ def cpu_name():
             for line in fh:
                 key, separator, value = line.partition(":")
                 if separator and key.strip() in keys and value.strip():
-                    return " ".join(value.split())
+                    name = " ".join(value.split())
+                    return re.sub(r"\s+(?:w/|with)\s+Radeon\b.*$", "", name,
+                                  flags=re.IGNORECASE).rstrip()
     except OSError:
         pass
     return "unbekannte CPU"

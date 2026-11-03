@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.35 — 03.11.2026
+
+- Integrierte Radeon-Zusatzbezeichnungen werden aus dem CPU-Modellnamen entfernt; angezeigt wird nur der CPU-Name.
+
 ### 2.2.34 — 03.11.2026
 
 - Die Load-Anzeige wurde aus der CPU-Modellzeile entfernt; sichtbar bleiben Modellname und nutzbare Kernanzahl.
