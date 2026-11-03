@@ -18,7 +18,7 @@ from llmtop_metrics import (
     write_history,
 )
 from llmtop_sources import (
-    GPU_POWER_BOOST_W, bar, collect_gpus, collect_ollama, cpu_percent,
+    bar, collect_gpus, collect_ollama, cpu_count, cpu_percent,
     cpu_temperature, get_ram_pct, loadavg, read_cpu_totals,
 )
 def _add(scr, y, x, text, attr=0, indent=True):
@@ -594,7 +594,7 @@ def _draw(scr, st, host, interval):
     cpu_value = f"{cpu:.1f} %" if cpu is not None else "n/a"
     cpu_temp = st["cpu_temp"]
     cpu_source = st["cpu_temp_source"] or "keine Quelle"
-    cpu_detail = f"Load {loadavg()[0]}  •  {os.cpu_count()} Kerne  ·  Temp "
+    cpu_detail = f"Load {loadavg()[0]}  •  {cpu_count()} Kerne  ·  Temp "
     cpu_accent = f"{cpu_temp:.1f} °C" if cpu_temp is not None else "n/a"
     row = sensor(row, "CPU", cpu, cpu_value, cpu_detail, accent=cpu_accent,
                  accent_attr=_temp_color(colors, cpu_temp))
@@ -624,10 +624,15 @@ def _draw(scr, st, host, interval):
             row = sensor(row, "VRAM", vram_pct, vram_value,
                          f"{g['mem_used']:.0f} / {g['mem_total']:.0f} MiB")
         if g["power_watt"] is not None:
-            limit = max(g["power_limit"] or 0.0, GPU_POWER_BOOST_W)
-            power_pct = min(100.0, 100.0 * g["power_watt"] / limit)
-            power_value = f"{power_pct:.1f} %"
-            power_detail = f"{g['power_watt']:.1f} W / {limit:.0f} W"
+            limit = g.get("power_limit")
+            if limit and limit > 0:
+                power_pct = min(100.0, 100.0 * g["power_watt"] / limit)
+                power_value = f"{power_pct:.1f} %"
+                power_detail = f"{g['power_watt']:.1f} W / {limit:.0f} W"
+            else:
+                power_pct = None
+                power_value = "n/a"
+                power_detail = f"{g['power_watt']:.1f} W · keine Grenze"
             row = sensor(row, "Power", power_pct, power_value, power_detail)
 
     row += 1

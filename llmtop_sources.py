@@ -3,13 +3,17 @@ import csv
 import glob
 import io
 import os
+import re
+import shutil
 import subprocess
 from datetime import datetime
 import urllib.request
 import json
 
-GPU_POWER_BOOST_W = 115.0
-VENDOR_NAMES = {"0x10de": "NVIDIA", "0x1002": "AMD", "0x8086": "Intel"}
+VENDOR_NAMES = {
+    "0x10de": "NVIDIA", "0x1002": "AMD", "0x8086": "Intel",
+    "0x15ad": "VMware", "0x1af4": "Virtio",
+}
 def http_json(host, path, timeout=2.0):
     with urllib.request.urlopen(host.rstrip("/") + path, timeout=timeout) as resp:
         payload = json.loads(resp.read().decode("utf-8"))
@@ -40,13 +44,37 @@ def collect_ollama(host):
     except Exception as exc:
         st["error"] = f"{type(exc).__name__}: {exc}"
     return st
+def _read_text(path):
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return fh.read().strip()
+    except (OSError, UnicodeError):
+        return None
+
+
+def _read_float(path, scale=1.0):
+    value = _read_text(path)
+    if value is None:
+        return None
+    try:
+        return float(value) * scale
+    except ValueError:
+        return None
+
+
 def read_cpu_totals():
-    with open("/proc/stat") as fh:
-        parts = [int(v) for v in fh.readline().split()[1:]]
-    return sum(parts), parts[3] + parts[4]
+    try:
+        parts = [int(v) for v in _read_text("/proc/stat").splitlines()[0].split()[1:]]
+        if len(parts) < 5:
+            raise ValueError("/proc/stat ohne CPU-Werte")
+        return sum(parts), parts[3] + parts[4]
+    except (AttributeError, IndexError, OSError, ValueError):
+        return 0, 0
 
 
 def cpu_percent(prev, cur):
+    if not prev or not cur:
+        return None
     dt = cur[0] - prev[0]
     di = cur[1] - prev[1]
     if dt <= 0:
@@ -56,9 +84,23 @@ def cpu_percent(prev, cur):
 
 def loadavg():
     try:
-        return open("/proc/loadavg").read().split()[:3]
+        values = _read_text("/proc/loadavg").split()[:3]
+        if len(values) == 3:
+            return values
+    except AttributeError:
+        pass
+    try:
+        return [f"{value:.2f}" for value in os.getloadavg()]
     except OSError:
         return ["-", "-", "-"]
+
+
+def cpu_count():
+    """Liefert die für den Prozess nutzbare logische CPU-Anzahl."""
+    try:
+        return len(os.sched_getaffinity(0))
+    except (AttributeError, OSError):
+        return os.cpu_count() or 1
 
 
 def _to_int(text):
@@ -68,190 +110,321 @@ def _to_int(text):
         return None
 
 
+def _temperature_value(path):
+    value = _read_float(path, 0.001)
+    return value if value is not None and -100.0 <= value <= 200.0 else None
+
+
+def _temperature_score(name, label):
+    text = f"{name} {label}".lower()
+    if name in ("k10temp", "coretemp", "zenpower", "zenpower3"):
+        return 100
+    if any(token in text for token in ("package", "tctl", "tdie", "cpu", "core")):
+        return 80
+    if any(token in text for token in ("x86_pkg", "soc_thermal", "cpu_thermal")):
+        return 70
+    if name in ("acpitz", "acpi_thermal_rel"):
+        return 10
+    return 0
+
+
 def cpu_temperature():
-    """Liest die CPU-Temperatur aus bekannten Linux-hwmon-Treibern."""
-    for hwmon in glob.glob("/sys/class/hwmon/hwmon*"):
-        try:
-            name = open(os.path.join(hwmon, "name")).read().strip().lower()
-        except OSError:
-            continue
-        if name not in ("k10temp", "coretemp", "zenpower"):
-            continue
+    """Liest CPU-Temperatur über hwmon und generische Thermal-Zones."""
+    candidates = []
+    for hwmon in sorted(glob.glob("/sys/class/hwmon/hwmon*")):
+        name = (_read_text(os.path.join(hwmon, "name")) or "").lower()
         for path in sorted(glob.glob(os.path.join(hwmon, "temp*_input"))):
-            try:
-                value = float(open(path).read().strip()) / 1000.0
-            except (OSError, ValueError):
+            value = _temperature_value(path)
+            if value is None:
                 continue
-            label_path = path.replace("_input", "_label")
-            try:
-                label = open(label_path).read().strip()
-            except OSError:
-                label = os.path.basename(path).replace("_input", "")
-            return value, f"{name}/{label}"
+            label = _read_text(path.replace("_input", "_label"))
+            label = label or os.path.basename(path).replace("_input", "")
+            score = _temperature_score(name, label)
+            if score:
+                candidates.append((score, value, f"{name or 'hwmon'}/{label}"))
+    if candidates:
+        _score, value, source = max(candidates, key=lambda item: item[0])
+        return value, source
+
+    zones = []
+    for zone in sorted(glob.glob("/sys/class/thermal/thermal_zone*")):
+        zone_type = (_read_text(os.path.join(zone, "type")) or "").lower()
+        value = _temperature_value(os.path.join(zone, "temp"))
+        if value is None:
+            continue
+        score = _temperature_score(zone_type, "")
+        if score:
+            zones.append((score, value, f"thermal/{zone_type}"))
+    if zones:
+        _score, value, source = max(zones, key=lambda item: item[0])
+        return value, source
     return None, "keine CPU-Temperaturquelle"
 
 
+def _cgroup_memory(total_kb):
+    """Liest eine endliche Speichergrenze des aktuellen cgroups."""
+    paths = []
+    for line in (_read_text("/proc/self/cgroup") or "").splitlines():
+        fields = line.split(":", 2)
+        if len(fields) != 3:
+            continue
+        controllers, relative = fields[1], fields[2].lstrip("/")
+        if not controllers:  # cgroup v2
+            paths.append(os.path.join("/sys/fs/cgroup", relative))
+        elif "memory" in controllers.split(","):
+            paths.append(os.path.join("/sys/fs/cgroup/memory", relative))
+    paths.extend(("/sys/fs/cgroup", "/sys/fs/cgroup/memory"))
+    host_bytes = total_kb * 1024
+    for path in dict.fromkeys(paths):
+        current = _read_float(os.path.join(path, "memory.current"))
+        limit = _read_float(os.path.join(path, "memory.max"))
+        if current is None or limit is None:
+            current = _read_float(os.path.join(path, "memory.usage_in_bytes"))
+            limit = _read_float(os.path.join(path, "memory.limit_in_bytes"))
+        if current is None or limit is None or limit <= 0 or limit >= host_bytes * 1.5:
+            continue
+        current = max(0.0, min(current, limit))
+        return limit / 1024.0, max(0.0, limit - current) / 1024.0
+    return None
+
+
 def get_ram_pct():
-    """RAM % aus /proc/meminfo: (MemTotal - MemAvailable) / MemTotal * 100"""
-    mem_total_kb = mem_available_kb = None
+    """RAM % aus meminfo, bei endlichem cgroup-Limit aus dem cgroup."""
+    mem = {}
     try:
-        with open("/proc/meminfo") as fh:
+        with open("/proc/meminfo", encoding="utf-8") as fh:
             for line in fh:
-                if line.startswith("MemTotal:"):
-                    mem_total_kb = int(line.split()[1])
-                elif line.startswith("MemAvailable:"):
-                    mem_available_kb = int(line.split()[1])
-        if mem_total_kb and mem_available_kb:
-            ram_pct = (mem_total_kb - mem_available_kb) / mem_total_kb * 100.0
-            return ram_pct, mem_total_kb / 1024.0 / 1024.0, mem_available_kb / 1024.0 / 1024.0
+                key, _, rest = line.partition(":")
+                parts = rest.split()
+                if parts:
+                    mem[key] = int(parts[0])
     except (OSError, ValueError, IndexError):
-        pass
-    return None, None, None
+        return None, None, None
+    mem_total_kb = mem.get("MemTotal")
+    if not mem_total_kb:
+        return None, None, None
+    cgroup = _cgroup_memory(mem_total_kb)
+    if cgroup:
+        total_kb, available_kb = cgroup
+    else:
+        available_kb = mem.get("MemAvailable")
+        if available_kb is None:
+            available_kb = (mem.get("MemFree", 0) + mem.get("Buffers", 0) +
+                            mem.get("Cached", 0) + mem.get("SReclaimable", 0) -
+                            mem.get("Shmem", 0))
+        available_kb = max(0.0, min(float(mem_total_kb), available_kb))
+        total_kb = float(mem_total_kb)
+    ram_pct = 100.0 * (total_kb - available_kb) / total_kb if total_kb else None
+    return ram_pct, total_kb / 1024.0 / 1024.0, available_kb / 1024.0 / 1024.0
+
+
+def _number(text):
+    if text is None or text.strip() in ("", "N/A", "[N/A]"):
+        return None
+    try:
+        return float(text.strip())
+    except ValueError:
+        return None
+
+
+def _normalize_pci_id(value):
+    value = (value or "").strip().lower()
+    match = re.match(r"^(?:0x)?([0-9a-f]{4,8}):([0-9a-f]{2}):([0-9a-f]{2})\.([0-7])$", value)
+    if not match:
+        return value or None
+    domain = int(match.group(1), 16)
+    return f"{domain:04x}:{match.group(2)}:{match.group(3)}.{match.group(4)}"
+
+
+def _nvidia_command():
+    command = shutil.which("nvidia-smi")
+    if command:
+        return command
+    for path in ("/usr/bin/nvidia-smi", "/usr/local/bin/nvidia-smi",
+                 "/opt/nvidia/bin/nvidia-smi", "/usr/lib/wsl/lib/nvidia-smi",
+                 "/run/opengl-driver/bin/nvidia-smi",
+                 "/run/current-system/sw/bin/nvidia-smi"):
+        if os.path.isfile(path) and os.access(path, os.X_OK):
+            return path
+    return None
 
 
 def nvidia_gpus():
-    cmd = ["nvidia-smi",
-           "--query-gpu=name,utilization.gpu,memory.total,memory.used,power.draw,power.limit,enforced.power.limit,temperature.gpu",
-           "--format=csv,noheader,nounits"]
-    try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=4)
-    except (OSError, subprocess.TimeoutExpired):
+    command = _nvidia_command()
+    if not command:
         return []
-    if res.returncode != 0:
-        return []
-
-    def number(text):
+    queries = (
+        "index,name,pci.bus_id,utilization.gpu,memory.total,memory.used,power.draw,power.limit,enforced.power.limit,temperature.gpu",
+        "name,utilization.gpu,memory.total,memory.used,power.draw,power.limit,enforced.power.limit,temperature.gpu",
+    )
+    result = None
+    fields = None
+    for query in queries:
+        cmd = [command, f"--query-gpu={query}", "--format=csv,noheader,nounits"]
         try:
-            return float(text) if text not in ("", "N/A", "[N/A]") else None
-        except ValueError:
-            return None
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=4)
+        except (OSError, subprocess.TimeoutExpired):
+            return []
+        if result.returncode == 0:
+            fields = query.split(",")
+            break
+    if result is None or result.returncode != 0:
+        return []
 
     gpus = []
-    for row in csv.reader(io.StringIO(res.stdout)):
-        f = [x.strip() for x in row]
-        if len(f) != 8:
+    for row in csv.reader(io.StringIO(result.stdout)):
+        values = [item.strip() for item in row]
+        if len(values) != len(fields):
             continue
-        mem_total, mem_used = _to_int(f[2]), _to_int(f[3])
+        item = dict(zip(fields, values))
+        mem_total, mem_used = _to_int(item.get("memory.total")), _to_int(item.get("memory.used"))
         vram_pct = (max(0.0, min(100.0, 100.0 * mem_used / mem_total))
                     if mem_total and mem_used is not None else None)
-        power_limit = number(f[5]) or number(f[6])
-        util = _to_int(f[1])
-        gpus.append({"name": f[0], "util": max(0, min(100, util)) if util is not None else None,
-                     "mem_total": mem_total, "mem_used": mem_used,
-                     "vram_pct": vram_pct, "power_watt": number(f[4]),
-                     "power_limit": power_limit, "temp_c": number(f[7]),
-                     "temp_source": "nvidia-smi", "source": "nvidia-smi"})
-    return gpus
-
-
-def sysfs_gpus():
-    gpus = []
-    for card in sorted(glob.glob("/sys/class/drm/card[0-9]*")):
-        busy_path = os.path.join(card, "device", "gpu_busy_percent")
-        if not os.path.exists(busy_path):
-            continue
-        try:
-            busy = int(open(busy_path).read().strip())
-        except (OSError, ValueError):
-            continue
-        vendor = "GPU"
-        vfile = os.path.join(card, "device", "vendor")
-        try:
-            vendor = VENDOR_NAMES.get(open(vfile).read().strip().lower(), vendor)
-        except OSError:
-            pass
-
-        # sysfs VRAM (MiB)
-        mem_info_used = None
-        mem_info_total = None
-        mem_path = os.path.join(card, "device", "mem_info_vram_used")
-        total_path = os.path.join(card, "device", "mem_info_vram_total")
-        if os.path.exists(mem_path):
-            try:
-                mem_info_used = int(open(mem_path).read().strip())
-            except (OSError, ValueError):
-                pass
-        if os.path.exists(total_path):
-            try:
-                mem_info_total = int(open(total_path).read().strip())
-            except (OSError, ValueError):
-                pass
-
-        vram_pct = None
-        if mem_info_total:
-            vram_pct = (max(0.0, min(100.0, 100.0 * mem_info_used / mem_info_total))
-                    if mem_info_used is not None else None)
-        # sysfs liefert Bytes, die restliche Anzeige verwendet MiB.
-        if mem_info_used is not None:
-            mem_info_used /= 1024 * 1024
-        if mem_info_total is not None:
-            mem_info_total /= 1024 * 1024
-
-        # hwmon Power für AMD/NVIDIA (sysfs unter card/*/device/hwmon*)
-        power_watt = None
-        power_limit = None
-        temp_c = None
-        temp_source = None
-        hwmon_path = os.path.join(card, "device", "hwmon")
-        if not hwmon_path or not os.path.isdir(hwmon_path):
-            pass
-        else:
-            for hwmon_dir in sorted(glob.glob(os.path.join(hwmon_path, "hwmon*")), reverse=True):
-                name_file = os.path.join(hwmon_dir, "name")
-                if not os.path.exists(name_file):
-                    continue
-                try:
-                    name = open(name_file).read().strip()
-                except (OSError, ValueError):
-                    pass
-                if temp_c is None:
-                    for temp_path in sorted(glob.glob(os.path.join(hwmon_dir, "temp*_input"))):
-                        try:
-                            temp_c = float(open(temp_path).read().strip()) / 1000.0
-                        except (OSError, ValueError):
-                            continue
-                        label_path = temp_path.replace("_input", "_label")
-                        try:
-                            label = open(label_path).read().strip()
-                        except OSError:
-                            label = os.path.basename(temp_path).replace("_input", "")
-                        temp_source = f"sysfs/{label}"
-                        break
-                # Suche Power-Input in diesem hwmon-Verzeichnis
-                for num in range(1, 6):
-                    inp_path = os.path.join(hwmon_dir, f"power{num}_input")
-                    try:
-                        content = open(inp_path).read().strip()
-                        watt = float(content) / 1e6  # µW -> W
-                        power_watt = watt
-                        cap_path = os.path.join(hwmon_dir, f"power{num}_cap")
-                        try:
-                            power_limit = float(open(cap_path).read().strip()) / 1e6
-                        except (OSError, ValueError):
-                            pass
-                        break
-                    except (OSError, ValueError):
-                        pass
-
+        power_limit = _number(item.get("power.limit")) or _number(item.get("enforced.power.limit"))
+        util = _to_int(item.get("utilization.gpu"))
         gpus.append({
-            "name": f"{vendor} {os.path.basename(card)}",
-            "util": max(0, min(100, busy)),
-            "mem_used": mem_info_used,
-            "mem_total": mem_info_total,
-            "vram_pct": vram_pct,
-            "power_watt": power_watt,
-            "power_limit": power_limit,
-            "temp_c": temp_c,
-            "temp_source": temp_source,
-            "source": "sysfs"
+            "name": item.get("name", "NVIDIA GPU"),
+            "util": max(0, min(100, util)) if util is not None else None,
+            "mem_total": mem_total, "mem_used": mem_used, "vram_pct": vram_pct,
+            "power_watt": _number(item.get("power.draw")), "power_limit": power_limit,
+            "temp_c": _number(item.get("temperature.gpu")),
+            "temp_source": "nvidia-smi", "source": "nvidia-smi",
+            "pci_id": _normalize_pci_id(item.get("pci.bus_id")), "vendor": "NVIDIA",
         })
     return gpus
 
 
+def _gpu_util(device):
+    direct = (os.path.join(device, "gpu_busy_percent"),
+              os.path.join(device, "gt_busy_percent"))
+    for path in direct:
+        value = _to_int(_read_text(path))
+        if value is not None:
+            return max(0, min(100, value))
+    paths = glob.glob(os.path.join(device, "gt", "gt*", "gt_busy_percent"))
+    paths += glob.glob(os.path.join(device, "gt*", "gt_busy_percent"))
+    values = [_to_int(_read_text(path)) for path in sorted(set(paths))]
+    values = [value for value in values if value is not None]
+    if values:
+        return max(0, min(100, round(sum(values) / len(values))))
+    return None
+
+
+def _gpu_hwmon_dirs(device):
+    device_real = os.path.realpath(device)
+    candidates = glob.glob("/sys/class/hwmon/hwmon*")
+    candidates += glob.glob(os.path.join(device, "hwmon", "hwmon*"))
+    result = []
+    for path in candidates:
+        real = os.path.realpath(path)
+        if real == device_real or real.startswith(device_real + os.sep):
+            if path not in result:
+                result.append(path)
+    return sorted(result)
+
+
+def _gpu_hwmon_values(device):
+    temp_c = temp_source = power_watt = power_limit = None
+    for hwmon in _gpu_hwmon_dirs(device):
+        name = _read_text(os.path.join(hwmon, "name")) or "hwmon"
+        if temp_c is None:
+            for path in sorted(glob.glob(os.path.join(hwmon, "temp*_input"))):
+                value = _temperature_value(path)
+                if value is None:
+                    continue
+                label = _read_text(path.replace("_input", "_label"))
+                label = label or os.path.basename(path).replace("_input", "")
+                temp_c, temp_source = value, f"sysfs/{name}/{label}"
+                break
+        power_paths = sorted(glob.glob(os.path.join(hwmon, "power*_input")))
+        power_paths += sorted(glob.glob(os.path.join(hwmon, "power*_average")))
+        for path in power_paths:
+            value = _read_float(path, 1e-6)
+            if value is None:
+                continue
+            power_watt = value
+            number = re.search(r"power(\d+)_", os.path.basename(path))
+            if number:
+                prefix = os.path.join(hwmon, f"power{number.group(1)}")
+                for suffix in ("_cap", "_max", "_rated_max"):
+                    power_limit = _read_float(prefix + suffix, 1e-6)
+                    if power_limit is not None:
+                        break
+            break
+        if temp_c is not None and power_watt is not None:
+            break
+    return temp_c, temp_source, power_watt, power_limit
+
+
+def _read_vram(device):
+    used = _to_int(_read_text(os.path.join(device, "mem_info_vram_used")))
+    total = _to_int(_read_text(os.path.join(device, "mem_info_vram_total")))
+    if total is not None and total <= 0:
+        total = None
+    if used is not None:
+        used /= 1024 * 1024
+    if total is not None:
+        total /= 1024 * 1024
+    pct = (max(0.0, min(100.0, 100.0 * used / total))
+           if total and used is not None else None)
+    return used, total, pct
+
+
+def sysfs_gpus():
+    gpus = []
+    cards = [path for path in glob.glob("/sys/class/drm/card[0-9]*")
+             if re.search(r"card(\d+)$", path)]
+    cards.sort(key=lambda path: int(re.search(r"card(\d+)$", path).group(1)))
+    for card in cards:
+        device = os.path.join(card, "device")
+        if not os.path.exists(device):
+            continue
+        vendor_id = (_read_text(os.path.join(device, "vendor")) or "").lower()
+        vendor = VENDOR_NAMES.get(vendor_id, "GPU")
+        driver_path = os.path.realpath(os.path.join(device, "driver"))
+        driver = os.path.basename(driver_path) if driver_path else None
+        busy = _gpu_util(device)
+        mem_used, mem_total, vram_pct = _read_vram(device)
+        temp_c, temp_source, power_watt, power_limit = _gpu_hwmon_values(device)
+        pci_id = _normalize_pci_id(os.path.basename(os.path.realpath(device)))
+        name = _read_text(os.path.join(device, "product_name")) or f"{vendor} {os.path.basename(card)}"
+        gpus.append({
+            "name": name, "util": busy, "mem_used": mem_used, "mem_total": mem_total,
+            "vram_pct": vram_pct, "power_watt": power_watt, "power_limit": power_limit,
+            "temp_c": temp_c, "temp_source": temp_source, "source": "sysfs",
+            "pci_id": pci_id, "vendor": vendor, "driver": driver,
+        })
+    return gpus
+
+
+def _merge_gpu(primary, fallback):
+    merged = dict(fallback)
+    for key, value in primary.items():
+        if value is not None:
+            merged[key] = value
+    merged["source"] = primary.get("source") or fallback.get("source")
+    return merged
+
+
 def collect_gpus(use_nvidia):
-    gpus = nvidia_gpus() if use_nvidia else []
-    if not gpus:
-        gpus = sysfs_gpus()
+    sysfs = sysfs_gpus()
+    external = nvidia_gpus() if use_nvidia else []
+    remaining = list(sysfs)
+    gpus = []
+    for item in external:
+        match = None
+        if item.get("pci_id"):
+            match = next((candidate for candidate in remaining
+                          if candidate.get("pci_id") == item["pci_id"]), None)
+        if match is None:
+            match = next((candidate for candidate in remaining
+                          if candidate.get("vendor") == "NVIDIA"), None)
+        if match is not None:
+            remaining.remove(match)
+            gpus.append(_merge_gpu(item, match))
+        else:
+            gpus.append(item)
+    gpus.extend(remaining)
     if not gpus:
         return [], "keine GPU-Quelle gefunden"
     return gpus, None

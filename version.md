@@ -12,6 +12,12 @@ gebracht.
 
 ## Changelog
 
+### 2.2.28 — 03.11.2026
+
+- Herstellerübergreifende Sensor-Fallbacks für gemischte AMD-/NVIDIA-Systeme, Intel i915/xe, generische Thermal-Zones und cgroup-RAM-Limits ergänzt.
+- DRM-GPUs werden exakt erkannt, über PCI-Bus-IDs zusammengeführt und auch bei fehlender Einzelmetrik angezeigt.
+- Power-Prozentwerte werden nur noch mit tatsächlich gemeldeter Leistungsgrenze berechnet.
+
 ### 2.2.27 — 02.11.2026
 
 - Fußzeilentext auf Kleinbuchstaben und gedimmtes Grau umgestellt; Steuersymbole bleiben Cyan. Den mittigen Schriftzug „LLM Terminal Monitor“ aus dem Kopfbereich entfernt.

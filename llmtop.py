@@ -5,7 +5,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.2.27"  # Single Source of Truth; History in version.md
+VERSION = "2.2.28"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -16,7 +16,7 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
                               format_run_line, load_run_events, load_run_history,
                               model_for_run, run_metric_detail, snapshot_record,
                               source_label, token_rate, write_history)
-    from llmtop_sources import (GPU_POWER_BOOST_W, bar, collect_gpus, collect_ollama,
+    from llmtop_sources import (bar, collect_gpus, collect_ollama, cpu_count,
                               cpu_percent, cpu_temperature, get_ram_pct, loadavg,
                               model_lines, read_cpu_totals)
     lines = []
@@ -35,7 +35,7 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
     time.sleep(cpu_measure)
     cpu = cpu_percent(prev, read_cpu_totals())
     lines.append(f"CPU {bar(cpu, 20)} {cpu:.1f}%" if cpu is not None else "CPU (Messung)")
-    lines.append(f"Load {loadavg()[0]}  Kerne {os.cpu_count()}")
+    lines.append(f"Load {loadavg()[0]}  Kerne {cpu_count()}")
     cpu_temp, cpu_temp_source = cpu_temperature()
     if cpu_temp is not None:
         lines.append(f"CPU Temp {cpu_temp:.1f} °C ({cpu_temp_source})")
@@ -57,9 +57,12 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
             pct_text = f"{vram_pct:.1f}%" if vram_pct is not None else "n/a"
             lines.append(f"  VRAM {bar(vram_pct, 12)} {pct_text}  {g['mem_used']:.0f} / {g['mem_total']:.0f} MiB")
         if g["power_watt"] is not None:
-            limit = max(g["power_limit"] or 0.0, GPU_POWER_BOOST_W)
-            power_pct = min(100.0, 100.0 * g["power_watt"] / limit)
-            lines.append(f"  Power {bar(power_pct, 12)} {power_pct:.1f}%  {g['power_watt']:.1f} W / {limit:.0f} W")
+            limit = g.get("power_limit")
+            if limit and limit > 0:
+                power_pct = min(100.0, 100.0 * g["power_watt"] / limit)
+                lines.append(f"  Power {bar(power_pct, 12)} {power_pct:.1f}%  {g['power_watt']:.1f} W / {limit:.0f} W")
+            else:
+                lines.append(f"  Power {bar(None, 12)} n/a  {g['power_watt']:.1f} W (keine Grenze)")
     if st["ok"] and not st["error"]:
         if st["models"]:
             for m in st["models"]:

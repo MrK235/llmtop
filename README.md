@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.2.18** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.2.28** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -204,16 +204,20 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   `size_vram` / `size` → Aufteilung GPU % / CPU %. Der Ollama-Bereich ist in
   „Aktuelle Runs“ und „Geladene Modelle“ unterteilt.
 * **CPU**: Gesamt-% aus `/proc/stat`-Differenz zwischen zwei Refreshes, dazu
-  Load Average (`/proc/loadavg`), Kernanzahl (`os.cpu_count()`) und Temperatur
-  aus `k10temp`, `coretemp` oder `zenpower`, sofern verfügbar.
-* **RAM**: Auslastung `%`, Größe `GiB`, Zeile direkt nach CPU-Balken
-  (aus `/proc/meminfo`).
-* **GPU**: Auslastung %, Temperatur und VRAM-belegt/%. Quellenkette: zunächst `nvidia-smi`
-  (via `subprocess`, Power W und Leistungsgrenze), bei fehlenden NVIDIA-Daten
-  `/sys/class/drm/card*/device/gpu_busy_percent` (sysfs); sonst
-  `keine GPU-Quelle gefunden`. `--no-nvidia` verwendet unmittelbar sysfs.
-  Der Power-Balken verwendet mindestens die lokale Boost-Skala von 115 W;
-  eine höhere gemeldete Leistungsgrenze hat Vorrang.
+  Load Average (`/proc/loadavg`), nutzbare logische Kernanzahl und Temperatur
+  aus hwmon oder generischen Thermal-Zones (`k10temp`, `coretemp`, `zenpower`,
+  `x86_pkg_temp`, `cpu_thermal`, `acpitz`), sofern verfügbar.
+* **RAM**: Auslastung `%`, Größe `GiB`, Zeile direkt nach CPU-Balken. Primär
+  `/proc/meminfo`; bei einer endlichen cgroup-v1/v2-Grenze werden effektiver
+  Verbrauch und verfügbares Limit des Prozesses angezeigt.
+* **GPU**: Alle erkannten DRM-GPUs werden zusammengeführt. NVIDIA verwendet
+  bevorzugt `nvidia-smi` und ordnet die Werte über die PCI-Bus-ID zu; AMD nutzt
+  amdgpu-sysfs, Intel i915/xe bekannte GT-Auslastungsdateien. Temperatur,
+  VRAM und Power kommen ergänzend aus der zugeordneten hwmon-Schnittstelle.
+  Fehlende Einzelwerte bleiben `n/a`; dadurch werden auch GPUs ohne
+  Auslastungsdatei angezeigt. `--no-nvidia` überspringt ausschließlich
+  `nvidia-smi` und verwendet weiterhin sysfs. Eine Power-Prozentanzeige gibt es
+  nur bei gemeldeter echter Leistungsgrenze.
 * **VRAM**: VRAM-Auslastung `%` und Größe in MiB
   (`VRAM [##########  ] 96.5 %  7864 / 8151 MiB`). Im Ollama-Bereich zeigt ein
   geteilter Balken die Modellaufteilung als „VRAM/RAM“: Der Modellname ist
@@ -286,8 +290,10 @@ Er fasst alle Modell- und Tool-Folgeturns einer bearbeiteten Pi-Anfrage zu einem
   währenddessen zeigt llmtop deshalb einen eindeutigen Wartezustand statt Schätzungen.
 * CPU-% ist ein Differenzwert über ein Refresh-Intervall — der erste Frame zeigt
   „Messung“.
-* Ist `nvidia-smi` erfolgreich, werden sysfs-GPUs nicht zusätzlich gezeigt.
-  Bei mehreren NVIDIA-GPUs werden alle von `nvidia-smi` gemeldeten Geräte gezeigt.
+* GPU-Sensoren sind treiber- und kernelabhängig. NVIDIA-Werte werden bei
+  verfügbarer PCI-Bus-ID mit DRM/sysfs zusammengeführt; ohne passende ID kann
+  ein sehr alter NVIDIA-Treiber nur über die Geräte-Reihenfolge zugeordnet
+  werden. Nicht verfügbare Einzelwerte erscheinen als `n/a`.
 * Schlägt `/api/ps` fehl, zeigt die Anwendung den Fehler statt „kein Modell geladen“.
 * Modelle ohne Scrollen: Passen nicht alle vollständigen Modellkarten in den
   verfügbaren Bereich, zeigt die TUI ihre Anzahl als ausgeblendet an; es gibt
@@ -299,5 +305,5 @@ Er fasst alle Modell- und Tool-Folgeturns einer bearbeiteten Pi-Anfrage zu einem
 ## Testumgebung (live)
 
 Ollama 0.40.6 im Docker-Container unter `http://localhost:11434`, GPU NVIDIA
-RTX 5070 Laptop (8151 MiB) + AMD iGPU (`card2`), 24 Kerne, Python 3.12.
+RTX 5070 Laptop (8151 MiB) + AMD iGPU (`card1`), 24 Kerne, Python 3.12.
 Aktueller Prüfstatus und bekannte Grenzen: siehe `status.md`.

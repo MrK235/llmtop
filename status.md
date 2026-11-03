@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.27** · Stand 02.11.2026 · Status: Graue Fußzeile und reduzierter Kopfbereich.
+**Version 2.2.28** · Stand 03.11.2026 · Status: Herstellerübergreifende GPU- und Sensor-Fallbacks.
 
 ## Aktueller Stand
 
@@ -9,7 +9,12 @@ mit curses-TUI und `--once`-Ausgabe. Die Datenerfassung liegt in
 `llmtop_sources.py`, Run-Metriken, History und Collector in `llmtop_metrics.py`
 sowie Rendering und TUI-Sampler in `llmtop_tui.py`. Die TUI zeigt die Bereiche
 System, GPU, geladene Modelle, aktuelle Runs und History in dieser Reihenfolge. CPU, RAM, GPU, VRAM und Power verwenden
-konsistente Balken, Abstände und eine globale Farbsyntax. Struktur ist Cyan,
+konsistente Balken, Abstände und eine globale Farbsyntax. Die Sensorquellen
+werden herstellerübergreifend zusammengeführt: mehrere DRM-GPUs bleiben
+sichtbar, NVIDIA wird per PCI-Bus-ID mit sysfs abgeglichen, AMD nutzt amdgpu-
+sysfs, Intel i915/xe bekannte GT-Dateien und Temperaturen/Power werden über
+zugeordnete hwmon-Geräte ergänzt. Fehlende Einzelwerte bleiben `n/a`; eine
+Power-Prozentanzeige wird nur bei echter gemeldeter Leistungsgrenze berechnet. Struktur ist Cyan,
 Statuswerte und Temperaturen verwenden Grün/Gelb/Rot, Sekundärinfos sind
 gedimmt. Ollama-Modelle zeigen einen geteilten Speicherbalken im gleichen
 Raster wie die Sensoren: GPU/VRAM ist Grün oberhalb 55 %, Gelb bei 45–55 %
@@ -26,6 +31,15 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.2.28
+
+- Mehrere GPUs und gemischte AMD-/NVIDIA-Systeme werden nicht mehr durch eine einzelne Quellenkette verdeckt.
+- DRM-Geräte werden exakt als `cardN` erkannt; GPUs ohne Auslastungsdatei bleiben mit verfügbaren Teilwerten sichtbar.
+- NVIDIA-Werte werden über `pci.bus_id` mit sysfs-Geräten verbunden; hwmon wird über reale Gerätepfade zugeordnet.
+- CPU-Temperaturen nutzen zusätzlich generische Thermal-Zones und ältere hwmon-Fallbacks.
+- RAM berücksichtigt endliche cgroup-v1/v2-Limits; die nutzbare CPU-Anzahl folgt der Prozessaffinität.
+- Power ohne gemeldete Leistungsgrenze wird nicht mehr als Prozentwert einer festen 115-W-Skala dargestellt.
 
 ## Korrektur in 2.2.18
 
@@ -430,7 +444,10 @@ Ollama-Endpunkte beziehungsweise vorhandene Dateien.
 - Der Kontextbalken verwendet Prompt- plus Ausgabetoken. Das Limit stammt aus `options.num_ctx` oder wird für passende Runs zuverlässig aus `context_length` des aktuell geladenen Modells in `/api/ps` übernommen und in der Run-History nachgetragen. Ein serverseitiger KV-Cache ist nicht separat sichtbar. Wenn der Provider Usage bereits während des Streams liefert, wird der Liveverbrauch aktualisiert; andernfalls bleibt er bis zum Abschluss unbekannt.
 
 - GPU-Auslastung ist geräteweit und nicht exklusiv Ollama zurechenbar.
-- `nvidia-smi` und sysfs werden als Fallback, nicht parallel, abgefragt.
+- NVIDIA-SMI und sysfs werden parallel als ergänzende Quellen abgefragt und über
+  PCI-Bus-ID beziehungsweise Hersteller-Reihenfolge zusammengeführt. Sehr alte
+  NVIDIA-Treiber ohne `pci.bus_id` können bei mehreren identischen Karten nur
+  best-effort zugeordnet werden.
 - Für Modellkarten gibt es keinen Scroll-Modus. Passen sie nicht vollständig
   in den verfügbaren Bereich, zeigt die TUI ihre Anzahl als ausgeblendet an;
   die Run-History ist unabhängig davon scrollbar.
