@@ -136,6 +136,9 @@ def indented_history_run(run):
     # Die Gruppenzeile beginnt bereits mit dem zweistelligen Aufklappmarker.
     # Vier Leerzeichen setzen den eigentlichen Quelltext zwei Spalten dahinter.
     child["_source_label"] = "    " + source_label(run.get("source"), run.get("provider"))
+    # Das Zeitfeld wird innerhalb seiner eigenen Spalte um zwei Zeichen
+    # eingerückt; die Spaltenberechnung berücksichtigt diese Breite.
+    child["_history_child"] = True
     return child
 
 
@@ -404,8 +407,10 @@ def _draw(scr, st, host, interval):
         if column == "zeit":
             finished = _parse_time(run.get("finished_at"))
             if not finished:
-                return "n/a"
-            return finished.strftime("%d.%m %H:%M") if w >= 118 else finished.strftime("%H:%M")
+                value = "n/a"
+            else:
+                value = finished.strftime("%d.%m %H:%M") if w >= 118 else finished.strftime("%H:%M")
+            return "  " + value if run.get("_history_child") else value
         if column == "quelle":
             return run.get("_source_label") or source_label(run.get("source"), run.get("provider"))
         if column == "modell":

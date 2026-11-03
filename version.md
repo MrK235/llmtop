@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.29 — 03.11.2026
+
+- Zeitfeld aufgeklappter History-Unterzeilen innerhalb der eigenen Spalte um
+  zwei Zeichen eingerückt, ohne die übrigen Spaltenabstände zu verändern.
+
 ### 2.3.28 — 03.11.2026
 
 - Zwischenräume der History-Spalten erhalten bei der aktiven Zeile ebenfalls

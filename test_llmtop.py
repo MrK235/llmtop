@@ -160,6 +160,7 @@ def test_history_groups_keep_all_runs_and_sources_separate():
     child = llmtop_tui.indented_history_run(runs[2])
     assert child['_source_label'] == '    Open WebUI'
     assert child['model'] == runs[2]['model']
+    assert child['_history_child'] is True
     assert '_source_label' not in runs[2]
     _, collapsed = llmtop_tui.history_display_items(runs)
     assert [item['kind'] for item in collapsed] == ['group', 'group', 'group', 'run']
