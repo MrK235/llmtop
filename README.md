@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.04** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.3.05** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -107,7 +107,7 @@ Datenbank-Fallback kann `LLMTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 | `Tab` / `Shift-Tab` | nächste / vorherige Sortierspalte der Run-History |
 | `s` / `S` | Sortierrichtung der Run-History umschalten |
 | `a` / `A` | Fokus zwischen aktuellen Runs und Run-History wechseln |
-| `c` / `C` | gesamte persistierte Run-History leeren |
+| `c` / `C` | Run-History nach Sicherheitsabfrage leeren |
 | `Enter` / `Leertaste` | markierte History-Gruppe auf- oder zuklappen |
 | `←` / `→` | markierte History-Gruppe zu- oder aufklappen |
 | `↑` / `↓`, `Bild↑` / `Bild↓` | Cursor im fokussierten Bereich bewegen |

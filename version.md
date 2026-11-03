@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.05 — 03.11.2026
+
+- `c`/`C` verlangt vor dem atomaren Leeren der Run-History die Bestätigung `j`/`y`; Standardantwort `N` bricht sicher ab.
+
 ### 2.3.04 — 03.11.2026
 
 - TUI-Hinweis `x: sudo aktivieren` sowie Fußzeile `x sudo` ergänzt.

@@ -926,6 +926,29 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
                 except curses.error:
                     pass
 
+    def confirm_clear_history(scr):
+        """Verlangt eine explizite Bestätigung vor dem Löschen der History."""
+        h, w = scr.getmaxyx()
+        prompt = "Run-History wirklich löschen? [j/N]"
+        row = max(0, h - 2)
+        try:
+            scr.move(row, 0)
+            scr.clrtoeol()
+            scr.addstr(row, 0, prompt[:max(0, w - 1)], state["colors"]["error"])
+            scr.refresh()
+            scr.timeout(-1)
+            return scr.getch() in (ord("j"), ord("J"), ord("y"), ord("Y"))
+        except curses.error:
+            return False
+        finally:
+            scr.timeout(250)
+            try:
+                scr.move(row, 0)
+                scr.clrtoeol()
+                scr.refresh()
+            except curses.error:
+                pass
+
     def session(scr):
         nonlocal interval
         curses.curs_set(0)
@@ -952,17 +975,19 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
                 activate_rapl(scr)
                 refresh.set()
                 continue
-            with lock:
-                normalize_history_state(state)
-                if key in (ord("c"), ord("C")):
-                    if clear_run_history():
+            if key in (ord("c"), ord("C")):
+                if confirm_clear_history(scr) and clear_run_history():
+                    with lock:
                         state["run_history"] = []
                         state["history_offset"] = 0
                         state["history_cursor"] = None
                         state["history_expanded"].clear()
                         state["history_generation"] += 1
-                        refresh.set()
-                elif key in (ord("h"), ord("H")):
+                    refresh.set()
+                continue
+            with lock:
+                normalize_history_state(state)
+                if key in (ord("h"), ord("H")):
                     state["help"] = not state["help"]
                 elif key in (ord("+"), ord("=")):
                     interval = min(60.0, interval * 2)
