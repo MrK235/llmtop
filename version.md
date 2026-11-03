@@ -12,6 +12,12 @@ gebracht.
 
 ## Changelog
 
+### 2.3.07 — 03.11.2026
+
+- Help-Seite in Bedienungs- und Sensorquellenübersicht neu strukturiert.
+- Aktuelle CPU-Power-, CPU-Temperatur-, GPU-, RAM- und Ollama-Quellen werden im Help-Overlay angezeigt.
+- `h`/`H` wird in der Fußzeile ausdrücklich als Help-Taste ausgewiesen.
+
 ### 2.3.06 — 03.11.2026
 
 - Die Tastenbuchstaben der Fußzeile werden wie die Steuersymbole cyan dargestellt.

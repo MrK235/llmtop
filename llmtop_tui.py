@@ -553,7 +553,7 @@ def _draw(scr, st, host, interval):
                 row += 1
         if row < h - 2:
             draw_history_table(row, h - row - 2)
-        draw_footer("q quit   r reload   x sudo   c clear   ▴▾ return   ↑↓ cursor   h hilfe")
+        draw_footer("q quit   r reload   x sudo   c clear   ▴▾ return   ↑↓ cursor   h help")
         scr.refresh()
         return
 
@@ -794,20 +794,31 @@ def _draw(scr, st, host, interval):
     row += 1
     draw_history_table(row, h - row - 2, columns)
 
-    draw_footer("q quit   r reload   x sudo   c clear   ▴▾ return   ↑↓ cursor")
+    draw_footer("q quit   r reload   x sudo   c clear   ▴▾ return   ↑↓ cursor   h help")
     if st["help"]:
-        sources = ", ".join(sorted(set(g.get("source", "?") for g in st["gpus"]))) or "keine"
-        box = ["Hilfe", "", "q  Q  beenden", "r  Programm neu laden",
-               "c  Run-History vollständig leeren",
-               "h  Hilfe ein/aus", "-  Intervall halbieren (min 0.2s)",
-               "+  Intervall verdoppeln (max 60s)",
-               "a  Aktuelle Runs oder History fokussieren",
-               "Tab / Shift-Tab  History-Spalte wechseln", "s  History-Sortierrichtung",
-               "Enter / Leertaste  Gruppe auf- oder zuklappen",
-               "←/→  Gruppe zu- oder aufklappen", "↑/↓ Bild↑/Bild↓  Cursor bewegen",
-               "Pos1/Ende  erster/letzter History-Eintrag",
-               "x  sudo-Passwortabfrage für CPU-Power öffnen", "",
-               "System / GPU / Ollama / History", "GPU-Quelle: " + sources]
+        def short_source(value, limit=28):
+            value = str(value or "n/a")
+            return value if len(value) <= limit else value[:limit - 1] + "…"
+
+        gpu_sources = ", ".join(
+            f"GPU{i} {g.get('source') or 'n/a'}" for i, g in enumerate(st["gpus"])) or "keine"
+        power_source = short_source(st.get("cpu_power_source"), 26)
+        temp_source = short_source(st.get("cpu_temp_source"), 26)
+        host_source = short_source(host.replace("http://", "").replace("https://", ""), 26)
+        box = ["Hilfe",
+               "Bedienung: q Ende · r Neu laden · h Help",
+               "x sudo CPU-Power · c History löschen",
+               "+/- Intervall · a Fokus aktuelle Runs/History",
+               "Tab/Shift-Tab Sort · s Richtung",
+               "↑↓/Bild↑↓ Cursor · Pos1/Ende Anfang/Ende",
+               "Enter/Space Gruppe · ←/→ Gruppe zu/auf",
+               "",
+               "Sensorquellen",
+               f"CPU Power: {power_source}",
+               f"CPU Temp: {temp_source}",
+               "CPU/RAM: /proc/stat · meminfo/cgroup",
+               f"GPU: {short_source(gpu_sources)}",
+               f"Ollama: {host_source}"]
         bh = len(box) + 2
         bw = max(len(b) for b in box) + 4
         y0 = max(1, (h - bh) // 2)
