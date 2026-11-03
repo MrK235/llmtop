@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.2.28** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.2.29** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -216,8 +216,9 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   VRAM und Power kommen ergänzend aus der zugeordneten hwmon-Schnittstelle.
   Fehlende Einzelwerte bleiben `n/a`; dadurch werden auch GPUs ohne
   Auslastungsdatei angezeigt. `--no-nvidia` überspringt ausschließlich
-  `nvidia-smi` und verwendet weiterhin sysfs. Eine Power-Prozentanzeige gibt es
-  nur bei gemeldeter echter Leistungsgrenze.
+  `nvidia-smi` und verwendet weiterhin sysfs. Der gemessene Wattwert bleibt
+  auch ohne Leistungsgrenze sichtbar; eine Power-Prozentanzeige gibt es nur bei
+  gemeldeter echter Leistungsgrenze.
 * **VRAM**: VRAM-Auslastung `%` und Größe in MiB
   (`VRAM [##########  ] 96.5 %  7864 / 8151 MiB`). Im Ollama-Bereich zeigt ein
   geteilter Balken die Modellaufteilung als „VRAM/RAM“: Der Modellname ist

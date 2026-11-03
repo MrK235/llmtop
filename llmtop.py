@@ -5,7 +5,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.2.28"  # Single Source of Truth; History in version.md
+VERSION = "2.2.29"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -62,7 +62,7 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
                 power_pct = min(100.0, 100.0 * g["power_watt"] / limit)
                 lines.append(f"  Power {bar(power_pct, 12)} {power_pct:.1f}%  {g['power_watt']:.1f} W / {limit:.0f} W")
             else:
-                lines.append(f"  Power {bar(None, 12)} n/a  {g['power_watt']:.1f} W (keine Grenze)")
+                lines.append(f"  Power {bar(None, 12)} {g['power_watt']:.1f} W (keine Grenze)")
     if st["ok"] and not st["error"]:
         if st["models"]:
             for m in st["models"]:

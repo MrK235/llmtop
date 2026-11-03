@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.29 — 03.11.2026
+
+- GPU-Power ohne gemeldete Leistungsgrenze zeigt den gemessenen Wattwert nun im primären Wertefeld statt nur in der grauen Detailspalte.
+
 ### 2.2.28 — 03.11.2026
 
 - Herstellerübergreifende Sensor-Fallbacks für gemischte AMD-/NVIDIA-Systeme, Intel i915/xe, generische Thermal-Zones und cgroup-RAM-Limits ergänzt.

@@ -631,8 +631,8 @@ def _draw(scr, st, host, interval):
                 power_detail = f"{g['power_watt']:.1f} W / {limit:.0f} W"
             else:
                 power_pct = None
-                power_value = "n/a"
-                power_detail = f"{g['power_watt']:.1f} W · keine Grenze"
+                power_value = f"{g['power_watt']:.1f} W"
+                power_detail = "keine Leistungsgrenze"
             row = sensor(row, "Power", power_pct, power_value, power_detail)
 
     row += 1
