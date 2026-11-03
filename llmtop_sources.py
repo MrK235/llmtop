@@ -16,6 +16,8 @@ import urllib.request
 import json
 
 GPU_POWER_DISPLAY_SCALE_W = 115.0
+# Reine Darstellungsskala, keine gemeldete CPU-Leistungsgrenze.
+CPU_POWER_DISPLAY_SCALE_W = 65.0
 VENDOR_NAMES = {
     "0x10de": "NVIDIA", "0x1002": "AMD", "0x8086": "Intel",
     "0x15ad": "VMware", "0x1af4": "Virtio",

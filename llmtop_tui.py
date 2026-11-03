@@ -20,7 +20,8 @@ from llmtop_metrics import (
     write_history,
 )
 from llmtop_sources import (
-    GPU_POWER_DISPLAY_SCALE_W, PrivilegedRaplReader, bar, collect_cpu_power,
+    CPU_POWER_DISPLAY_SCALE_W, GPU_POWER_DISPLAY_SCALE_W, PrivilegedRaplReader,
+    bar, collect_cpu_power,
     collect_gpus, collect_ollama, cpu_count, cpu_name, cpu_percent,
     cpu_temperature, get_ram_pct, read_cpu_totals,
 )
@@ -492,6 +493,9 @@ def _draw(scr, st, host, interval):
         power_limit = st.get("cpu_power_limit")
         power_pct = (min(100.0, 100.0 * power_watt / power_limit)
                      if power_watt is not None and power_limit and power_limit > 0 else None)
+        power_meter_pct = (power_pct if power_pct is not None else
+                           min(100.0, 100.0 * power_watt / CPU_POWER_DISPLAY_SCALE_W)
+                           if power_watt is not None else None)
         power_value = (f"{power_pct:.1f} %" if power_pct is not None else
                        f"{power_watt:.1f} W" if power_watt is not None else "n/a")
         power_detail = st.get("cpu_power_source") or "keine CPU-Powerquelle"
@@ -502,7 +506,7 @@ def _draw(scr, st, host, interval):
             power_detail += f"  ·  {rapl_status}"
         power_attr = (_util_color(colors, power_pct) if power_pct is not None else
                       colors["status_green"] if power_watt is not None else colors["secondary"])
-        row = sensor(row, "Power", power_pct, power_value, power_detail,
+        row = sensor(row, "Power", power_meter_pct, power_value, power_detail,
                      value_attr=power_attr, meter_attr=power_attr)
         ram_pct, ram_total, ram_avail = st["ram"]
         ram_value = f"{ram_pct:.1f} %" if ram_pct is not None else "n/a"
@@ -622,6 +626,9 @@ def _draw(scr, st, host, interval):
     power_limit = st.get("cpu_power_limit")
     power_pct = (min(100.0, 100.0 * power_watt / power_limit)
                  if power_watt is not None and power_limit and power_limit > 0 else None)
+    power_meter_pct = (power_pct if power_pct is not None else
+                       min(100.0, 100.0 * power_watt / CPU_POWER_DISPLAY_SCALE_W)
+                       if power_watt is not None else None)
     power_value = (f"{power_pct:.1f} %" if power_pct is not None else
                    f"{power_watt:.1f} W" if power_watt is not None else "n/a")
     power_detail = st.get("cpu_power_source") or "keine CPU-Powerquelle"
@@ -632,7 +639,7 @@ def _draw(scr, st, host, interval):
         power_detail += f"  ·  {rapl_status}"
     power_attr = (_util_color(colors, power_pct) if power_pct is not None else
                   colors["status_green"] if power_watt is not None else colors["secondary"])
-    row = sensor(row, "Power", power_pct, power_value, power_detail,
+    row = sensor(row, "Power", power_meter_pct, power_value, power_detail,
                  value_attr=power_attr, meter_attr=power_attr)
     ram_pct, ram_total, ram_avail = st["ram"]
     ram_value = f"{ram_pct:.1f} %" if ram_pct is not None else "n/a"

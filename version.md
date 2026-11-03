@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.3 — 03.11.2026
+
+- CPU-Power-Balken ohne Leistungsgrenze verwenden eine reine 65-W-Darstellungsskala; die Anzeige erfindet weiterhin keinen Prozentwert oder Leistungsgrenzwert.
+
 ### 2.3.2 — 03.11.2026
 
 - CPU-Power vor dem Balken auf `Power` verkürzt.
