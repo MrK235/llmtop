@@ -802,25 +802,25 @@ def _draw(scr, st, host, interval):
 
         gpu_sources = ", ".join(
             f"GPU{i} {g.get('source') or 'n/a'}" for i, g in enumerate(st["gpus"])) or "keine"
-        power_source = short_source(st.get("cpu_power_source"), 26)
-        temp_source = short_source(st.get("cpu_temp_source"), 26)
-        host_source = short_source(host.replace("http://", "").replace("https://", ""), 26)
+        power_source = short_source(st.get("cpu_power_source"), 18)
+        temp_source = short_source(st.get("cpu_temp_source"), 18)
+        host_source = short_source(host.replace("http://", "").replace("https://", ""), 20)
         power_status = st.get("rapl_status")
         if power_status and power_status != "nicht aktiviert":
             power_source = f"{power_source} · {short_source(power_status, 20)}"
         box = [
             ("Bedienung", colors["structure"]),
-            ("  q / Q Ende   h / H Help   r / R Reload", colors["secondary"]),
-            ("  x / X sudo CPU   c / C History", colors["secondary"]),
-            ("  + / - Intervall   a / A Fokus   Tab Sort", colors["secondary"]),
-            ("  s / S Richtung   ↑ / ↓ Cursor", colors["secondary"]),
-            ("  ← / → Gruppe auf/zu", colors["secondary"]),
-            ("  Pos1       Anfang", colors["secondary"]),
-            ("  Ende       Ende", colors["secondary"]),
+            ("  q/Q Ende  h/H Help  r/R Reload", colors["secondary"]),
+            ("  x/X sudo  c/C History", colors["secondary"]),
+            ("  +/- Intervall a/A Fokus Tab Sort", colors["secondary"]),
+            ("  s/S Richtung", colors["secondary"]),
+            ("  ↑/↓ Cursor   ←/→ Gruppe auf/zu", colors["secondary"]),
+            ("  Pos1  Anfang", colors["secondary"]),
+            ("  Ende  Ende", colors["secondary"]),
             ("Sensorquellen", colors["structure"]),
             (f"  {'CPU Power':<12} {power_source}", colors["secondary"]),
             (f"  {'CPU Temp':<12} {temp_source}", colors["secondary"]),
-            ("  CPU/RAM      /proc/stat · meminfo/cgroup", colors["secondary"]),
+            ("  CPU/RAM /proc/stat + meminfo", colors["secondary"]),
             (f"  {'GPU':<12} {short_source(gpu_sources)}", colors["secondary"]),
             (f"  {'Ollama':<12} {host_source}", colors["secondary"]),
         ]

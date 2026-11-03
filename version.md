@@ -12,6 +12,15 @@ gebracht.
 
 ## Changelog
 
+### 2.3.12 — 03.11.2026
+
+- Help-Bedienungstabelle auf die verfügbare Terminalbreite verdichtet; Slash-Schreibweise sowie Pfeil-, `Pos1`- und `Ende`-Einträge bleiben lesbar.
+
+### 2.3.11 — 03.11.2026
+
+- Tastenangaben im Help-Overlay ohne Leerzeichen um `/` formatiert und auf die Terminalbreite abgestimmt.
+- Pfeilnavigation sowie separate `Pos1`-/`Ende`-Einträge sichtbar gehalten; Enter/Space bleibt aus der Übersicht entfernt.
+
 ### 2.3.10 — 03.11.2026
 
 - Bedienung im Help-Overlay mit getrennten Tastenangaben (`/`), vollständigen Pfeiltasten sowie separaten `Pos1`-/`Ende`-Zeilen überarbeitet.
