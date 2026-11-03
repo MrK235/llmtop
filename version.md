@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.10 — 03.11.2026
+
+- Bedienung im Help-Overlay mit getrennten Tastenangaben (`/`), vollständigen Pfeiltasten sowie separaten `Pos1`-/`Ende`-Zeilen überarbeitet.
+- Enter/Space aus der Bedienungsübersicht entfernt; `Gruppe auf/zu` steht hinter den Pfeiltasten.
+
 ### 2.3.09 — 03.11.2026
 
 - Bedienung im Help-Overlay tabellarischer mit ausgerichteten Tasten-/Aktionsblöcken dargestellt.
