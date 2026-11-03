@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.3** · Stand 03.11.2026 · Status: Privilegierter RAPL-Leser ohne Neustart.
+**Version 2.3.4** · Stand 03.11.2026 · Status: Privilegierter RAPL-Leser ohne Neustart.
 
 ## Aktueller Stand
 
@@ -34,6 +34,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.4
+
+- Die TUI weist in der Power-Zeile auf `x: sudo aktivieren` hin; die Fußzeile verwendet `x sudo`.
+- Die Aktivierungstaste wurde von `p` auf `x` geändert.
 
 ## Neu in 2.3.3
 

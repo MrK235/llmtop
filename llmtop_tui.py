@@ -502,7 +502,9 @@ def _draw(scr, st, host, interval):
         if power_watt is not None and power_limit and power_limit > 0:
             power_detail = f"{power_watt:.1f} W / {power_limit:.1f} W  ·  {power_detail}"
         rapl_status = st.get("rapl_status")
-        if power_watt is None and rapl_status and rapl_status != "nicht aktiviert":
+        if power_watt is None and rapl_status == "nicht aktiviert":
+            power_detail += "  ·  x: sudo aktivieren"
+        elif power_watt is None and rapl_status:
             power_detail += f"  ·  {rapl_status}"
         power_attr = (_util_color(colors, power_pct) if power_pct is not None else
                       colors["status_green"] if power_watt is not None else colors["secondary"])
@@ -548,7 +550,7 @@ def _draw(scr, st, host, interval):
                 row += 1
         if row < h - 2:
             draw_history_table(row, h - row - 2)
-        draw_footer("q quit   r reload   p rapl   c clear   ▴▾ return   ↑↓ cursor   h hilfe")
+        draw_footer("q quit   r reload   x sudo   c clear   ▴▾ return   ↑↓ cursor   h hilfe")
         scr.refresh()
         return
 
@@ -635,7 +637,9 @@ def _draw(scr, st, host, interval):
     if power_watt is not None and power_limit and power_limit > 0:
         power_detail = f"{power_watt:.1f} W / {power_limit:.1f} W  ·  {power_detail}"
     rapl_status = st.get("rapl_status")
-    if power_watt is None and rapl_status and rapl_status != "nicht aktiviert":
+    if power_watt is None and rapl_status == "nicht aktiviert":
+        power_detail += "  ·  x: sudo aktivieren"
+    elif power_watt is None and rapl_status:
         power_detail += f"  ·  {rapl_status}"
     power_attr = (_util_color(colors, power_pct) if power_pct is not None else
                   colors["status_green"] if power_watt is not None else colors["secondary"])
@@ -787,7 +791,7 @@ def _draw(scr, st, host, interval):
     row += 1
     draw_history_table(row, h - row - 2, columns)
 
-    draw_footer("q quit   r reload   p rapl   c clear   ▴▾ return   ↑↓ cursor")
+    draw_footer("q quit   r reload   x sudo   c clear   ▴▾ return   ↑↓ cursor")
     if st["help"]:
         sources = ", ".join(sorted(set(g.get("source", "?") for g in st["gpus"]))) or "keine"
         box = ["Hilfe", "", "q  Q  beenden", "r  Programm neu laden",
@@ -799,7 +803,7 @@ def _draw(scr, st, host, interval):
                "Enter / Leertaste  Gruppe auf- oder zuklappen",
                "←/→  Gruppe zu- oder aufklappen", "↑/↓ Bild↑/Bild↓  Cursor bewegen",
                "Pos1/Ende  erster/letzter History-Eintrag",
-               "p  RAPL-Leser mit sudo aktivieren", "",
+               "x  sudo-Passwortabfrage für CPU-Power öffnen", "",
                "System / GPU / Ollama / History", "GPU-Quelle: " + sources]
         bh = len(box) + 2
         bw = max(len(b) for b in box) + 4
@@ -944,7 +948,7 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
                 return 0
             if key in (ord("r"), ord("R")):
                 return "reload"
-            if key in (ord("p"), ord("P")):
+            if key in (ord("x"), ord("X")):
                 activate_rapl(scr)
                 refresh.set()
                 continue

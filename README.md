@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.3** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.3.4** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -100,7 +100,7 @@ Datenbank-Fallback kann `LLMTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 |-------|---------|
 | `q` / `Q` | beenden |
 | `r` / `R` | Programm mit denselben Optionen neu laden |
-| `p` / `P` | privilegierten RAPL-Leser nach expliziter sudo-Bestätigung aktivieren |
+| `x` / `X` | sudo-Passwortabfrage für CPU-Power öffnen |
 | `h` / `H` | Hilfe ein/aus (wird ignoriert, wenn das Overlay nicht ins Terminal passt) |
 | `-` | Intervall halbieren (min. 0,2 s) |
 | `+` / `=` | Intervall verdoppeln (max. 60 s) |

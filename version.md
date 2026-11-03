@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.4 — 03.11.2026
+
+- TUI-Hinweis `x: sudo aktivieren` sowie Fußzeile `x sudo` ergänzt.
+- Die Aktivierung des privilegierten RAPL-Lesers von `p` auf `x` umgestellt.
+
 ### 2.3.3 — 03.11.2026
 
 - CPU-Power-Balken ohne Leistungsgrenze verwenden eine reine 65-W-Darstellungsskala; die Anzeige erfindet weiterhin keinen Prozentwert oder Leistungsgrenzwert.
