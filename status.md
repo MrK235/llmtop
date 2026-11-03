@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.20** · Stand 03.11.2026 · Status: Privilegierter RAPL-Leser ohne Neustart.
+**Version 2.3.21** · Stand 03.11.2026 · Status: Breitere mittlere Balken-Farbstufe.
 
 ## Aktueller Stand
 
@@ -16,7 +16,8 @@ sysfs, Intel i915/xe bekannte GT-Dateien und Temperaturen/Power werden über
 zugeordnete hwmon-Geräte ergänzt. Fehlende Einzelwerte bleiben `n/a`; eine
 Power-Prozentanzeige wird nur bei echter gemeldeter Leistungsgrenze berechnet. Struktur ist Cyan,
 Statuswerte und Temperaturen verwenden Grün/Gelb/Rot, Sekundärinfos sind
-gedimmt. Ollama-Modelle zeigen einen geteilten Speicherbalken im gleichen
+gedimmt. Auslastungsbalken bleiben bis unter 40 % grün, sind von 40 bis
+unter 80 % gelb/orange und ab 80 % rot. Ollama-Modelle zeigen einen geteilten Speicherbalken im gleichen
 Raster wie die Sensoren: GPU/VRAM ist Grün oberhalb 55 %, Gelb bei 45–55 %
 und Rot darunter; CPU/RAM bleibt gedimmt grau. Beide Anteile verwenden `#`.
 CPU-Power wird über dynamische powercap-/RAPL-Zonen, eindeutig zugeordnete
@@ -34,6 +35,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.21
+
+- Die mittlere Auslastungsfarbe wurde auf 40 bis unter 80 % erweitert; dadurch
+  sind CPU-, RAM-, GPU- und Power-Balken häufiger gelb/orange statt grün oder rot.
 
 ## Neu in 2.3.20
 

@@ -52,11 +52,12 @@ def _temp_color(colors, temp_c):
 
 
 def _util_color(colors, pct):
+    """Färbt Auslastungsbalken mit einer breiteren mittleren Stufe."""
     if pct is None:
         return colors["secondary"]
-    if pct >= 85:
+    if pct >= 80:
         return colors["error"]
-    if pct >= 60:
+    if pct >= 40:
         return colors["status_yellow"]
     return colors["status_green"]
 

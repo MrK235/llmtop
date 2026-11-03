@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.20** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.3.21** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -130,8 +130,9 @@ Kernwerten, Modellanzahl und History-Status, damit sich keine Bereiche
 CPU, RAM, GPU-Auslastung, VRAM und Power verwenden
 pro Terminal dieselbe Balkenbreite; Label, Prozentwert und Detailwert sind
 spaltenweise ausgerichtet. Die Farbsyntax ist global: Struktur (Überschriften,
-Labels und Rahmen) ist Cyan, Auslastungs- und Temperaturstatus Grün/Gelb/Rot,
-Sekundärinfos gedimmt. History-Gruppen verwenden neutrales Grau ohne
+Labels und Rahmen) ist Cyan, Auslastungsstatus wechselt bei unter 40 % von
+Grün zu Gelb/Orange, ab 80 % zu Rot; Temperaturstatus verwendet weiterhin
+Grün/Gelb/Rot. Sekundärinfos sind gedimmt. History-Gruppen verwenden neutrales Grau ohne
 Fettdarstellung; die aktive Cursorzeile erhält schwarze Schrift auf Cyan,
 ebenfalls ohne Fettdarstellung, damit Schwarz nicht zu Hellgrau aufgehellt wird. Im
 Ollama-Speicherbalken bedeuten die Farben explizit
@@ -218,7 +219,8 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   ohne llmtop neu zu starten. CPU-Power-Wert und Balken werden auch ohne
   Leistungsgrenze sichtbar farbig hervorgehoben. Die Systemzeile heißt
   `Power`; bei echter Leistungsgrenze wechseln Balken und Wert dynamisch
-  zwischen Grün, Gelb und Rot. Ohne Grenze bleibt ein gültiger Messwert grün
+  zwischen Grün (unter 40 %), Gelb/Orange (40–79 %) und Rot (ab 80 %). Ohne
+  Grenze bleibt ein gültiger Messwert grün
   und erhält eine reine 65-W-Darstellungsskala für den Balken; dies ist keine
   Leistungsgrenze und wird nicht als Prozentwert angezeigt.
 * **RAM**: Auslastung `%`, Größe `GiB`, Zeile nach den CPU-Systemwerten. Primär

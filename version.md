@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.21 — 03.11.2026
+
+- Auslastungsbalken verwenden Grün unter 40 %, Gelb/Orange von 40 bis unter
+  80 % und Rot ab 80 %, damit die mittlere Farbstufe sichtbarer ist.
+
 ### 2.3.20 — 03.11.2026
 
 - TCC-D-Bus vor dem optionalen sudo-RAPL-Helper priorisiert, wenn der Dienst gültige CPU-Powerwerte liefert.
