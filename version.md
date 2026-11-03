@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.31 — 03.11.2026
+
+- Mehrere GPUs werden in TUI und `--once` durch sichtbare Trennzeilen klar voneinander getrennt.
+
 ### 2.2.30 — 03.11.2026
 
 - GPU-Power ohne gemeldete Leistungsgrenze erhält wieder eine grafische Darstellungsskala; der Wattwert bleibt der primäre Textwert.

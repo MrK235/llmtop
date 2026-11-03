@@ -610,6 +610,9 @@ def _draw(scr, st, host, interval):
         _add(scr, row, 0, st["gpu_err"], colors["status_yellow"])
         row += 1
     for i, g in enumerate(st["gpus"]):
+        if i:
+            _add(scr, row, 0, "  ··· weitere GPU ···", colors["secondary"])
+            row += 1
         util = g["util"]
         util_value = f"{util:d} %" if util is not None else "n/a"
         temp_c = g.get("temp_c")

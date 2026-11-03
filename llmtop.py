@@ -5,7 +5,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.2.30"  # Single Source of Truth; History in version.md
+VERSION = "2.2.31"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -48,6 +48,8 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
     if gerr:
         lines.append(f"GPU {gerr}")
     for i, g in enumerate(gpus):
+        if i:
+            lines.append("  ─────────────── weitere GPU ───────────────")
         util = g["util"]
         util_text = f"{util:3d}%" if util is not None else " n/a"
         lines.append(f"GPU{i} {g['name']} {bar(util, 20)} {util_text} ({g['source']})")
