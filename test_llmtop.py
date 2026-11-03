@@ -369,7 +369,7 @@ def test_tui_draws_loaded_model():
     colors = {name: 0 for name in ("structure", "secondary", "group", "cursor",
                                     "model_name", "context_label", "status_green", "status_yellow",
                                     "rate_green", "rate_yellow", "rate_error", "error",
-                                    "offload_good", "offload_mixed", "offload_cpu")}
+                                    "offload_good", "offload_mixed", "offload_cpu", "bar_bracket")}
     colors["model_name"] = 12
     colors["context_label"] = 11
     colors["rate_green"] = 13
@@ -381,6 +381,7 @@ def test_tui_draws_loaded_model():
     colors["cursor"] = 21
     colors["offload_mixed"] = 16
     colors["secondary"] = 17
+    colors["bar_bracket"] = 22
     state = {"colors": colors, "help": False, "cpu": 10.0,
              "cpu_temp": None, "cpu_temp_source": None,
              "ram": (20.0, 16.0, 12.0), "gpus": [], "gpu_err": None,
@@ -417,7 +418,7 @@ def test_tui_draws_loaded_model():
     assert not any(text == "LLM Terminal Monitor" for text in screen.text)
     interval_text = "-/+ intervall 2.0s"
     assert (interval_text, 120 - len(interval_text) - 1) in screen.positions
-    assert any(text.startswith("q quit   r reload   c clear   ▴▾ return   ↑↓ cursor")
+    assert any(text.startswith("q quit   r reload   x sudo   c clear   ▴▾ return   ↑↓ cursor   h help")
                for text in screen.text)
     assert ("▴", colors["structure"]) in screen.calls
     assert ("▾", colors["structure"]) in screen.calls
@@ -443,8 +444,12 @@ def test_tui_draws_loaded_model():
     assert llmtop_tui._rate_color(colors, 10) == 14
     assert llmtop_tui._rate_color(colors, 50) == 13
     assert ("model", 12) in screen.calls
-    assert ("[##          ]  20%", 18) in screen.calls
+    assert ("[", 22) in screen.calls
+    assert ("##          ", 18) in screen.calls
+    assert ("]", 22) in screen.calls
+    assert ("  20%", 18) in screen.calls
     assert (" 100", 17) in screen.calls
+    assert ("[            ]  n/a n/a", 17) in screen.calls
     assert any(text.startswith("01.01 00:00") and attr == 21
                for text, attr in screen.calls)
 

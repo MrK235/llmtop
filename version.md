@@ -12,6 +12,12 @@ gebracht.
 
 ## Changelog
 
+### 2.3.26 — 03.11.2026
+
+- History-Kontext vollständig grau gezeichnet, auch bei aktiver Cursorzeile.
+- Dokumentation und Farbbeschreibung auf die aktuelle Aktivierungstaste `x`/`X`
+  sowie die vier Auslastungsfarbstufen abgeglichen.
+
 ### 2.3.25 — 03.11.2026
 
 - Balkenklammern sind außerhalb der History cyan und normal dargestellt; der

@@ -265,11 +265,12 @@ def _draw(scr, st, host, interval):
                     str(run.get("status", "unknown")), str(run.get("status", "unknown")))
 
     def draw_meter(row, x, pct, width, fill_attr):
-        """Zeichnet den Inhalt farbig, die Klammern konstant grün und normal."""
+        """Zeichnet den Inhalt farbig, die Klammern konstant cyan und normal."""
         meter = bar(pct, width)
-        _add(scr, row, x, "[", colors["bar_bracket"])
+        bracket_attr = colors.get("bar_bracket", colors["structure"])
+        _add(scr, row, x, "[", bracket_attr)
         _add(scr, row, x + 1, meter[1:-1], fill_attr)
-        _add(scr, row, x + len(meter) - 1, "]", colors["bar_bracket"])
+        _add(scr, row, x + len(meter) - 1, "]", bracket_attr)
         return meter
 
     def sensor(row, label, pct, value, detail="", value_attr=None, accent="", accent_attr=None,
@@ -429,6 +430,11 @@ def _draw(scr, st, host, interval):
             return stamp.strftime("%d.%m %H:%M") if stamp else "n/a"
         return history_cell(run, column)
 
+    def draw_history_context_cell(row, x, width, run):
+        """Zeichnet den History-Kontext vollständig grau, auch beim Cursor."""
+        text = history_cell(run, "kontext")
+        _add(scr, row, x, text[:width].ljust(width), colors["secondary"])
+
     def draw_live_context_cell(row, x, width, run):
         used, limit, pct = context_values(run, model_for_run(run, oll.get("models", [])))
         if used is None:
@@ -496,9 +502,15 @@ def _draw(scr, st, host, interval):
                 cells.append(text[:width].ljust(width))
             attr = cursor_attr if active else (colors["group"] if item["kind"] == "group"
                                                 else colors["secondary"])
-            # History-Kontext bleibt als graue Tabellenzelle erhalten und
-            # übernimmt nicht die statusabhängigen Live-Farben.
-            _add(scr, row, 0, " ".join(cells), attr)
+            # History-Kontext bleibt vollständig grau und übernimmt weder
+            # Live-Farben noch die Cursor-Hervorhebung.
+            x = 0
+            for index, (name, width) in enumerate(columns):
+                if name == "kontext":
+                    draw_history_context_cell(row, x, width, run)
+                else:
+                    _add(scr, row, x, cells[index], attr)
+                x += width + 1
             row += 1
         if not sorted_runs:
             _add(scr, row, 0, "Keine abgeschlossenen instrumentierten Runs", colors["secondary"])
@@ -614,17 +626,19 @@ def _draw(scr, st, host, interval):
         _add(scr, row, x, "VRAM/RAM ".ljust(label_w), colors["structure"])
         x += label_w
         if gpu_pct is None:
-            _add(scr, row, x, "[", colors["bar_bracket"])
+            bracket_attr = colors.get("bar_bracket", colors["structure"])
+            _add(scr, row, x, "[", bracket_attr)
             _add(scr, row, x + 1, " " * bar_w, colors["secondary"])
-            _add(scr, row, x + bar_w + 1, "]", colors["bar_bracket"])
+            _add(scr, row, x + bar_w + 1, "]", bracket_attr)
         else:
             gpu_width = max(0, min(bar_w, int(round(gpu_pct * bar_w / 100.0))))
             cpu_width = bar_w - gpu_width
             gpu_attr = _offload_color(colors, gpu_pct)
-            _add(scr, row, x, "[", colors["bar_bracket"])
+            bracket_attr = colors.get("bar_bracket", colors["structure"])
+            _add(scr, row, x, "[", bracket_attr)
             _add(scr, row, x + 1, "#" * gpu_width, gpu_attr)
             _add(scr, row, x + 1 + gpu_width, "#" * cpu_width, colors["secondary"])
-            _add(scr, row, x + bar_w + 1, "]", colors["bar_bracket"])
+            _add(scr, row, x + bar_w + 1, "]", bracket_attr)
         x += len(bar(None, bar_w)) + 1
         if gpu_pct is None:
             _add(scr, row, x, "n/a".rjust(7), colors["secondary"])

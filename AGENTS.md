@@ -26,7 +26,7 @@
 - Fachgrenzen beibehalten: Quellen in `llmtop_sources.py`, Runmetriken und Collector in `llmtop_metrics.py`, curses in `llmtop_tui.py`, CLI in `llmtop.py`.
 - Alle neuen Sensoren und Funktionen müssen die Standardbibliothek einhalten. Kein `subprocess` für neue externe Tools außer wo bereits etabliert (`nvidia-smi`).
 - Bestehende CLI-Optionen, Tastatürkürzel und Exit-Codes nur erweitern, nicht umbenennen oder löschen.
-- Farbschema (Cyan Struktur, Grün/Gelb/Rot Status) und Balkengeometrie konsistent halten.
+- Farbschema (Cyan Struktur, abgestufte Auslastungsfarben, Grün/Gelb/Rot für Temperatur und Status) und Balkengeometrie konsistent halten.
 
 ### Neue Features — Richtlinien
 - Jede neue Option muss dokumentiert werden (`README.md`, `--version`-Hilfe).
