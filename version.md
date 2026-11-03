@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.18 — 03.11.2026
+
+- CPU-Power-Quellen im Help-Overlay kompakt gekürzt, damit die Messquelle nicht überläuft oder unvollständig erscheint.
+
 ### 2.3.17 — 03.11.2026
 
 - WebUI-Quellenzeile im Help-Overlay auf Label und Status verkürzt, damit sie nicht überläuft.

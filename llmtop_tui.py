@@ -802,7 +802,11 @@ def _draw(scr, st, host, interval):
 
         gpu_sources = ", ".join(
             f"GPU{i} {g.get('source') or 'n/a'}" for i, g in enumerate(st["gpus"])) or "keine"
-        power_source = short_source(st.get("cpu_power_source"), 18)
+        power_source = str(st.get("cpu_power_source") or "n/a")
+        power_source = (power_source.replace("RAPL (sudo)", "RAPL sudo")
+                        .replace("package-", "pkg-"))
+        if power_source == "keine CPU-Powerquelle":
+            power_source = "n/a"
         temp_source = short_source(st.get("cpu_temp_source"), 18)
         host_source = short_source(host.replace("http://", "").replace("https://", ""), 20)
         power_status = st.get("rapl_status")
