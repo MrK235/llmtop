@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.30** · Stand 03.11.2026 · Status: Vollständiges, eingerücktes Zeitfeld in History-Unterzeilen.
+**Version 2.3.31** · Stand 03.11.2026 · Status: Voll ausgefüllte Balkensegmente.
 
 ## Aktueller Stand
 
@@ -21,7 +21,8 @@ Orange von 60 bis 90 % und Rot über 90 %. Balkenklammern sind außerhalb der
 History normal cyan; der History-Kontext bleibt statusgrau und übernimmt bei
 aktiver Cursorzeile deren durchgehende Hervorhebung. Ollama-Modelle zeigen einen geteilten Speicherbalken im gleichen
 Raster wie die Sensoren: GPU/VRAM ist Grün oberhalb 55 %, Gelb bei 45–55 %
-und Rot darunter; CPU/RAM bleibt gedimmt grau. Beide Anteile verwenden `#`.
+und Rot darunter; CPU/RAM bleibt gedimmt grau. Beide Anteile verwenden voll
+ausgefüllte `█`-Segmente.
 CPU-Power wird über dynamische powercap-/RAPL-Zonen, eindeutig zugeordnete
 CPU-hwmon-Geräte und optional TUXEDO Control Center per lesendem D-Bus-Fallback
 gemessen. Fehlende Berechtigungen oder Zählerstände bleiben als `n/a` sichtbar;
@@ -37,6 +38,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.31
+
+- Balken verwenden für gefüllte Anteile jetzt das voll ausgefüllte Zeichen `█`
+  statt `#`; leere Anteile bleiben als Leerzeichen sichtbar.
 
 ## Neu in 2.3.30
 

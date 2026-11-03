@@ -881,8 +881,11 @@ def model_lines(model):
     return [line1, line2]
 
 
+BAR_FILL_CHAR = "█"
+
+
 def bar(pct, width):
     if pct is None:
         return "[" + " " * width + "]"
     n = max(0, min(width, int(round(pct * width / 100.0))))
-    return "[" + "#" * n + " " * (width - n) + "]"
+    return "[" + BAR_FILL_CHAR * n + " " * (width - n) + "]"

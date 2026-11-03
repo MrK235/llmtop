@@ -20,7 +20,7 @@ from llmtop_metrics import (
     write_history,
 )
 from llmtop_sources import (
-    CPU_POWER_DISPLAY_SCALE_W, GPU_POWER_DISPLAY_SCALE_W, PrivilegedRaplReader,
+    BAR_FILL_CHAR, CPU_POWER_DISPLAY_SCALE_W, GPU_POWER_DISPLAY_SCALE_W, PrivilegedRaplReader,
     bar, collect_cpu_power,
     collect_gpus, collect_ollama, cpu_count, cpu_name, cpu_percent,
     cpu_temperature, get_ram_pct, read_cpu_totals,
@@ -646,8 +646,8 @@ def _draw(scr, st, host, interval):
             gpu_attr = _offload_color(colors, gpu_pct)
             bracket_attr = colors.get("bar_bracket", colors["structure"])
             _add(scr, row, x, "[", bracket_attr)
-            _add(scr, row, x + 1, "#" * gpu_width, gpu_attr)
-            _add(scr, row, x + 1 + gpu_width, "#" * cpu_width, colors["secondary"])
+            _add(scr, row, x + 1, BAR_FILL_CHAR * gpu_width, gpu_attr)
+            _add(scr, row, x + 1 + gpu_width, BAR_FILL_CHAR * cpu_width, colors["secondary"])
             _add(scr, row, x + bar_w + 1, "]", bracket_attr)
         x += len(bar(None, bar_w)) + 1
         if gpu_pct is None:
