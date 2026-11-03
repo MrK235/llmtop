@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.35** · Stand 03.11.2026 · Status: Herstellerübergreifende GPU- und Sensor-Fallbacks.
+**Version 2.2.36** · Stand 03.11.2026 · Status: Erweiterte Linux-Sensor-Fallbacks.
 
 ## Aktueller Stand
 
@@ -31,6 +31,12 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.2.36
+
+- cgroup-Mounts werden über `/proc/self/mountinfo` und `/proc/self/cgroup` ermittelt, einschließlich nichtstandardmäßiger Mountpfade.
+- Intel-GPUs prüfen zusätzliche generische GT-/Busy-sysfs-Pfade; nicht vorhandene Kernelzähler bleiben `n/a`.
+- PCI-Namen und GPU-Sensoren bleiben ohne neue externe Abhängigkeiten.
 
 ## Korrektur in 2.2.35
 

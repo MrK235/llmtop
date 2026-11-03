@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.2.35** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.2.36** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -219,7 +219,9 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   amdgpu-sysfs, Intel i915/xe bekannte GT-Auslastungsdateien. Temperatur,
   VRAM und Power kommen ergänzend aus der zugeordneten hwmon-Schnittstelle.
   Fehlende Einzelwerte bleiben `n/a`; dadurch werden auch GPUs ohne
-  Auslastungsdatei angezeigt. `--no-nvidia` überspringt ausschließlich
+  Auslastungsdatei angezeigt. Intel nutzt zusätzlich verfügbare generische
+  GT-/Busy-sysfs-Dateien; fehlen diese, bleibt die Auslastung bewusst `n/a`.
+  `--no-nvidia` überspringt ausschließlich
   `nvidia-smi` und verwendet weiterhin sysfs. Der gemessene Wattwert bleibt
   auch ohne Leistungsgrenze sichtbar. Der Balken verwendet dann eine reine
   115-W-Darstellungsskala; eine Power-Prozentanzeige gibt es nur bei gemeldeter

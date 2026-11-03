@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.2.36 — 03.11.2026
+
+- cgroup-Mounts werden dynamisch aus `/proc/self/mountinfo` und `/proc/self/cgroup` ermittelt.
+- Zusätzliche generische GT-/Busy-sysfs-Fallbacks für Intel-GPUs ergänzt; fehlende Kernelzähler bleiben `n/a`.
+
 ### 2.2.35 — 03.11.2026
 
 - Integrierte Radeon-Zusatzbezeichnungen werden aus dem CPU-Modellnamen entfernt; angezeigt wird nur der CPU-Name.

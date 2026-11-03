@@ -178,21 +178,45 @@ def cpu_temperature():
     return None, "keine CPU-Temperaturquelle"
 
 
-def _cgroup_memory(total_kb):
-    """Liest eine endliche Speichergrenze des aktuellen cgroups."""
-    paths = []
+def _mountinfo_unescape(value):
+    return re.sub(r"\\([0-7]{3})",
+                  lambda match: chr(int(match.group(1), 8)), value)
+
+
+def _cgroup_mounts():
+    """Ermittelt cgroup-Mounts und den relativen Pfad des aktuellen Prozesses."""
+    relative = {}
     for line in (_read_text("/proc/self/cgroup") or "").splitlines():
         fields = line.split(":", 2)
-        if len(fields) != 3:
+        if len(fields) == 3:
+            controllers, path = fields[1], fields[2].lstrip("/")
+            relative["v2" if not controllers else "memory"] = path
+    mounts = []
+    mountinfo = _read_text("/proc/self/mountinfo") or ""
+    for line in mountinfo.splitlines():
+        fields = line.split(" - ", 1)
+        if len(fields) != 2:
             continue
-        controllers, relative = fields[1], fields[2].lstrip("/")
-        if not controllers:  # cgroup v2
-            paths.append(os.path.join("/sys/fs/cgroup", relative))
-        elif "memory" in controllers.split(","):
-            paths.append(os.path.join("/sys/fs/cgroup/memory", relative))
-    paths.extend(("/sys/fs/cgroup", "/sys/fs/cgroup/memory"))
+        left, right = fields
+        left_fields = left.split()
+        right_fields = right.split()
+        if len(left_fields) < 6 or len(right_fields) < 3:
+            continue
+        mount_point = _mountinfo_unescape(left_fields[4])
+        filesystem = right_fields[0]
+        options = set(left_fields[5].split(",")) | set(right_fields[2].split(","))
+        kind = "v2" if filesystem == "cgroup2" else "memory" if (
+            filesystem == "cgroup" and "memory" in options) else None
+        if kind is not None:
+            mounts.append(os.path.join(mount_point, relative.get(kind, "")))
+    mounts.extend(("/sys/fs/cgroup", "/sys/fs/cgroup/memory"))
+    return list(dict.fromkeys(mounts))
+
+
+def _cgroup_memory(total_kb):
+    """Liest eine endliche Speichergrenze des aktuellen cgroups."""
     host_bytes = total_kb * 1024
-    for path in dict.fromkeys(paths):
+    for path in _cgroup_mounts():
         current = _read_float(os.path.join(path, "memory.current"))
         limit = _read_float(os.path.join(path, "memory.max"))
         if current is None or limit is None:
@@ -342,13 +366,16 @@ def nvidia_gpus():
 
 def _gpu_util(device):
     direct = (os.path.join(device, "gpu_busy_percent"),
-              os.path.join(device, "gt_busy_percent"))
+              os.path.join(device, "gt_busy_percent"),
+              os.path.join(device, "busy_percent"))
     for path in direct:
         value = _to_int(_read_text(path))
         if value is not None:
             return max(0, min(100, value))
-    paths = glob.glob(os.path.join(device, "gt", "gt*", "gt_busy_percent"))
-    paths += glob.glob(os.path.join(device, "gt*", "gt_busy_percent"))
+    paths = []
+    for relative in ("gt/gt*/gt_busy_percent", "gt/gt*/busy_percent",
+                     "gt*/gt_busy_percent", "gt*/busy_percent"):
+        paths.extend(glob.glob(os.path.join(device, relative)))
     values = [_to_int(_read_text(path)) for path in sorted(set(paths))]
     values = [value for value in values if value is not None]
     if values:
