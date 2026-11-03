@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.19 — 03.11.2026
+
+- CPU-hwmon vor den optionalen sudo-RAPL-Helper in die Fallback-Reihenfolge eingeordnet.
+
 ### 2.3.18 — 03.11.2026
 
 - CPU-Power-Quellen im Help-Overlay kompakt gekürzt, damit die Messquelle nicht überläuft oder unvollständig erscheint.
