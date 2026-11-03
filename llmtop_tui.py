@@ -808,24 +808,32 @@ def _draw(scr, st, host, interval):
         power_status = st.get("rapl_status")
         if power_status and power_status != "nicht aktiviert":
             power_source = f"{power_source} · {short_source(power_status, 20)}"
-        box = [
-            ("Bedienung", colors["structure"]),
-            ("  q/Q Ende  h/H Help  r/R Reload", colors["secondary"]),
-            ("  x/X sudo  c/C History", colors["secondary"]),
-            ("  +/- Intervall a/A Fokus Tab Sort", colors["secondary"]),
-            ("  s/S Richtung", colors["secondary"]),
-            ("  ↑/↓ Cursor   ←/→ Gruppe auf/zu", colors["secondary"]),
-            ("  Pos1  Anfang", colors["secondary"]),
-            ("  Ende  Ende", colors["secondary"]),
-            ("Sensorquellen", colors["structure"]),
-            (f"  {'CPU Power':<12} {power_source}", colors["secondary"]),
-            (f"  {'CPU Temp':<12} {temp_source}", colors["secondary"]),
-            ("  CPU/RAM /proc/stat + meminfo", colors["secondary"]),
-            (f"  {'GPU':<12} {short_source(gpu_sources)}", colors["secondary"]),
-            (f"  {'Ollama':<12} {host_source}", colors["secondary"]),
-        ]
-        content_width = max(len(text) for text, _attr in box)
-        bw = min(w - 2, max(36, content_width + 4))
+        bw = min(w - 2, 50)
+        body_width = max(0, bw - 4)
+        key_width = 11
+        source_limit = max(8, body_width - key_width - 3)
+        control_rows = (
+            ("q/Q h/H r/R", "Ende Help Neu"),
+            ("x/X c/C", "sudo History"),
+            ("+/- a/A Tab", "Intervall Fokus Sort"),
+            ("s/S", "Richtung"),
+            ("↑/↓ ←/→", "Cursor Gruppe auf/zu"),
+            ("Pos1", "Anfang"),
+            ("Ende", "Ende"),
+        )
+        source_rows = (
+            ("CPU Power", power_source),
+            ("CPU Temp", temp_source),
+            ("CPU/RAM", "/proc/stat + meminfo"),
+            ("GPU", short_source(gpu_sources, source_limit)),
+            ("Ollama", host_source),
+        )
+        box = [("Bedienung", colors["structure"])]
+        box.extend((f"  {key:<{key_width}} {action}", colors["secondary"])
+                   for key, action in control_rows)
+        box.append(("Sensorquellen", colors["structure"]))
+        box.extend((f"  {label:<{key_width}} {short_source(source, source_limit)}",
+                    colors["secondary"]) for label, source in source_rows)
         bh = len(box) + 2
         y0 = max(1, (h - bh) // 2)
         x0 = max(0, (w - bw) // 2)

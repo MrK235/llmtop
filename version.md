@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.13 — 03.11.2026
+
+- Help-Bedienung und Sensorquellen auf feste Schlüssel-/Wertspalten umgestellt, damit die Abstände auch bei 40 Spalten stimmen.
+
 ### 2.3.12 — 03.11.2026
 
 - Help-Bedienungstabelle auf die verfügbare Terminalbreite verdichtet; Slash-Schreibweise sowie Pfeil-, `Pos1`- und `Ende`-Einträge bleiben lesbar.
