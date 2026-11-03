@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.17 — 03.11.2026
+
+- WebUI-Quellenzeile im Help-Overlay auf Label und Status verkürzt, damit sie nicht überläuft.
+
 ### 2.3.16 — 03.11.2026
 
 - Help-Overlay um Open-WebUI-Collector und Pi-Adapter als aktuelle Datenquellen erweitert.

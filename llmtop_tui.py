@@ -836,7 +836,7 @@ def _draw(scr, st, host, interval):
             ("CPU/RAM", "/proc/stat + meminfo"),
             ("GPU", short_source(gpu_sources, source_limit)),
             ("Ollama", host_source),
-            ("Open WebUI", f"Collector {collector_source}"),
+            ("WebUI", collector_source),
             ("Pi Adapter", pi_source),
         )
         box = [("Bedienung", colors["structure"])]
