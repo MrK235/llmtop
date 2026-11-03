@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.08** · Stand 03.11.2026 · Status: Privilegierter RAPL-Leser ohne Neustart.
+**Version 2.3.09** · Stand 03.11.2026 · Status: Privilegierter RAPL-Leser ohne Neustart.
 
 ## Aktueller Stand
 
@@ -34,6 +34,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.09
+
+- Bedienungszeilen im Help-Overlay tabellarisch mit festen Tasten-/Aktionsblöcken angeordnet.
+- Rahmen-Seiten und Ecken werden durchgehend cyan gezeichnet.
 
 ## Neu in 2.3.08
 

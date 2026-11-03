@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.09 — 03.11.2026
+
+- Bedienung im Help-Overlay tabellarischer mit ausgerichteten Tasten-/Aktionsblöcken dargestellt.
+- Rahmen-Seiten und Ecken des Help-Overlays werden durchgehend cyan gezeichnet.
+
 ### 2.3.08 — 03.11.2026
 
 - Help-Overlay optisch mit Titelrahmen, Bedienungs- und Sensorquellenbereichen sowie ausgerichteten Quellwerten neu gestaltet.
