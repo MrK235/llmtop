@@ -212,7 +212,7 @@ def _init_colors():
         curses.init_pair(6, curses.COLOR_WHITE, curses.COLOR_BLACK)
         curses.init_pair(7, curses.COLOR_BLACK, curses.COLOR_CYAN)
         c["status_green"] = curses.color_pair(1) | curses.A_BOLD
-        c["bar_bracket"] = curses.color_pair(1)
+        c["bar_bracket"] = curses.color_pair(4)
         c["context_label"] = curses.color_pair(4) | curses.A_BOLD
         c["status_yellow"] = curses.color_pair(2) | curses.A_BOLD
         # 256-Farbterminals erhalten Orange und ein nur wenig helleres Amber.
@@ -496,13 +496,9 @@ def _draw(scr, st, host, interval):
                 cells.append(text[:width].ljust(width))
             attr = cursor_attr if active else (colors["group"] if item["kind"] == "group"
                                                 else colors["secondary"])
-            x = 0
-            for index, (name, width) in enumerate(columns):
-                if name == "kontext":
-                    draw_live_context_cell(row, x, width, run)
-                else:
-                    _add(scr, row, x, cells[index], attr)
-                x += width + 1
+            # History-Kontext bleibt als graue Tabellenzelle erhalten und
+            # übernimmt nicht die statusabhängigen Live-Farben.
+            _add(scr, row, 0, " ".join(cells), attr)
             row += 1
         if not sorted_runs:
             _add(scr, row, 0, "Keine abgeschlossenen instrumentierten Runs", colors["secondary"])

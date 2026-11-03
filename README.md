@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.24** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.3.25** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -133,7 +133,8 @@ spaltenweise ausgerichtet. Die Farbsyntax ist global: Struktur (Überschriften,
 Labels und Rahmen) ist Cyan, Auslastungsstatus wechselt bei unter 30 % von
 Grün zu Amber (30–59 %), Orange (60–90 %) und Rot über 90 %;
 Temperaturstatus verwendet weiterhin Grün/Gelb/Rot. Sekundärinfos sind gedimmt.
-Balkenklammern sind immer normal dargestelltes Grün. History-Gruppen verwenden neutrales Grau ohne
+Balkenklammern sind außerhalb der History immer normal dargestelltes Cyan;
+Kontextzellen in der History bleiben vollständig grau. History-Gruppen verwenden neutrales Grau ohne
 Fettdarstellung; die aktive Cursorzeile erhält schwarze Schrift auf Cyan,
 ebenfalls ohne Fettdarstellung, damit Schwarz nicht zu Hellgrau aufgehellt wird. Im
 Ollama-Speicherbalken bedeuten die Farben explizit

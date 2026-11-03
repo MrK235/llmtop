@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.25 — 03.11.2026
+
+- Balkenklammern sind außerhalb der History cyan und normal dargestellt; der
+  Kontext in der History bleibt vollständig grau.
+
 ### 2.3.24 — 03.11.2026
 
 - Klammern aller Auslastungs-, Kontext- und Modellbalken grün und normal statt
