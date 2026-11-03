@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.2.30 — 03.11.2026
+
+- GPU-Power ohne gemeldete Leistungsgrenze erhält wieder eine grafische Darstellungsskala; der Wattwert bleibt der primäre Textwert.
+
 ### 2.2.29 — 03.11.2026
 
 - GPU-Power ohne gemeldete Leistungsgrenze zeigt den gemessenen Wattwert nun im primären Wertefeld statt nur in der grauen Detailspalte.

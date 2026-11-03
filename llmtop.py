@@ -5,7 +5,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.2.29"  # Single Source of Truth; History in version.md
+VERSION = "2.2.30"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -16,8 +16,9 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
                               format_run_line, load_run_events, load_run_history,
                               model_for_run, run_metric_detail, snapshot_record,
                               source_label, token_rate, write_history)
-    from llmtop_sources import (bar, collect_gpus, collect_ollama, cpu_count,
-                              cpu_percent, cpu_temperature, get_ram_pct, loadavg,
+    from llmtop_sources import (GPU_POWER_DISPLAY_SCALE_W, bar, collect_gpus,
+                              collect_ollama, cpu_count, cpu_percent, cpu_temperature,
+                              get_ram_pct, loadavg,
                               model_lines, read_cpu_totals)
     lines = []
     st = collect_ollama(host)
@@ -62,7 +63,8 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
                 power_pct = min(100.0, 100.0 * g["power_watt"] / limit)
                 lines.append(f"  Power {bar(power_pct, 12)} {power_pct:.1f}%  {g['power_watt']:.1f} W / {limit:.0f} W")
             else:
-                lines.append(f"  Power {bar(None, 12)} {g['power_watt']:.1f} W (keine Grenze)")
+                power_pct = min(100.0, 100.0 * g["power_watt"] / GPU_POWER_DISPLAY_SCALE_W)
+                lines.append(f"  Power {bar(power_pct, 12)} {g['power_watt']:.1f} W (keine Grenze)")
     if st["ok"] and not st["error"]:
         if st["models"]:
             for m in st["models"]:

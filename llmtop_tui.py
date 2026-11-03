@@ -18,8 +18,8 @@ from llmtop_metrics import (
     write_history,
 )
 from llmtop_sources import (
-    bar, collect_gpus, collect_ollama, cpu_count, cpu_percent,
-    cpu_temperature, get_ram_pct, loadavg, read_cpu_totals,
+    GPU_POWER_DISPLAY_SCALE_W, bar, collect_gpus, collect_ollama, cpu_count,
+    cpu_percent, cpu_temperature, get_ram_pct, loadavg, read_cpu_totals,
 )
 def _add(scr, y, x, text, attr=0, indent=True):
     """Zeichnet normalen Inhalt mit einem linken Leerzeichen-Rand."""
@@ -630,7 +630,7 @@ def _draw(scr, st, host, interval):
                 power_value = f"{power_pct:.1f} %"
                 power_detail = f"{g['power_watt']:.1f} W / {limit:.0f} W"
             else:
-                power_pct = None
+                power_pct = min(100.0, 100.0 * g["power_watt"] / GPU_POWER_DISPLAY_SCALE_W)
                 power_value = f"{g['power_watt']:.1f} W"
                 power_detail = "keine Leistungsgrenze"
             row = sensor(row, "Power", power_pct, power_value, power_detail)

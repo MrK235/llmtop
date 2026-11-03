@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.2.29** · Stand 03.11.2026 · Status: Herstellerübergreifende GPU- und Sensor-Fallbacks.
+**Version 2.2.30** · Stand 03.11.2026 · Status: Herstellerübergreifende GPU- und Sensor-Fallbacks.
 
 ## Aktueller Stand
 
@@ -31,6 +31,10 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Korrektur in 2.2.30
+
+- GPU-Power ohne gemeldete Leistungsgrenze verwendet wieder eine grafische 115-W-Darstellungsskala; der Wattwert bleibt der primäre Textwert.
 
 ## Korrektur in 2.2.29
 
