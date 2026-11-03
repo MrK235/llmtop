@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.06 — 03.11.2026
+
+- Die Tastenbuchstaben der Fußzeile werden wie die Steuersymbole cyan dargestellt.
+
 ### 2.3.05 — 03.11.2026
 
 - `c`/`C` verlangt vor dem atomaren Leeren der Run-History die Bestätigung `j`/`y`; Standardantwort `N` bricht sicher ab.

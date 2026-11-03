@@ -310,14 +310,17 @@ def _draw(scr, st, host, interval):
             _add(scr, 3, x + len(compact_label), pi_short, pi_attr, indent=False)
 
     def draw_footer(text):
-        """Zeichnet graue Navigation; Steuersymbole bleiben strukturiert."""
+        """Zeichnet Navigation grau; Tasten und Steuersymbole bleiben Cyan."""
         interval_text = f"-/+ intervall {interval:.1f}s"
         interval_x = max(0, w - len(interval_text) - 1)
 
         def footer_part(value, x):
             _add(scr, h - 1, x, value, colors["secondary"], indent=False)
             for offset, char in enumerate(value):
-                if char in "▴▾↑↓-/+":
+                is_key = (char in "qrxch" and
+                          (offset == 0 or value[offset - 1].isspace()) and
+                          (offset + 1 == len(value) or value[offset + 1].isspace()))
+                if char in "▴▾↑↓-/+" or is_key:
                     _add(scr, h - 1, x + offset, char, colors["structure"], indent=False)
 
         footer_part(text[:max(0, interval_x - 1)], 0)
