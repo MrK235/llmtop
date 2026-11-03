@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.0** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.3.1** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -215,7 +215,8 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   Quelle und echte Leistungsgrenze werden angezeigt. GPU-hwmon wird nicht als
   CPU-Power verwendet. Wenn RAPL nur für root lesbar ist, aktiviert `p`/`P` in
   der TUI nach einer sichtbaren `sudo -v`-Abfrage einen begrenzten RAPL-Helper,
-  ohne llmtop neu zu starten.
+  ohne llmtop neu zu starten. CPU-Power-Wert und Balken werden auch ohne
+  Leistungsgrenze sichtbar farbig hervorgehoben.
 * **RAM**: Auslastung `%`, Größe `GiB`, Zeile nach den CPU-Systemwerten. Primär
   `/proc/meminfo`; bei einer endlichen cgroup-v1/v2-Grenze werden effektiver
   Verbrauch und verfügbares Limit des Prozesses angezeigt.

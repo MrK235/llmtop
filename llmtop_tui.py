@@ -248,13 +248,14 @@ def _draw(scr, st, host, interval):
                 "cancelled": "abgebrochen", "error": "Fehler"}.get(
                     str(run.get("status", "unknown")), str(run.get("status", "unknown")))
 
-    def sensor(row, label, pct, value, detail="", value_attr=None, accent="", accent_attr=None):
+    def sensor(row, label, pct, value, detail="", value_attr=None, accent="", accent_attr=None,
+               meter_attr=None):
         x = 0
         _add(scr, row, x, label.ljust(label_w), colors["structure"])
         x += label_w
         attr = _util_color(colors, pct)
         meter = bar(pct, bar_w)
-        _add(scr, row, x, meter, attr)
+        _add(scr, row, x, meter, meter_attr if meter_attr is not None else attr)
         x += len(meter) + 1
         _add(scr, row, x, value.rjust(7), value_attr if value_attr is not None else attr)
         x += 8
@@ -499,7 +500,10 @@ def _draw(scr, st, host, interval):
         rapl_status = st.get("rapl_status")
         if power_watt is None and rapl_status and rapl_status != "nicht aktiviert":
             power_detail += f"  ·  {rapl_status}"
-        row = sensor(row, "CPU Power", power_pct, power_value, power_detail)
+        power_attr = (_util_color(colors, power_pct) if power_pct is not None else
+                      colors["structure"] if power_watt is not None else colors["secondary"])
+        row = sensor(row, "CPU Power", power_pct, power_value, power_detail,
+                     value_attr=power_attr, meter_attr=power_attr)
         ram_pct, ram_total, ram_avail = st["ram"]
         ram_value = f"{ram_pct:.1f} %" if ram_pct is not None else "n/a"
         row = sensor(row, "RAM", ram_pct, ram_value)
@@ -626,7 +630,10 @@ def _draw(scr, st, host, interval):
     rapl_status = st.get("rapl_status")
     if power_watt is None and rapl_status and rapl_status != "nicht aktiviert":
         power_detail += f"  ·  {rapl_status}"
-    row = sensor(row, "CPU Power", power_pct, power_value, power_detail)
+    power_attr = (_util_color(colors, power_pct) if power_pct is not None else
+                  colors["structure"] if power_watt is not None else colors["secondary"])
+    row = sensor(row, "CPU Power", power_pct, power_value, power_detail,
+                 value_attr=power_attr, meter_attr=power_attr)
     ram_pct, ram_total, ram_avail = st["ram"]
     ram_value = f"{ram_pct:.1f} %" if ram_pct is not None else "n/a"
     ram_detail = (f"{ram_avail:.1f} / {ram_total:.1f} GiB frei"

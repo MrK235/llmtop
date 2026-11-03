@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.1 — 03.11.2026
+
+- CPU-Power-Wert und Balken werden im TUI auch ohne Leistungsgrenze farbig hervorgehoben; eine künstliche Prozentgrenze bleibt deaktiviert.
+
 ### 2.3.0 — 03.11.2026
 
 - TUI-Taste `p`/`P` aktiviert nach sichtbarer `sudo -v`-Bestätigung einen begrenzten, nur lesenden RAPL-Helper.
