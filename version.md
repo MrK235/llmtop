@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.15 — 03.11.2026
+
+- Bedienungseinträge im Help-Overlay sinnvoll sortiert und mit verständlicheren Aktionen beschrieben.
+
 ### 2.3.14 — 03.11.2026
 
 - Jeder Bedienungseintrag steht im Help-Overlay in einer eigenen Schlüssel-/Aktionszeile.
