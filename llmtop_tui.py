@@ -810,13 +810,13 @@ def _draw(scr, st, host, interval):
             power_source = f"{power_source} · {short_source(power_status, 20)}"
         box = [
             ("Bedienung", colors["structure"]),
-            ("  q  Ende        r  Neu laden        h  Help", colors["secondary"]),
-            ("  x  sudo CPU-Power    c  History löschen", colors["secondary"]),
-            ("  +/- Intervall    a  Fokus Runs/History", colors["secondary"]),
-            ("  Tab/Shift-Tab Sortierung    s Richtung", colors["secondary"]),
-            ("  ↑↓/Bild↑↓ Cursor    Pos1/Ende Anfang/Ende", colors["secondary"]),
-            ("  Enter/Space Gruppe    ←/→ Gruppe zu/auf", colors["secondary"]),
-            ("", colors["secondary"]),
+            ("  q/Q  Ende       h/H  Help", colors["secondary"]),
+            ("  r/R  Neu laden  x/X  sudo CPU", colors["secondary"]),
+            ("  c/C  History    +/-  Intervall", colors["secondary"]),
+            ("  a/A  Run-Fokus  Tab  Sortierung", colors["secondary"]),
+            ("  s    Richtung   ↑↓   Cursor/Scroll", colors["secondary"]),
+            ("  Enter/Space Gruppe · ←/→ auf/zu", colors["secondary"]),
+            ("  Pos1/Ende  Anfang/Ende", colors["secondary"]),
             ("Sensorquellen", colors["structure"]),
             (f"  {'CPU Power':<12} {power_source}", colors["secondary"]),
             (f"  {'CPU Temp':<12} {temp_source}", colors["secondary"]),
@@ -838,6 +838,8 @@ def _draw(scr, st, host, interval):
             for j, (text, attr) in enumerate(box, 1):
                 body = text[:max(0, inner_width - 2)].ljust(max(0, inner_width - 2))
                 _add(scr, y0 + j, x0, "│ " + body + " │", attr, indent=False)
+                _add(scr, y0 + j, x0, "│", colors["structure"], indent=False)
+                _add(scr, y0 + j, x0 + bw - 1, "│", colors["structure"], indent=False)
             _add(scr, y0 + bh - 1, x0, bottom[:bw], colors["structure"], indent=False)
     scr.refresh()
 
