@@ -1039,7 +1039,7 @@ def final_run(run, response=None, error=None, energy=None):
     return result
 
 
-def run_ollama_request(host, endpoint, payload, use_nvidia=True):
+def run_ollama_request(host, endpoint, payload, use_nvidia=True, rapl_reader=None):
     """Direkter opt-in Ollama-Client mit optionaler Komponentenenergiemessung."""
     model = payload.get("model")
     if not isinstance(model, str) or not model:
@@ -1054,7 +1054,7 @@ def run_ollama_request(host, endpoint, payload, use_nvidia=True):
         host.rstrip("/") + endpoint, data=json.dumps(payload).encode("utf-8"),
         headers={"Content-Type": "application/json"}, method="POST")
     final = None
-    energy_monitor = EnergyMonitor(use_nvidia=use_nvidia).start()
+    energy_monitor = EnergyMonitor(use_nvidia=use_nvidia, rapl_reader=rapl_reader).start()
     try:
         with urllib.request.urlopen(request, timeout=600) as response:
             for raw in response:

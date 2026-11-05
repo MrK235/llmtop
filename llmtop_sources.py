@@ -308,6 +308,15 @@ class PrivilegedRaplReader:
         except (OSError, ValueError, TypeError):
             pass
 
+    def energy_snapshot(self):
+        """Liefert den zuletzt gelesenen kumulativen RAPL-Zähler in Joule."""
+        with self._lock:
+            item = self._latest
+        if item is None:
+            return None
+        _sequence, energy, _timestamp, _maximum, _limit, name = item
+        return {"scope": f"cpu-package:{name}", "energy_j": energy / 1_000_000.0}
+
     def sample(self):
         with self._lock:
             item = self._latest
@@ -1005,9 +1014,10 @@ class _NvidiaPowerReader:
 
 class EnergyMonitor:
     """Misst lokale Komponentenenergie während eines begrenzten Vorgangs."""
-    def __init__(self, interval=0.2, use_nvidia=True):
+    def __init__(self, interval=0.2, use_nvidia=True, rapl_reader=None):
         self.interval = max(0.1, float(interval))
         self.use_nvidia = use_nvidia
+        self.rapl_reader = rapl_reader
         self.started_at = None
         self.started_mono = None
         self.stop_event = threading.Event()
@@ -1020,7 +1030,8 @@ class EnergyMonitor:
     def start(self):
         self.started_at = _utc_timestamp()
         self.started_mono = time.monotonic()
-        self.rapl_start = _read_rapl_energy()
+        self.rapl_start = (self.rapl_reader.energy_snapshot()
+                           if self.rapl_reader is not None else _read_rapl_energy())
         self.amd_sources = _sysfs_gpu_power_sources()
         if self.nvidia is not None:
             self.nvidia.start()
@@ -1057,7 +1068,10 @@ class EnergyMonitor:
             nvidia_values = self.nvidia.stop()
         else:
             nvidia_values = []
-        rapl_end = _read_rapl_energy()
+        rapl_end = (self.rapl_reader.energy_snapshot()
+                    if self.rapl_reader is not None else _read_rapl_energy())
+        if self.rapl_reader is not None:
+            self.rapl_reader.stop()
         finished_at = _utc_timestamp()
         sources = []
         for item in self.amd_values.values():

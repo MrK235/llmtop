@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.34 — 05.11.2026
+
+- Optionalen CPU-RAPL-Zugriff für direkte Runs über vorhandene nicht-interaktive sudo-Anmeldung ergänzt.
+- Der privilegierte RAPL-Helper kann kumulative Energiezähler für Run-Messungen liefern.
+
 ### 2.3.33 — 05.11.2026
 
 - Komponentenenergie für direkte lokale `--chat`-/`--generate`-Runs ergänzt.

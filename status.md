@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.33** · Stand 05.11.2026 · Status: Komponentenenergie für direkte lokale Ollama-Runs.
+**Version 2.3.34** · Stand 05.11.2026 · Status: Komponentenenergie für direkte lokale Ollama-Runs.
 
 ## Aktueller Stand
 
@@ -37,6 +37,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.34
+
+- `--energy-rapl-sudo` ermöglicht bei direkten Runs den CPU-RAPL-Zugriff über eine vorhandene nicht-interaktive sudo-Anmeldung.
+- Der bestehende privilegierte RAPL-Helper liefert dafür kumulative Energiezähler; ohne Berechtigung bleiben CPU-RAPL-Werte `n/a`.
 
 ## Neu in 2.3.33
 

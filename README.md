@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.33** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.3.34** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -67,6 +67,7 @@ python3 llmtop.py --emit event.json    # Schema-2-Testevent an den Collector sen
 python3 llmtop.py --no-nvidia          # nvidia-smi überspringen (sysfs-Pfad)
 python3 llmtop.py --debug               # Diagnose-Logging aktivieren
 python3 llmtop.py --log-file llmtop.log # Diagnosemeldungen in Datei schreiben
+python3 llmtop.py --chat @request.json --energy-rapl-sudo  # CPU-RAPL mit sudo-cached lesen
 python3 llmtop.py --version            # Versionsnummer, danach Exit 0 (kein TUI)
 ```
 
@@ -83,6 +84,7 @@ Datenbank-Fallback kann `LLMTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 | `--no-nvidia` | `nvidia-smi` nicht aufrufen, sysfs benutzen |
 | `--debug` | detaillierte Diagnosemeldungen aktivieren; im TUI-Modus standardmäßig nach `$XDG_STATE_HOME/llmtop/llmtop.log` schreiben |
 | `--log-file DATEI` | Diagnosemeldungen in die angegebene Datei schreiben; private Datei mit 1 MiB/3 Rotationen |
+| `--energy-rapl-sudo` | bei `--chat`/`--generate` CPU-RAPL über eine vorhandene nicht-interaktive sudo-Anmeldung lesen |
 | `--chat JSON` | direkter Streaming-Aufruf an `/api/chat`, Abschlussmetriken und verfügbare Komponentenenergie lokal speichern |
 | `--generate JSON` | direkter Streaming-Aufruf an `/api/generate`, Abschlussmetriken und verfügbare Komponentenenergie lokal speichern |
 | `--collector` | lokalen, token-geschützten Collector für `POST /v1/runs` starten |

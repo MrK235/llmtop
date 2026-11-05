@@ -8,7 +8,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.3.33"  # Single Source of Truth; History in version.md
+VERSION = "2.3.34"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -170,9 +170,13 @@ def main(argv=None):
     ap.add_argument("--once", action="store_true", help="ein Einzel-Snapshot, kein Vollbild")
     ap.add_argument("--debug", action="store_true", help="detaillierte Diagnosemeldungen aktivieren")
     ap.add_argument("--log-file", metavar="DATEI", help="Diagnosemeldungen in diese Datei schreiben")
+    ap.add_argument("--energy-rapl-sudo", action="store_true",
+                    help="CPU-RAPL für direkte Runs über vorhandene sudo-Anmeldung lesen")
     ap.add_argument("--no-nvidia", action="store_true", help="nvidia-smi nicht verwenden")
     ap.add_argument("--rapl-helper", action="store_true", help=argparse.SUPPRESS)
     args = ap.parse_args(argv)
+    if args.energy_rapl_sudo and not (args.chat or args.generate):
+        ap.error("--energy-rapl-sudo ist nur mit --chat oder --generate möglich")
     is_tui = not (args.install_open_webui_adapter or args.collector or args.emit
                   or args.chat or args.generate or args.once or args.rapl_helper)
     try:
@@ -211,12 +215,16 @@ def main(argv=None):
             sys.stderr.write(f"Event konnte nicht gesendet werden: {type(exc).__name__}: {exc}\n")
             return 2
     if args.chat or args.generate:
+        rapl_reader = None
         try:
             payload = read_request_payload(args.chat or args.generate)
+            if args.energy_rapl_sudo:
+                from llmtop_sources import PrivilegedRaplReader
+                rapl_reader = PrivilegedRaplReader.start(os.path.abspath(__file__))
             run_ollama_request(host, "/api/chat" if args.chat else "/api/generate", payload,
-                               use_nvidia=not args.no_nvidia)
+                               use_nvidia=not args.no_nvidia, rapl_reader=rapl_reader)
             return 0
-        except (OSError, ValueError, urllib.error.URLError) as exc:
+        except (OSError, PermissionError, ValueError, urllib.error.URLError) as exc:
             sys.stderr.write(f"Ollama-Run fehlgeschlagen: {type(exc).__name__}: {exc}\n")
             return 2
     if args.once:
