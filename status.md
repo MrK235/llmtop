@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.40** · Stand 05.11.2026 · Status: Fehlende GPU1-Power wird als `n/a` angezeigt.
+**Version 2.3.41** · Stand 05.11.2026 · Status: Pi-History übernimmt den letzten Session-Kontext.
 
 ## Aktueller Stand
 
@@ -39,6 +39,13 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.41
+
+- Der Pi-Adapter aktualisiert den Session-Kontext unmittelbar vor dem
+  Abschlussereignis erneut.
+- Dadurch übernimmt die History den letzten Live-Kontext statt eines älteren,
+  zu kleinen Zwischenstands.
 
 ## Neu in 2.3.40
 

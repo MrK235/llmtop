@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.41 — 05.11.2026
+
+- Der Pi-Adapter liest den Session-Kontext unmittelbar vor dem Abschluss
+  erneut, damit die History den letzten Live-Stand übernimmt.
+
 ### 2.3.40 — 05.11.2026
 
 - Fehlende GPU1-Power wird als gedimmtes `n/a` angezeigt.

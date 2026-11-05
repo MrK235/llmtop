@@ -1,4 +1,4 @@
-/* llmtop 2.2.19 – globale Pi-Erweiterung für datensparsame Run-Metriken.
+/* llmtop 2.2.20 – globale Pi-Erweiterung für datensparsame Run-Metriken.
  * Installation: nach ~/.pi/agent/extensions/ kopieren und Pi neu starten oder /reload.
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -178,10 +178,14 @@ export default function (pi: ExtensionAPI) {
     currentSessionId = sessionId(ctx.sessionManager);
   });
 
-  const progress = (run: Run, force = false) => {
-    const current = Date.now();
+  const refreshContext = (run: Run) => {
     const contextTokens = run.context_reader?.();
     if (contextTokens !== undefined) run.metrics.context_tokens = contextTokens;
+  };
+
+  const progress = (run: Run, force = false) => {
+    const current = Date.now();
+    refreshContext(run);
     if (!force && run.last_progress_at !== undefined && current - run.last_progress_at < 1000) return;
     run.last_progress_at = current;
     const duration = Math.max(0, (current - Date.parse(run.started_at)) / 1000);
@@ -199,6 +203,9 @@ export default function (pi: ExtensionAPI) {
   const finish = (event: "completed" | "cancelled" | "error") => {
     const run = active;
     if (!run) return;
+    // Der letzte Live-Stand kann vor dem Abschlussereignis liegen. Noch einmal
+    // aus der Session lesen, damit die History denselben Kontextstand erhält.
+    refreshContext(run);
     active = undefined;
     if (run.heartbeat) clearInterval(run.heartbeat);
     const finished_at = now();
