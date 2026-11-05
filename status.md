@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.38** · Stand 05.11.2026 · Status: Korrekte Pi-Provider-Antwortdauer für Tok/s.
+**Version 2.3.39** · Stand 05.11.2026 · Status: AMD-APU-Powerquelle und gedimmte GPU1-Anzeige korrigiert.
 
 ## Aktueller Stand
 
@@ -22,10 +22,11 @@ History normal cyan; der History-Kontext bleibt statusgrau und übernimmt bei
 aktiver Cursorzeile deren durchgehende Hervorhebung. Ollama-Modelle zeigen einen geteilten Speicherbalken im gleichen
 Raster wie die Sensoren: GPU/VRAM ist Grün oberhalb 55 %, Gelb bei 45–55 %
 und Rot darunter; CPU/RAM bleibt gedimmt grau. Beide Anteile verwenden `#`.
-CPU-Power wird über dynamische powercap-/RAPL-Zonen, eindeutig zugeordnete
-CPU-hwmon-Geräte und optional TUXEDO Control Center per lesendem D-Bus-Fallback
-gemessen. Fehlende Berechtigungen oder Zählerstände bleiben als `n/a` sichtbar;
-GPU-hwmon wird nicht als CPU-Power übernommen. History speichert begrenzte,
+CPU-Power wird zuerst aus dem lokalen AMD-APU-Powerwert von GPU1, danach
+über eindeutig zugeordnete CPU-hwmon-Geräte und optional TUXEDO Control Center
+per lesendem D-Bus-Fallback gemessen; RAPL bleibt die letzte direkte Instanz.
+Der GPU1-Wert bleibt sichtbar, wird aber als CPU-/APU-Leistung gedimmt.
+Fehlende Berechtigungen oder Zählerstände bleiben als `n/a` sichtbar. History speichert begrenzte,
 datensparsame JSONL-Snapshots mit UTC-Zeitstempeln. Die Run-History hält bis zu 500 abgeschlossene Runs als scrollbare und sortierbare Tabelle vor; instrumentierte Runs enthalten optional Kontexttoken und Kontextlimit. Die TUI gruppiert diese Anzeige quellengetrennt nach Session-, Chat- oder Message-ID, lässt Gruppen per Cursor aufklappen und zeigt beim Aufklappen weiterhin jeden einzelnen Run.
 Aktive Run-Metriken können über einen token-geschützten lokalen HTTP-Collector
 (`POST /v1/runs`) geliefert werden. Er verwaltet mehrere parallele Runs,
@@ -37,6 +38,12 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.39
+
+- Die lokale AMD-APU-Leistung von GPU1 wird für die CPU-Power-Abfrage verwendet.
+- GPU1-Power wird in der TUI gedimmt dargestellt; direkte RAPL-Abfrage bleibt
+  als letzte CPU-Power-Instanz erhalten.
 
 ## Neu in 2.3.38
 

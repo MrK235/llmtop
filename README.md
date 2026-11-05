@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.38** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.3.39** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -235,11 +235,12 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   Refreshes, dazu nutzbare logische Kernanzahl und Temperatur
   aus hwmon oder generischen Thermal-Zones (`k10temp`, `coretemp`, `zenpower`,
   `x86_pkg_temp`, `cpu_thermal`, `acpitz`), sofern verfügbar.
-* **CPU-Power**: CPU-Package-/SoC-Leistung aus dynamisch erkannten
-  powercap-/RAPL-Zonen, CPU-hwmon oder optional TUXEDO Control Center über
-  D-Bus. Die erste RAPL-Messung bleibt bis zum zweiten Zählerstand `n/a`;
-  Quelle und echte Leistungsgrenze werden angezeigt. GPU-hwmon wird nicht als
-  CPU-Power verwendet. Wenn RAPL nur für root lesbar ist, aktiviert `x`/`X` in
+* **CPU-Power**: CPU-Package-/SoC-Leistung aus der lokalen AMD-APU-
+  Messung von GPU1, CPU-hwmon, optional TUXEDO Control Center über D-Bus
+  und zuletzt RAPL. Die erste RAPL-Messung bleibt bis zum zweiten
+  Zählerstand `n/a`; Quelle und echte Leistungsgrenze werden angezeigt.
+  Der GPU1-Wert bleibt als CPU-/APU-Wert sichtbar und wird in der TUI
+  gedimmt dargestellt. Wenn RAPL nur für root lesbar ist, aktiviert `x`/`X` in
   der TUI nach einer sichtbaren `sudo -v`-Abfrage einen begrenzten RAPL-Helper,
   ohne llmtop neu zu starten. CPU-Power-Wert und Balken werden auch ohne
   Leistungsgrenze sichtbar farbig hervorgehoben. Die Systemzeile heißt
@@ -265,7 +266,8 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   `nvidia-smi` und verwendet weiterhin sysfs. Der gemessene Wattwert bleibt
   auch ohne Leistungsgrenze sichtbar. Der Balken verwendet dann eine reine
   115-W-Darstellungsskala; eine Power-Prozentanzeige gibt es nur bei gemeldeter
-  echter Leistungsgrenze.
+  echter Leistungsgrenze. Wenn GPU1 die lokale AMD-APU-Power meldet, wird dieser
+  Wert zusätzlich für CPU-Power verwendet und in der TUI gedimmt dargestellt.
 * **VRAM**: VRAM-Auslastung `%` und Größe in MiB
   (`VRAM [##########  ] 96.5 %  7864 / 8151 MiB`). Im Ollama-Bereich zeigt ein
   geteilter Balken die Modellaufteilung als „VRAM/RAM“: Der Modellname ist

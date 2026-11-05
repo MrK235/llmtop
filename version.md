@@ -12,6 +12,13 @@ gebracht.
 
 ## Changelog
 
+### 2.3.39 — 05.11.2026
+
+- Lokale AMD-APU-Power von GPU1 wird als CPU-Powerquelle vor CPU-hwmon,
+  TCC und RAPL verwendet.
+- GPU1-Power wird in der TUI gedimmt dargestellt; direkte RAPL-Abfrage bleibt
+  die letzte CPU-Power-Instanz.
+
 ### 2.3.38 — 05.11.2026
 
 - Pi/OpenAI-Codex-Tok/s verwendet die gemessene Dauer der jeweiligen Provider-Antwort statt der gesamten Agentenlaufzeit.

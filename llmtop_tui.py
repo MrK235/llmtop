@@ -289,23 +289,26 @@ def _draw(scr, st, host, interval):
                 "cancelled": "abgebrochen", "error": "Fehler"}.get(
                     str(run.get("status", "unknown")), str(run.get("status", "unknown")))
 
-    def draw_meter(row, x, pct, width, fill_attr):
-        """Zeichnet den Inhalt farbig, die Klammern konstant cyan und normal."""
+    def draw_meter(row, x, pct, width, fill_attr, bracket_attr=None):
+        """Zeichnet den Inhalt farbig und erlaubt eine gedimmte Sonderzeile."""
         meter = bar(pct, width)
-        bracket_attr = colors.get("bar_bracket", colors["structure"])
+        bracket_attr = (bracket_attr if bracket_attr is not None else
+                        colors.get("bar_bracket", colors["structure"]))
         _add(scr, row, x, "[", bracket_attr)
         _add(scr, row, x + 1, meter[1:-1], fill_attr)
         _add(scr, row, x + len(meter) - 1, "]", bracket_attr)
         return meter
 
     def sensor(row, label, pct, value, detail="", value_attr=None, accent="", accent_attr=None,
-               meter_attr=None):
+               meter_attr=None, label_attr=None, bracket_attr=None):
         x = 0
-        _add(scr, row, x, label.ljust(label_w), colors["structure"])
+        _add(scr, row, x, label.ljust(label_w),
+             label_attr if label_attr is not None else colors["structure"])
         x += label_w
         attr = _util_color(colors, pct)
         meter = draw_meter(row, x, pct, bar_w,
-                           meter_attr if meter_attr is not None else attr)
+                           meter_attr if meter_attr is not None else attr,
+                           bracket_attr=bracket_attr)
         x += len(meter) + 1
         _add(scr, row, x, value.rjust(7), value_attr if value_attr is not None else attr)
         x += 8
@@ -761,7 +764,11 @@ def _draw(scr, st, host, interval):
                 power_pct = min(100.0, 100.0 * g["power_watt"] / GPU_POWER_DISPLAY_SCALE_W)
                 power_value = f"{g['power_watt']:.1f} W"
                 power_detail = "keine Leistungsgrenze"
-            row = sensor(row, "Power", power_pct, power_value, power_detail)
+            power_attr = (colors["secondary"]
+                          if g.get("power_scope") == "cpu" else None)
+            row = sensor(row, "Power", power_pct, power_value, power_detail,
+                         value_attr=power_attr, meter_attr=power_attr,
+                         label_attr=power_attr, bracket_attr=power_attr)
 
     row += 1
     # Geladene Modelle stehen direkt unter GPU. Für Runs und History wird
@@ -981,7 +988,7 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
             gpus, gpu_err = collect_gpus(use_nvidia)
             with lock:
                 rapl_reader = state.get("rapl_reader")
-            cpu_power = collect_cpu_power(rapl_reader)
+            cpu_power = collect_cpu_power(rapl_reader, gpus)
             cur = read_cpu_totals()
             with lock:
                 previous = state["prev_cpu"]

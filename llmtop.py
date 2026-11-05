@@ -8,7 +8,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.3.38"  # Single Source of Truth; History in version.md
+VERSION = "2.3.39"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -78,12 +78,14 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
     lines.append("Collector: " + ("konfiguriert" if token else "nicht konfiguriert"))
     if st["error"]:
         lines.append(f"Fehler: {st['error']}")
+    gpus, gerr = collect_gpus(use_nvidia)
     prev = read_cpu_totals()
-    cpu_power = collect_cpu_power()
+    cpu_power = collect_cpu_power(gpus=gpus)
     import time
     time.sleep(cpu_measure)
     cpu = cpu_percent(prev, read_cpu_totals())
-    cpu_power = collect_cpu_power()
+    gpus, gerr = collect_gpus(use_nvidia)
+    cpu_power = collect_cpu_power(gpus=gpus)
     lines.append(f"CPU {bar(cpu, 20)} {cpu:.1f}%" if cpu is not None else "CPU (Messung)")
     power_watt = cpu_power.get("watt")
     power_limit = cpu_power.get("limit")
@@ -105,7 +107,6 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
     if ram_data and ram_data[0] is not None:
         ram_pct, ram_total_gib, ram_avail_gib = ram_data
         lines.append(f"RAM  {bar(ram_pct, 24)} {ram_pct:.1f}%  {ram_avail_gib:.1f} GiB / {ram_total_gib:.1f} GiB")
-    gpus, gerr = collect_gpus(use_nvidia)
     if gerr:
         lines.append(f"GPU {gerr}")
     for i, g in enumerate(gpus):

@@ -490,26 +490,45 @@ def _tcc_cpu_power():
     return {"watt": watt, "limit": limit, "source": "TCC D-Bus"}
 
 
-def collect_cpu_power(privileged_reader=None):
-    """Liefert CPU-Package-Power und Quelle über die definierte Fallback-Kette."""
-    for reader in (_rapl_cpu_power,):
+def _gpu_cpu_power(gpus):
+    """Nutzt die als GPU1 gemeldete AMD-APU-Leistung für die CPU-Anzeige."""
+    if not isinstance(gpus, (list, tuple)):
+        return None
+    for gpu in gpus:
+        if gpu.get("power_scope") != "cpu":
+            continue
+        watt = gpu.get("power_watt")
+        if not isinstance(watt, (int, float)) or not math.isfinite(watt) or watt < 0:
+            return None
+        return {"watt": watt, "limit": gpu.get("power_limit"),
+                "source": "GPU1 sysfs (CPU/APU)"}
+    return None
+
+
+def collect_cpu_power(privileged_reader=None, gpus=None):
+    """Liefert CPU-Package-Power über die definierte Fallback-Kette.
+
+    RAPL bleibt bewusst die letzte direkte Quelle, da die AMD-APU-Leistung
+    lokal bereits über den als GPU1 gemeldeten sysfs-Wert verfügbar ist.
+    """
+    result = _gpu_cpu_power(gpus)
+    if result is not None:
+        return result
+    for reader, fallback_source in ((_hwmon_cpu_power, "CPU-hwmon"),
+                                    (_tcc_cpu_power, "TCC D-Bus")):
         result = reader()
         if result is not None:
             return {"watt": result.get("watt"), "limit": result.get("limit"),
-                    "source": result.get("source") or "CPU-Power"}
-    result = _hwmon_cpu_power()
-    if result is not None:
-        return {"watt": result.get("watt"), "limit": result.get("limit"),
-                "source": result.get("source") or "CPU-hwmon"}
-    result = _tcc_cpu_power()
-    if result is not None:
-        return {"watt": result.get("watt"), "limit": result.get("limit"),
-                "source": result.get("source") or "TCC D-Bus"}
+                    "source": result.get("source") or fallback_source}
     if privileged_reader is not None:
         result = privileged_reader.sample()
         if result is not None:
             return {"watt": result.get("watt"), "limit": result.get("limit"),
                     "source": result.get("source") or "RAPL (sudo)"}
+    result = _rapl_cpu_power()
+    if result is not None:
+        return {"watt": result.get("watt"), "limit": result.get("limit"),
+                "source": result.get("source") or "RAPL"}
     return {"watt": None, "limit": None, "source": "keine CPU-Powerquelle"}
 
 
@@ -904,6 +923,14 @@ def collect_gpus(use_nvidia):
         _LAST_GPU_DEBUG_STATE = debug_state
     if not gpus:
         return [], "keine GPU-Quelle gefunden"
+    # Bei der lokalen AMD-APU ist der PPT-Wert des zweiten Eintrags die
+    # CPU-/SoC-Leistung. Er bleibt unter GPU1 sichtbar, wird aber nicht als
+    # eigenständige GPU-Leistung gewertet.
+    if len(gpus) > 1:
+        gpu1 = gpus[1]
+        if (gpu1.get("vendor") == "AMD" and gpu1.get("driver") == "amdgpu"
+                and gpu1.get("source") == "sysfs"):
+            gpu1["power_scope"] = "cpu"
     return gpus, None
 
 
