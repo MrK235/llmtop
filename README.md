@@ -1,363 +1,307 @@
 <div align="center">
   <img src="assets/llmtop-logo.svg" alt="llmtop – LLM Terminal Monitor" width="620">
-  <p><strong>Terminal-Monitor für Ollama</strong> mit CPU-, RAM-, GPU-, VRAM- und Run-Metriken.</p>
-  <p>
-    <a href="#start">Schnellstart</a> ·
-    <a href="#angezeigte-werte">Messwerte</a> ·
-    <a href="#open-webui-adapter">Open WebUI</a> ·
-    <a href="#pi-adapter">Pi-Adapter</a>
-  </p>
+  <p><strong>Terminal-Monitor für Ollama</strong> mit System-, GPU- und Run-Metriken.</p>
 </div>
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.42** · Python-Terminal-Anwendung aus der Standardbibliothek.
-> llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
-> zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
+> **Version 2.3.42** · Python-Anwendung aus der Standardbibliothek für Linux.
 
-Die Version wird im TUI-Kopf, in der ersten Zeile von `--once` und über
-`--version` angezeigt. Die maßgebliche Versionsnummer steht in `VERSION` in
-`llmtop.py`; die vollständige Historie befindet sich in `version.md`.
+`llmtop` zeigt den Ollama-Status, lokale CPU-/RAM-/GPU-Sensoren sowie laufende
+und abgeschlossene Modell-Runs in einer curses-TUI oder als einmaligen
+Text-Snapshot. Run-Daten bleiben datensparsam: Prompts, Antworten und Tooldaten
+werden nicht gespeichert.
 
-## Dateien
+## Eigenschaften
 
-| Datei | Inhalt |
-|-------|--------|
-| `llmtop.py` | Programmeinstieg, CLI und Snapshot-Modus |
-| `llmtop_sources.py` | Ollama-, CPU-, RAM- und GPU-Datenerfassung |
-| `llmtop_metrics.py` | Run-Schema, JSONL-Historie, Collector und Open-WebUI-Integration |
-| `llmtop_tui.py` | curses-Rendering und TUI-Hintergrundsampler |
-| `README.md` | diese Anleitung |
-| `status.md` | Projektstand, bekannte Grenzen und Prüfhinweise |
-| `version.md` | Versionsschema, Versionsanzeige, Changelog |
-| `pi/llmtop_run_metrics.ts` | optionaler globaler Pi-Adapter für lokale und Cloud-Provider |
-| `assets/llmtop-logo.svg` | Projektlogo im aktuellen TUI-Stil |
-| `assets/llmtop-screenshot.png` | Beispielansicht der TUI |
-| `.gitignore` | lokale Python-Artefakte und Backups ausschließen |
-| `plan/` | akzeptierte Arbeitspläne (Plan-Mode-Artefakte) |
+- keine pip-Abhängigkeiten und keine Konfigurationsdatei außer der optionalen
+  `.env`
+- TUI mit Live-Sensoren, Modellstatus, aktuellen Runs und Run-History
+- `--once` für Skripte, SSH-Sitzungen und Diagnose ohne curses
+- GPU-Erfassung über `nvidia-smi` und sysfs-Fallbacks
+- token-geschützter lokaler Collector für Pi und Open WebUI
+- JSONL-Speicherung mit begrenzter Größe und atomarem Schreiben
+- optionale Run-Energiequellen: CPU-RAPL, AMD-sysfs und NVIDIA-`nvidia-smi`
 
-## Versionierung
+## Voraussetzungen
 
-Das Projekt ist als Git-Repository eingerichtet. Der aktuelle Branch ist
-`master`. Code, Dokumentation und akzeptierte
-Pläne werden gemeinsam versioniert. Vor einem Commit: Tests aus `status.md`
-ausführen, `VERSION` sowie `README.md`, `status.md` und `version.md` abgleichen.
-Tags verwenden das Format `vX.Y.Z`.
+- Linux
+- Python 3.9 oder neuer
+- ein erreichbarer Ollama-Server für Modellstatus und Modellliste
+- optional: `nvidia-smi` für detaillierte NVIDIA-Werte
 
-## Umstieg 2.0
+Fehlende Hardware, Berechtigungen oder Sensoren führen nicht zum Abbruch;
+nicht verfügbare Einzelwerte erscheinen als `n/a`.
 
-Dies ist ein harter Namenswechsel: Der Start erfolgt ausschließlich über
-`python3 llmtop.py`; die früheren `otop.py`-Dateien, `OTOP_*`-Variablen und
-`$XDG_STATE_HOME/otop/` werden nicht mehr verwendet. Die neuen Pfade und
-Variablen beginnen mit `llmtop` beziehungsweise `LLMTOP_`. Nach dem Umstieg
-muss der Open-WebUI-Adapter einmal mit
-`python3 llmtop.py --install-open-webui-adapter` neu installiert werden.
-
-## Start
+## Schnellstart
 
 ```bash
-python3 llmtop.py                      # Vollbild-TUI (curses), Refresh alle 0,5 s
-python3 llmtop.py --interval 1         # TUI mit 1 s Refresh
-python3 llmtop.py --once               # ein Einzel-Snapshot (Skripte / kein Terminal)
-python3 llmtop.py --host http://127.0.0.1:11434
-python3 llmtop.py --chat '{"model":"qwen3.5:4b","messages":[{"role":"user","content":"Hallo"}]}'
-python3 llmtop.py --collector          # Loopback und privates Open-WebUI-Docker-Gateway
-python3 llmtop.py --install-open-webui-adapter  # Filter per Open-WebUI-API installieren
-python3 llmtop.py --emit event.json    # Schema-2-Testevent an den Collector senden
-python3 llmtop.py --no-nvidia          # nvidia-smi überspringen (sysfs-Pfad)
-python3 llmtop.py --debug               # Diagnose-Logging aktivieren
-python3 llmtop.py --log-file llmtop.log # Diagnosemeldungen in Datei schreiben
-python3 llmtop.py --chat @request.json --energy-rapl-sudo  # CPU-RAPL mit sudo-cached lesen
-python3 llmtop.py --version            # Versionsnummer, danach Exit 0 (kein TUI)
+python3 llmtop.py                  # Vollbild-TUI
+python3 llmtop.py --interval 1    # TUI mit 1 s Aktualisierung
+python3 llmtop.py --once          # einmaliger Snapshot
+python3 llmtop.py --version
 ```
 
-`$OLLAMA_HOST` wird als Default übernommen; `--host` ohne Protokoll wird zu
-`http://<host>`. Für einen optionalen, ausschließlich lesenden Open-WebUI-
-Datenbank-Fallback kann `LLMTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
-`webui.db` gesetzt werden. Ohne stabile Zuordnung werden keine Daten ergänzt.
+`OLLAMA_HOST` wird als Standard übernommen. Ohne Angabe gilt
+`http://localhost:11434`; Hostwerte ohne Protokoll werden zu `http://...`
+ergänzt.
 
-| Option | Verhalten |
-|--------|-----------|
-| `--host` | Ollama-URL; Default `$OLLAMA_HOST`, sonst `http://localhost:11434` |
-| `--interval` | Refresh-Sekunden im TUI; Default 0,5 s, **auf 0,2–60 s begrenzt** (`--interval 0.1` → 0,2 s) |
-| `--once` | ein Snapshot, kein Vollbild; ignoriert `--interval` (CPU-Messung 1 s) |
-| `--no-nvidia` | `nvidia-smi` nicht aufrufen, sysfs benutzen |
-| `--debug` | detaillierte Diagnosemeldungen aktivieren; im TUI-Modus standardmäßig nach `$XDG_STATE_HOME/llmtop/llmtop.log` schreiben |
-| `--log-file DATEI` | Diagnosemeldungen in die angegebene Datei schreiben; private Datei mit 1 MiB/3 Rotationen |
-| `--energy-rapl-sudo` | bei `--chat`/`--generate` CPU-RAPL über eine vorhandene nicht-interaktive sudo-Anmeldung lesen |
-| `--chat JSON` | direkter Streaming-Aufruf an `/api/chat`, Abschlussmetriken und verfügbare Komponentenenergie lokal speichern |
-| `--generate JSON` | direkter Streaming-Aufruf an `/api/generate`, Abschlussmetriken und verfügbare Komponentenenergie lokal speichern |
-| `--collector` | lokalen, token-geschützten Collector für `POST /v1/runs` starten |
-| `--collector-bind` / `--collector-port` | Listen-Adresse und Port; Default bleibt `127.0.0.1:11435` |
-| `--emit DATEI` | Schema-2-Event aus Datei oder `-` für stdin an den Collector senden |
-| `--install-open-webui-adapter` | Filter per Open-WebUI-Admin-API installieren, konfigurieren und global aktivieren |
+## Kommandozeile
+
+| Option | Funktion |
+|---|---|
+| `--host URL` | Ollama-Adresse; Standard `$OLLAMA_HOST` oder `http://localhost:11434` |
+| `--interval SEKUNDEN` | TUI-Aktualisierung; Standard `0.5`, mindestens `0.2` |
+| `--once` | einen Snapshot ausgeben und ohne Vollbild beenden; CPU-Messung 1 s |
+| `--no-nvidia` | `nvidia-smi` überspringen und sysfs verwenden |
+| `--chat JSON` | direkten Streaming-Request an `/api/chat` instrumentieren |
+| `--generate JSON` | direkten Streaming-Request an `/api/generate` instrumentieren |
+| `--energy-rapl-sudo` | bei `--chat`/`--generate` CPU-RAPL über vorhandenes sudo-Caching lesen |
+| `--collector` | lokalen Collector als blockierenden Dienst starten |
+| `--collector-bind ADRESSE` | Collector-Bind-Adresse; Standard `127.0.0.1` |
+| `--collector-port PORT` | Collector-Port; Standard `11435` |
+| `--emit DATEI` | Schema-2-Ereignis aus Datei oder `-` an den Collector senden |
+| `--install-open-webui-adapter` | Open-WebUI-Filter per Admin-API installieren und aktivieren |
+| `--debug` | technische Diagnosemeldungen aktivieren |
+| `--log-file DATEI` | Diagnosemeldungen in eine private Logdatei schreiben |
 | `--version` | Versionsnummer ausgeben und beenden |
 
-## Exit-Codes
+Beispiele:
 
-| Fall | Code |
-|------|------|
-| normal (`--once`, TUI mit `q`) | 0 |
-| kein TTY (Vollbild ohne Terminal) | 1, Hinweis auf `--once` auf stderr |
+```bash
+python3 llmtop.py --host http://127.0.0.1:11434 --once
+python3 llmtop.py --once --no-nvidia
+python3 llmtop.py --chat @request.json
+python3 llmtop.py --generate '{"model":"qwen3.5:4b","prompt":"Hallo"}'
+python3 llmtop.py --emit event.json
+```
 
-## Tasten im TUI
+`--energy-rapl-sudo` ist ausschließlich mit `--chat` oder `--generate`
+erlaubt. Ohne TTY beendet sich der normale Vollbildmodus mit Exit-Code `1`;
+verwende dann `--once`.
+
+## TUI-Bedienung
 
 | Taste | Wirkung |
-|-------|---------|
+|---|---|
 | `q` / `Q` | beenden |
 | `r` / `R` | Programm mit denselben Optionen neu laden |
-| `x` / `X` | sudo-Passwortabfrage für CPU-Power öffnen |
-| `h` / `H` | Help ein/aus mit Bedienungs- und Sensorquellenübersicht |
-| `-` | Intervall halbieren (min. 0,2 s) |
-| `+` / `=` | Intervall verdoppeln (max. 60 s) |
-| `Tab` / `Shift-Tab` | nächste / vorherige Sortierspalte der Run-History |
-| `s` / `S` | Sortierrichtung der Run-History umschalten |
-| `a` / `A` | Fokus zwischen aktuellen Runs und Run-History wechseln |
-| `c` / `C` | Run-History nach Sicherheitsabfrage leeren |
-| `Enter` / `Leertaste` | markierte History-Gruppe auf- oder zuklappen |
-| `←` / `→` | markierte History-Gruppe zu- oder aufklappen |
-| `↑` / `↓`, `Bild↑` / `Bild↓` | Cursor im fokussierten Bereich bewegen |
-| `Pos1` / `Ende` | ersten/letzten sichtbaren History-Eintrag markieren |
+| `x` / `X` | sichtbare sudo-Abfrage für CPU-RAPL öffnen |
+| `h` / `H` | Hilfe und Sensorquellen ein-/ausblenden |
+| `-` | Aktualisierungsintervall halbieren, mindestens `0.2 s` |
+| `+` / `=` | Aktualisierungsintervall verdoppeln, höchstens `60 s` |
+| `a` / `A` | Fokus zwischen aktuellen Runs und History wechseln |
+| `Tab` / `Shift-Tab` | History-Sortierspalte wechseln |
+| `s` / `S` | Sortierrichtung wechseln |
+| `Enter` / `Leertaste` | History-Gruppe auf- oder zuklappen |
+| `←` / `→` | Gruppe zu- oder aufklappen |
+| `↑` / `↓` | Cursor bewegen |
+| `Bild↑` / `Bild↓` | seitenweise bewegen |
+| `Pos1` / `Ende` | ersten oder letzten History-Eintrag wählen |
+| `c` / `C` | Run-History nach Bestätigung leeren |
 
-## TUI-Layout
-
-Ein vierzeiliger Kopfbereich zeigt ein optisch quadratisches Terminal-Logo mit
-Prompt und LLM-Kennung; zwei Zeichen trennen Logo und Produkttext. Ollama-,
-Open-WebUI-Collector- und Pi-Adapter-Status folgen rechts davon. Die
-rechtsbündige Statusleiste enthält das Intervall und die Legende `-/+`.
-Navigationstext ist gedimmt grau, Steuersymbole bleiben Cyan. Eine Leerzeile trennt ihn von den Messwerten. Die
-Vollbildansicht
-gliedert sich danach von oben nach unten in **System**, **GPU**,
-**Geladene Modelle**, **Aktuelle Runs** und **History**. Bereichslinien beginnen am linken Rand und laufen
-vor sowie nach dem Titel; alle übrigen Inhalte haben einen Leerzeichen-Rand
-links. Bei 40×18 verwendet sie eine kompakte Ansicht mit
-Kernwerten, Modellanzahl und History-Status, damit sich keine Bereiche
-überzeichnen.
-CPU, RAM, GPU-Auslastung, VRAM und Power verwenden
-pro Terminal dieselbe Balkenbreite; Label, Prozentwert und Detailwert sind
-spaltenweise ausgerichtet. Die Farbsyntax ist global: Struktur (Überschriften,
-Labels und Rahmen) ist Cyan, Auslastungsstatus wechselt bei unter 30 % von
-Grün zu Amber (30–59 %), Orange (60–90 %) und Rot über 90 %;
-Temperaturstatus verwendet weiterhin Grün/Gelb/Rot. Auf 256-Farbterminals
-sind Amber und Orange getrennte Farbtöne; mit 8 Standardfarben werden sie
-über die Darstellung unterschieden. Sekundärinfos sind gedimmt.
-Balkenklammern sind außerhalb der History immer normal dargestelltes Cyan;
-Kontextzellen in der History bleiben statusgrau; die aktive Cursorzeile bleibt
-durchgehend hervorgehoben. History-Gruppen verwenden neutrales Grau ohne
-Fettdarstellung; die aktive Cursorzeile erhält schwarze Schrift auf Cyan,
-ebenfalls ohne Fettdarstellung, damit Schwarz nicht zu Hellgrau aufgehellt wird. Im
-Ollama-Speicherbalken bedeuten die Farben explizit
-den Offload-Grad der GPU/VRAM-Anzeige: Grün oberhalb 55 %, Gelb bei 45–55 %
-und Rot unterhalb 45 % GPU-Anteil. CPU/RAM bleibt gedimmt grau. Beide Anteile
-nutzen `#` und zeigen zusätzlich Textwerte. Eine
-Leerzeile trennt System, GPU, geladene Modelle, aktuelle Runs und History.
-**Aktuelle Runs** und **History** verwenden dieselben Spalten und Werte für
-Zeit, Quelle, Modell, Status, Tokens, Kontext, Tok/s und Dauer. Die Breite jeder
-sichtbaren Spalte richtet sich dynamisch nach Überschrift und Inhalt; aktuelle
-Runs und History nutzen dabei dieselben Spaltenbreiten. Die History berücksichtigt
-dafür stets ihre gesamte Liste. Die Kontextspalte der aktuellen Runs zeigt den Fortschritt zuerst als farbigen
-Balken, danach den rechtsbündigen Prozentwert und nur das graue Kontextlimit;
-in der History bleibt die Kontextzelle statusgrau und übernimmt bei der aktiven
-Zeile weiterhin die durchgehende Cursor-Hervorhebung. **History** zeigt
-eine scrollbare Tabelle mit bis zu 500 abgeschlossenen instrumentierten Runs.
-Sie kann nach Abschlusszeit, Quelle, Modell, Status, Tokens, Kontextverbrauch,
-Ausgaberate und Dauer sortiert werden. Die aktive Sortierspalte ist im
-Tabellenkopf exakt über die Länge ihres Textes unterstrichen und mit `▾`
-beziehungsweise `▴` markiert; die History-Überschrift bleibt frei von
-Sortierdetails. Eine Leerzeile trennt die History von der Statusleiste. Die
-History gruppiert Pi-Runs nach `session_id` und Open-WebUI-Runs vorrangig nach
-`chat_id`; Session und Nachricht dienen dort nur als Fallback. Ohne diese IDs
-bleibt jeder Run einzeln. Gruppen sind zunächst eingeklappt. Ihre Tabellenzeile
-zeigt ausschließlich die Ergebniswerte des neuesten abgeschlossenen Runs sowie
-dessen Ausgaberate; Quelle, Kurzkennung, Modell, Status und letzter Abschluss
-bleiben ebenfalls sichtbar. Bei Pi-Sessions und Open-WebUI-Chats wird dafür der
-erste ID-Block ohne die Präfixe `Session` beziehungsweise `Chat` angezeigt. Die
-Quellenspalte erhält bei knapper Breite bevorzugt ihren vollständigen Inhalt;
-der zweistellige Aufklappmarker wird dabei mitgerechnet. Fehlende Werte werden nur aus demselben
-Run eindeutig abgeleitet; unbekannte Werte bleiben `n/a`. Mit dem Cursor lässt sich die
-Gruppe aufklappen und zeigt dann alle einzelnen Runs. Die Persistenz und die
-Begrenzung auf 500 Runs bleiben unverändert. Mit `c` wird ausschließlich die
-Run-History atomar geleert; aktuelle Runs und System-Snapshots bleiben erhalten.
-Kontext wird nach dem prozentualen Verbrauch sortiert, nicht nach der absoluten
-Tokengröße. Die Kontextspalte zeigt Prozentwert, Fortschrittsbalken und danach
-nur das Limit im Format `[######      ] 42% 16.4k`; fehlende Providerwerte
-bleiben `n/a`. Die Daten bleiben
-als begrenzte JSONL-Datei gespeichert; eine Datenbank ist bei 500 Einträgen
-nicht nötig. Zusätzlich speichert llmtop lokale, begrenzte System-Snapshots. Der
-Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
-`LLMTOP_RUN_HISTORY_FILE` oder `XDG_STATE_HOME` angepasst werden. Im TUI-Modus werden System-Snapshots aus Rücksicht auf I/O höchstens alle fünf Sekunden persistiert; die Live-Anzeige aktualisiert sich weiterhin mit dem eingestellten Intervall. `--once` schreibt sofort einen Snapshot.
+Die Mindestgröße beträgt `40×18`. Kleine Terminals verwenden eine kompakte
+Ansicht, damit Bereiche nicht überzeichnet werden.
 
 ## Angezeigte Werte
 
-* **History**: Gruppen aus derselben Pi-Session beziehungsweise demselben
-  Open-WebUI-Chat werden kompakt dargestellt. Pi-Session-Gruppen verwenden
-  dieselbe Aufklappfunktion wie Chats. Die Gruppenzeile repräsentiert den
-  neuesten abgeschlossenen Run; fehlende Werte werden nur eindeutig aus diesem
-  Run abgeleitet. Open WebUI verwendet `chat_id` vor der Browser-`session_id`,
-  damit unterschiedliche Chats nicht gemeinsam gruppiert werden. Aufgeklappte
-  Gruppen zeigen alle enthaltenen Runs in der bestehenden Tabelle.
-  Bei diesen Unterzeilen stehen **Zeit** und **Quelle** eingerückt; das Zeitfeld
-  erhält zwei Leerzeichen innerhalb seiner eigenen Spalte, die Quelle bleibt
-  zusätzlich um den zweistelligen Gruppenmarker eingerückt. Alle übrigen
-  Spaltenbreiten und Abstände bleiben unverändert.
-* **Kopfbereich**: vierzeiliges, optisch quadratisches Terminal-Logo mit
-  Prompt und LLM-Kennung sowie zwei freien Spalten zum Textblock. **LLM Terminal
-  Monitor** ist stets mittig in der ersten Zeile platziert; `llmtop <VERSION>`
-  und Produktname,
-  `Ollama v<VERSION>` mit Erreichbarkeit (`/api/version`), **Open-WebUI
-  Collector**-Status sowie **Pi Adapter**-Status (`aktiv` / `nicht aktiv`). Eine Leerzeile
-  folgt vor den Messwerten. Rechts unten steht `-/+ Intervall <SEKUNDEN>` als
-  Anzeige und Legende. Namen und Metadaten sind
-  gedimmt grau; verbundene/aktive Stati sind Grün und OFFLINE/nicht aktive
-  Stati Rot. Bei 40 Spalten werden die Verbindungsstati als `Ollama OK/OFF` und
-  `OW Collector OK/OFF` verdichtet.
-* **Aktuelle Runs**: Pi und Open WebUI senden auf getrennten Collector-Pfaden (`/v1/runs/pi`, `/v1/runs/open-webui`) mit demselben Bearer-Token. Quelle und Provider (etwa `Pi/OpenAI`, `Pi/Ollama`, `Open WebUI/Ollama`), Status, Modell, Session-/Chat-/Message-IDs und verfügbare Token-/Dauerwerte bleiben getrennt. Aktive Runs beider Quellen stehen vor frischen Ergebnissen; gleichartige Identitätsblöcke zeigen jeweils `aktiv N · Ergebnis N`, ohne eine Quelle oder Identität vorzuziehen. Ein Abschluss bleibt höchstens zehn Sekunden sichtbar und wird danach atomar aus `run.jsonl` entfernt, bleibt aber in der begrenzten Run-History erhalten. Bei mehr Runs als sichtbaren Zeilen ist der Bereich mit `a` und den Scrolltasten erreichbar. Verwaiste nicht-finale Live-Einträge werden nach 90 Sekunden ohne Lebenszeichen entfernt und nicht als aktuelle Runs angezeigt. Lange Streams senden regelmäßig Lebenszeichen. Schema-1-Daten bleiben als `Legacy` lesbar. Status, Modell, Kontextlimit und grafischer Kontextverbrauch (Prompt- plus Ausgabetoken),
-  Prompt-/Ausgabe-/Gesamttoken und Ausgabe-Rate. Der Pi-Adapter liest den Session-Kontext
-  auch unmittelbar vor dem Abschluss erneut, damit die History den letzten Live-Stand übernimmt.
-  Pi/OpenAI-Codex verwendet für Tok/s die
-  gemessene Dauer der jeweiligen Provider-Antwort; die Laufzeit von Tool-Aufrufen und
-  übrigen Agenten-Folgeturns wird nicht fälschlich als Antwortdauer verwendet. `--chat` und `--generate`
-  instrumentieren eigene direkte Ollama-Aufrufe ohne Reverse Proxy. Während
-  des Streamings liefert Ollama keine Tokenwerte; bis zum Abschluss stehen sie
-  daher als `n/a` da. Ohne Ereignis wird nichts geschätzt. Direkte lokale Runs speichern
-  zusätzlich verfügbare Komponentenenergie aus CPU-RAPL, AMD-sysfs und NVIDIA-
-  `nvidia-smi`; die Quellen werden getrennt ausgewiesen und bei möglicher
-  Überlappung nicht zu einer Gesamtsumme addiert. Eine Steckdosenmessung ist
-  nicht enthalten. In breiten TUI-Tabellen wird zusätzlich eine `Wh`-Spalte
-  für Open-WebUI-Runs angezeigt; Gruppenzeilen summieren die Energiewerte ihrer
-  enthaltenen Runs. Andere Quellen bleiben in dieser ersten Anzeige leer.
-  Neue Open-WebUI-Runs werden beim Collector zwischen `started` und Abschluss
-  gemessen; bestehende ältere Runs ohne Energiedaten bleiben `n/a`.
-* **Geladene Modelle** (`/api/ps`): Name, Parametergröße, Quantisierung,
-  `context_length`, Runner, Restzeit bis Auto-Unload (`expires_at`),
-  `size_vram` / `size` → Aufteilung GPU % / CPU %. Der Ollama-Bereich ist in
-  „Aktuelle Runs“ und „Geladene Modelle“ unterteilt.
-* **CPU**: Bereinigter Modellname aus `/proc/cpuinfo` ohne integrierte
-  Radeon-Zusatzbezeichnung, Gesamt-% aus `/proc/stat`-Differenz zwischen zwei
-  Refreshes, dazu nutzbare logische Kernanzahl und Temperatur
-  aus hwmon oder generischen Thermal-Zones (`k10temp`, `coretemp`, `zenpower`,
-  `x86_pkg_temp`, `cpu_thermal`, `acpitz`), sofern verfügbar.
-* **CPU-Power**: CPU-Package-/SoC-Leistung aus der lokalen AMD-APU-
-  Messung von GPU1, CPU-hwmon, optional TUXEDO Control Center über D-Bus
-  und zuletzt RAPL. Die erste RAPL-Messung bleibt bis zum zweiten
-  Zählerstand `n/a`; Quelle und echte Leistungsgrenze werden angezeigt.
-  Der interne GPU1-/APU-Wert wird als CPU-/APU-Wert verwendet und bei
-  vorhandener CPU-Power nicht zusätzlich unter GPU1 dargestellt. Wenn RAPL nur
-  für root lesbar ist, aktiviert `x`/`X` in
-  der TUI nach einer sichtbaren `sudo -v`-Abfrage einen begrenzten RAPL-Helper,
-  ohne llmtop neu zu starten. CPU-Power-Wert und Balken werden auch ohne
-  Leistungsgrenze sichtbar farbig hervorgehoben. Die Systemzeile heißt
-  `Power`; bei echter Leistungsgrenze wechseln Balken und Wert dynamisch
-  zwischen Grün (unter 30 %), Amber (30–59 %), Orange (60–90 %) und
-  Rot (über 90 %). Ohne Grenze bleibt ein gültiger Messwert grün
-  und erhält eine reine 65-W-Darstellungsskala für den Balken; dies ist keine
-  Leistungsgrenze und wird nicht als Prozentwert angezeigt.
-* **RAM**: Auslastung `%`, Größe `GiB`, Zeile nach den CPU-Systemwerten. Primär
-  `/proc/meminfo`; bei einer endlichen cgroup-v1/v2-Grenze werden effektiver
-  Verbrauch und verfügbares Limit des Prozesses angezeigt.
-* **GPU**: Alle erkannten DRM-GPUs werden zusammengeführt und in TUI sowie
-  `--once` durch sichtbare Trennzeilen voneinander abgegrenzt. Modellnamen
-  werden aus `product_name` oder der lokalen PCI-ID-Datenbank ermittelt;
-  NVIDIA verwendet
-  bevorzugt `nvidia-smi` und ordnet die Werte über die PCI-Bus-ID zu; AMD nutzt
-  amdgpu-sysfs, Intel i915/xe bekannte GT-Auslastungsdateien. Temperatur,
-  VRAM und Power kommen ergänzend aus der zugeordneten hwmon-Schnittstelle.
-  Fehlende Einzelwerte bleiben `n/a`; dadurch werden auch GPUs ohne
-  Auslastungsdatei angezeigt. Intel nutzt zusätzlich verfügbare generische
-  GT-/Busy-sysfs-Dateien; fehlen diese, bleibt die Auslastung bewusst `n/a`.
-  `--no-nvidia` überspringt ausschließlich
-  `nvidia-smi` und verwendet weiterhin sysfs. Der gemessene Wattwert bleibt
-  auch ohne Leistungsgrenze sichtbar. Der Balken verwendet dann eine reine
-  115-W-Darstellungsskala; eine Power-Prozentanzeige gibt es nur bei gemeldeter
-  echter Leistungsgrenze. Ein separater interner GPU1-/APU-Powerwert wird bei
-  vorhandener CPU-Power nicht doppelt dargestellt; andere GPU-Powerwerte bleiben
-  sichtbar.
-* **VRAM**: VRAM-Auslastung `%` und Größe in MiB
-  (`VRAM [##########  ] 96.5 %  7864 / 8151 MiB`). Im Ollama-Bereich zeigt ein
-  geteilter Balken die Modellaufteilung als „VRAM/RAM“: Der Modellname ist
-  grau und unterstrichen; die folgenden Modellinformationen beginnen an einer
-  verkürzten festen Tabulatorposition. Auch Quelle, Modell, Status und Metriken aktueller
-  Runs sind per Tabulator ausgerichtet. Label und Klammern sind Cyan. VRAM ist oberhalb 55 % Grün,
-  bei 45–55 % Gelb und darunter Rot. Der VRAM-Prozentwert steht auf derselben Flucht wie die Prozentwerte von System
-  und GPU. Der CPU/RAM-Anteil bleibt ausschließlich als grauer Balkenanteil und
-  in der gedimmten Größenangabe im Format `MiB / MiB` mit einmaliger Einheit sichtbar; ein zweiter
-  RAM-Prozentwert wird nicht angezeigt.
-  Der Kontextbalken aktueller Runs steht ausschließlich in der Kontextspalte.
-  Prozentwert und Balken sind statusabhängig farbig; Verbrauch und Limit bleiben
-  gedimmt grau. Tok/s aktueller Runs ist rot unter
-  10, gelb von 10 bis unter 50 und grün ab 50 Tok/s; diese Tok/s-Farbe ist
-  nicht fett.
+### System
 
-## Open-WebUI-Adapter
+- CPU-Auslastung aus `/proc/stat`
+- CPU-Modell, nutzbare logische Kerne und CPU-Temperatur
+- CPU-Power mit Fallback-Kette:
+  1. interne AMD-APU-Leistung von GPU1, wenn als CPU-/SoC-Wert erkannt
+  2. eindeutig zugeordnetes CPU-hwmon
+  3. TUXEDO Control Center über lesendes D-Bus
+  4. optionaler privilegierter RAPL-Helper
+  5. direkter RAPL-Zähler als letzte Instanz
+- RAM-Auslastung und verfügbarer Speicher aus `/proc/meminfo`, unter
+  Berücksichtigung geeigneter cgroup-Grenzen
 
-Der Filter liegt in `open_webui/llmtop_run_metrics.py` und wird ausschließlich über die Open-WebUI-API installiert. Er überträgt über den eigenen Collector-Pfad verifizierte Modellprovider neutral; fehlende finale Usage bleibt sichtbar als `n/a`. Bei Tool-Use werden `prompt_tokens`/`completion_tokens` beziehungsweise die Ollama-Einzelaufruffelder für den Kontext verwendet; kumulierte `input_tokens`/`output_tokens` mehrerer eingebetteter Modellaufrufe werden nicht gegen das Kontextlimit gerechnet. Der TUI-Start aktualisiert auch bereits aktive ältere Filterversionen. Die lokale `.env` benötigt zusätzlich zu `LLMTOP_COLLECTOR_TOKEN` einen Admin-API-Key:
+Wenn die interne GPU1-/APU-Leistung als CPU-Power verwendet wird, wird sie
+nicht zusätzlich als GPU1-Power dargestellt. Andere GPUs zeigen ihre eigenen
+verfügbaren Powerwerte weiterhin an.
+
+### GPU und Modelle
+
+- mehrere DRM-GPUs bleiben sichtbar und werden über PCI-Bus-ID bzw. sysfs
+  zusammengeführt
+- NVIDIA bevorzugt `nvidia-smi`; AMD nutzt amdgpu-sysfs; Intel verwendet
+  bekannte i915-/xe- und generische GT-Busy-Dateien
+- GPU-Auslastung, Temperatur, VRAM und verfügbare Powerwerte
+- GPU1-/APU-Power wird nicht doppelt als GPU-Leistung angezeigt, wenn sie
+  bereits die CPU-Power liefert
+- geladene Ollama-Modelle aus `/api/ps` mit Name, Größe, VRAM-Anteil,
+  Quantisierung, Kontextlimit, Runner und Ablaufzeit
+
+Die Modellkarte zeigt die Aufteilung von VRAM und CPU/RAM. GPU-Auslastungs- und
+Temperaturfarben dienen der Orientierung; nicht verfügbare Einzelwerte bleiben
+`n/a`.
+
+### Runs und Kontext
+
+Instrumentierte Runs zeigen, soweit vom Provider geliefert:
+
+- Quelle und Provider
+- Modell, Status und Identität
+- Prompt-, Ausgabe- und Gesamttoken
+- Kontextverbrauch und Kontextlimit
+- Ausgabe-Rate und Dauer
+- bei Open WebUI zusätzlich Energie in Wh, sofern gemessen
+
+Aktuelle Runs und History verwenden dieselben Tabellenwerte. Die History kann
+nach Zeit, Quelle, Modell, Status, Tokens, Kontextverbrauch, Tok/s und Dauer
+sortiert werden. Pi-Runs werden nach `session_id`, Open-WebUI-Runs bevorzugt
+nach `chat_id` gruppiert. Eingeklappte Gruppen repräsentieren den neuesten
+abgeschlossenen Run; aufgeklappt erscheinen die Einzelruns.
+
+Der Pi-Adapter aktualisiert den Session-Kontext während des laufenden Agenten-
+Laufs und unmittelbar vor dem Abschluss erneut. Dadurch übernimmt die History
+den letzten verfügbaren Live-Stand. Fehlen Providerwerte, zeigt llmtop `n/a`
+statt einer Schätzung.
+
+## Collector und Adapter
+
+### Collector
+
+Der Collector empfängt Schema-2-Ereignisse über:
+
+- `POST /v1/runs`
+- `POST /v1/runs/pi`
+- `POST /v1/runs/open-webui`
+
+Standardmäßig lauscht er auf `127.0.0.1:11435` und – wenn erkannt – zusätzlich
+auf dem privaten Docker-Gateway von Open WebUI. Ein Bearer-Token ist
+standardmäßig erforderlich. Für isolierte lokale Tests kann ausnahmsweise
+`LLMTOP_COLLECTOR_INSECURE=1` verwendet werden.
+
+Collector starten:
+
+```bash
+cp .env.example .env
+# LLMTOP_COLLECTOR_TOKEN in .env setzen
+python3 llmtop.py --collector
+```
+
+Collector-Fehler stoppen weder Sensoren noch TUI.
+
+### Open WebUI
+
+Der Filter `open_webui/llmtop_run_metrics.py` wird ausschließlich über die
+Open-WebUI-API installiert. Für automatische Installation in `.env` setzen:
 
 ```dotenv
+LLMTOP_COLLECTOR_TOKEN=<langer-zufälliger-wert>
+LLMTOP_COLLECTOR_URL=http://127.0.0.1:11435
 OPEN_WEBUI_URL=http://127.0.0.1:3000
 OPEN_WEBUI_API_KEY=<Open-WebUI-Admin-API-Key>
 ```
 
-Beim normalen TUI-Start prüft llmtop bei vorhandenem `OPEN_WEBUI_API_KEY` und
-`LLMTOP_COLLECTOR_TOKEN` asynchron, ob der globale aktive Filter
-`llmtop_run_metrics` installiert ist. Alte globale Adapter wie
-`otop_run_metrics` werden dabei deaktiviert, damit ein Request nicht doppelt
-registriert wird. Fehlt oder deaktiviert der Filter, wird ersatzweise die
-bestehende Installationsroutine ausgeführt. Ohne vollständige
-lokale Konfiguration und bei API-Fehlern bleibt der Start unverändert; `--once`
-und die Skriptmodi führen keine Adapter-Änderung aus.
-
-Danach genügt der normale TUI-Start; der Collector wird bei konfiguriertem
-`LLMTOP_COLLECTOR_TOKEN` automatisch im Hintergrund gestartet:
+Danach genügt ein normaler TUI-Start:
 
 ```bash
 python3 llmtop.py
+```
+
+Oder die Installation wird explizit ausgelöst:
+
+```bash
 python3 llmtop.py --install-open-webui-adapter
 ```
 
-`--collector` bleibt für einen separat laufenden, blockierenden Dienstmodus
-verfügbar.
+Der Filter überträgt keine Chatinhalte. Bei Tool-Loops werden die Usage-Werte
+des aktuellen Modellaufrufs gegenüber kumulierten Zwischenwerten bevorzugt.
 
-Der Installationsbefehl erkennt die private Docker-Gateway-Adresse, setzt die Filter-Valves, aktiviert den Filter und schaltet ihn global. Der Filter überträgt ausschließlich Quelle, Provider, UUID, Session-/Chat-/Message-IDs, Modell, Zeit- und Nutzungswerte. Collector-Fehler werden abgefangen und beeinflussen die Chatantwort nicht. Die gleiche Schema-2-Schnittstelle verarbeitet auch den optionalen Pi-Adapter; der Kern benötigt dafür keine Pi-Abhängigkeit.
+### Pi
 
-## Pi-Adapter
+`pi/llmtop_run_metrics.ts` ist ein dependency-freier Pi-Adapter. Bei
+konfiguriertem Collector wird er beim normalen TUI-Start automatisch nach
+`~/.pi/agent/extensions/llmtop_run_metrics.ts` kopiert.
 
-Der dependency-freie Adapter unter `pi/llmtop_run_metrics.ts` wird beim normalen TUI-Start automatisch nach `~/.pi/agent/extensions/` aktualisiert. Nach einem Update muss eine bereits laufende llmtop-TUI einmal mit `r` neu geladen werden, damit ihr Collector die getrennten Adapterpfade übernimmt. Dabei legt llmtop die Collector-URL und den Token ausschließlich mit Dateimodus `0600` unter `$XDG_STATE_HOME/llmtop/pi-collector.json` (Fallback `~/.local/state/llmtop/`) ab; neue Pi-Prozesse lesen diese private Laufzeitdatei automatisch. Für bereits laufende Pi-Prozesse einmal `/reload` ausführen oder Pi neu starten.
+Nach einem Update:
 
-Er fasst alle Modell- und Tool-Folgeturns einer bearbeiteten Pi-Anfrage zu einem Live-Run zusammen. Die aktuelle Session-ID wird beim Pi-Session-Start zwischengespeichert und jedem Run mitgegeben; mehrere Ergebnisse derselben Pi-Session erscheinen dadurch als aufklappbare Gruppe. Die eingeklappte Gruppe zeigt den neuesten abgeschlossenen Run; erst wenn Pi den Agentenlauf als erledigt meldet, wird genau ein Datensatz für dessen finale Antwort in der Run-History gespeichert. Dabei werden Input-/Cache-/Ausgabetoken, Kontextlimit, Gesamtdauer und Ausgaberate übertragen. Der Session-Kontext wird während aktiver Runs aus Pi gelesen und höchstens einmal pro Sekunde als Tokenzahl aktualisiert; bekannte Provider-Usage ergänzt diese Werte. Die Session-ID wird direkt aus dem Pi-Session-Manager übernommen und bei älteren Laufzeitobjekten aus Header oder Sessiondatei ermittelt. Unvollständige Zwischenmeldungen mit `0` überschreiben bereits bekannte Tokenstände nicht. Steht weder Session-Kontext noch Usage bereit, bleiben Tokenwerte bis dahin `n/a`. Er sendet ausschließlich Quelle, Provider, Session-ID, Modell, UUID, Zeit und Nutzungsmetriken. Prompt, Antwort, Tooldaten, Sessionpfade und Credentials bleiben lokal in Pi.
+1. `python3 llmtop.py` starten oder die TUI mit `r` neu laden.
+2. In einem bereits laufenden Pi-Prozess `/reload` ausführen oder Pi neu starten.
+
+Der Adapter überträgt nur Quelle, Provider, Session-ID, Modell, UUID,
+Zeitstempel und Nutzungsmetriken. Prompts, Antworten, Tooldaten, Sessionpfade
+und Zugangsdaten bleiben lokal in Pi.
+
+## Konfiguration und Dateien
+
+Die Kernanwendung benötigt keine Initialisierung. Optionale Einstellungen
+kommen aus `.env` oder der Umgebung:
+
+| Variable | Zweck |
+|---|---|
+| `OLLAMA_HOST` | Standardadresse des Ollama-Servers |
+| `LLMTOP_COLLECTOR_TOKEN` | Bearer-Token für den Collector |
+| `LLMTOP_COLLECTOR_URL` | Collector-Adresse; Standard `http://127.0.0.1:11435` |
+| `LLMTOP_COLLECTOR_BIND` | Collector-Bind-Adresse |
+| `LLMTOP_COLLECTOR_PORT` | Collector-Port |
+| `LLMTOP_COLLECTOR_INSECURE` | nur mit Wert `1` tokenlosen lokalen Test erlauben |
+| `LLMTOP_HISTORY_FILE` | System-Snapshot-Datei überschreiben |
+| `LLMTOP_RUN_FILE` | Live-Run-Datei überschreiben |
+| `LLMTOP_RUN_HISTORY_FILE` | Run-History-Datei überschreiben |
+| `LLMTOP_OPEN_WEBUI_DB` | optionaler lesender Open-WebUI-Datenbank-Fallback |
+| `XDG_STATE_HOME` | Basisverzeichnis für llmtop-Zustandsdaten |
+
+Standardpfade:
+
+```text
+$XDG_STATE_HOME/llmtop/history.jsonl
+$XDG_STATE_HOME/llmtop/run.jsonl
+$XDG_STATE_HOME/llmtop/runs.jsonl
+$XDG_STATE_HOME/llmtop/pi-collector.json
+$XDG_STATE_HOME/llmtop/llmtop.log       # nur bei --debug im TUI-Modus
+```
+
+Ohne `XDG_STATE_HOME` verwendet llmtop `~/.local/state/llmtop/`. Dateien werden
+begrenzt, atomar und – soweit von llmtop erstellt – mit privaten Rechten
+geschrieben. Die System-Snapshot-History ist auf 500 Einträge begrenzt; die
+Run-History ebenfalls auf 500 abgeschlossene Runs. Aktive Runs verfallen nach
+90 Sekunden ohne Lebenszeichen, abgeschlossene Live-Einträge nach 10 Sekunden;
+die dauerhafte Run-History bleibt erhalten.
 
 ## Bekannte Grenzen
 
-* Die Ollama-API selbst liefert **keine** CPU-/GPU-Auslastung (nur `size_vram`);
-  `/metrics` gibt es hier nicht (404). GPU-Auslastung kommt vom **Host**, sie ist
-  geräte-global und nicht exklusiv Ollama zurechenbar.
-* Ollama läuft im Docker-Container; die GPU-Messung erfolgt am Host (NVIDIA-Binary
-  `nvidia-smi` bzw. sysfs), nicht im Container.
-* Der Collector lauscht standardmäßig auf `127.0.0.1:11435` und zusätzlich auf dem erkannten privaten Docker-Gateway von `open-webui`. Er benötigt `LLMTOP_COLLECTOR_TOKEN`; `.env.example` zeigt die lokalen Variablennamen.
-* Run-Historien speichern nur IDs, Quelle, Modell, Status, Zeit- und Tokenzähler
-  sowie optional Kontexttoken, Kontextlimit und Identitätsfelder (`session_id`,
-  `chat_id`, `message_id`); keine Prompts oder Modellantworten. Die
-  Identitätsfelder dienen der quelleninternen Gruppierung und Wiedererkennung;
-  bei fehlenden IDs werden Runs nicht spekulativ zusammengelegt. Das
-  Kontextlimit wird bevorzugt aus dem Run (`options.num_ctx`) übernommen und
-  ersatzweise aus dem aktuell geladenen Modell in `/api/ps` ergänzt. Open-WebUI
-  liefert bei Ollama-Streaming echte Usage-Werte häufig erst im Abschluss;
-  währenddessen zeigt llmtop deshalb einen eindeutigen Wartezustand statt Schätzungen.
-* CPU-% ist ein Differenzwert über ein Refresh-Intervall — der erste Frame zeigt
-  „Messung“.
-* GPU-Sensoren sind treiber- und kernelabhängig. NVIDIA-Werte werden bei
-  verfügbarer PCI-Bus-ID mit DRM/sysfs zusammengeführt; ohne passende ID kann
-  ein sehr alter NVIDIA-Treiber nur über die Geräte-Reihenfolge zugeordnet
-  werden. Nicht verfügbare Einzelwerte erscheinen als `n/a`.
-* Schlägt `/api/ps` fehl, zeigt die Anwendung den Fehler statt „kein Modell geladen“.
-* Modelle ohne Scrollen: Passen nicht alle vollständigen Modellkarten in den
-  verfügbaren Bereich, zeigt die TUI ihre Anzahl als ausgeblendet an; es gibt
-  keinen Scroll-Modus.
-* TUI braucht ein echtes Terminal (TTY). Ohne TTY: `--once` verwenden.
-* Mindest-Terminalgröße 40×18. Darunter zeigt die TUI einen Hinweis, damit
-  Fußzeile oder Bereiche nicht überdeckt werden.
+- Ollama liefert keine Host-CPU-/GPU-Auslastung; diese Werte stammen vom lokalen
+  Linux-System und sind nicht exklusiv einem Modell zuordenbar.
+- GPU-Sensoren hängen von Kernel, Treiber, sysfs und Berechtigungen ab.
+- Die erste CPU-%-Anzeige lautet `Messung`, weil ein Differenzwert benötigt wird.
+- Die Ollama-Abfrage kann die TUI bei langsamer Netzwerkverbindung kurzzeitig
+  blockieren.
+- Viele geladene Modelle können auf kleinen Terminals aus dem sichtbaren Bereich
+  laufen; es gibt keinen separaten Modell-Scrollmodus.
+- Run-History und System-History enthalten keine Prompts oder vollständigen
+  Modellantworten.
+- Der Datenbank-Fallback für Open WebUI ergänzt nur eindeutig zuordenbare Werte.
 
-## Testumgebung (live)
+## Projektstruktur
 
-Ollama 0.40.6 im Docker-Container unter `http://localhost:11434`, GPU NVIDIA
-RTX 5070 Laptop (8151 MiB) + AMD iGPU (`card1`), 24 Kerne, Python 3.12.
-Aktueller Prüfstatus und bekannte Grenzen: siehe `status.md`.
+| Datei | Zweck |
+|---|---|
+| `llmtop.py` | CLI, TUI-Start und `--once` |
+| `llmtop_sources.py` | Ollama-, CPU-, RAM- und GPU-Quellen |
+| `llmtop_metrics.py` | Run-Schema, Collector, History und Adapterintegration |
+| `llmtop_tui.py` | curses-Rendering und Sampler |
+| `open_webui/llmtop_run_metrics.py` | Open-WebUI-Filter |
+| `pi/llmtop_run_metrics.ts` | Pi-Adapter |
+| `status.md` | aktueller Projektstand und Grenzen |
+| `version.md` | Versionsschema und Changelog |
+| `.env.example` | Beispielkonfiguration |
+
+## Prüfen
+
+Die kleinsten Projektprüfungen sind:
+
+```bash
+python3 -m py_compile llmtop.py llmtop_sources.py llmtop_metrics.py llmtop_tui.py
+python3 llmtop.py --version
+python3 llmtop.py --once
+python3 llmtop.py --once --no-nvidia
+python3 open_webui/test_llmtop_run_metrics.py
+```
+
+Die maßgebliche Versionsnummer steht in `VERSION` in `llmtop.py`. Bei einem
+Release werden `README.md`, `status.md` und `version.md` synchron gehalten.
