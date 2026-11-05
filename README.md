@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.35** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.3.36** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -222,6 +222,8 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   nicht enthalten. In breiten TUI-Tabellen wird zusätzlich eine `Wh`-Spalte
   für Open-WebUI-Runs angezeigt; Gruppenzeilen summieren die Energiewerte ihrer
   enthaltenen Runs. Andere Quellen bleiben in dieser ersten Anzeige leer.
+  Neue Open-WebUI-Runs werden beim Collector zwischen `started` und Abschluss
+  gemessen; bestehende ältere Runs ohne Energiedaten bleiben `n/a`.
 * **Geladene Modelle** (`/api/ps`): Name, Parametergröße, Quantisierung,
   `context_length`, Runner, Restzeit bis Auto-Unload (`expires_at`),
   `size_vram` / `size` → Aufteilung GPU % / CPU %. Der Ollama-Bereich ist in

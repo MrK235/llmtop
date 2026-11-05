@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.35** · Stand 05.11.2026 · Status: Wh-Anzeige für Open-WebUI-Runs.
+**Version 2.3.36** · Stand 05.11.2026 · Status: Open-WebUI-Energiemessung und Wh-Anzeige.
 
 ## Aktueller Stand
 
@@ -37,6 +37,12 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.36
+
+- Der Collector startet für neue Open-WebUI-Runs einen lokalen Energie-Sampler und speichert die Messung beim Abschluss.
+- Dadurch können neue WebUI-Runs in der TUI einen Wh-Wert anzeigen; ältere Runs ohne Messdaten bleiben `n/a`.
+- Verwaiste WebUI-Energiesampler werden nach dem bestehenden Run-TTL beendet.
 
 ## Neu in 2.3.35
 

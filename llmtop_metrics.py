@@ -29,6 +29,8 @@ RUN_FILE_LOCK = threading.RLock()
 OPEN_WEBUI_FUNCTION_ID = "llmtop_run_metrics"
 LEGACY_OPEN_WEBUI_FUNCTION_IDS = ("otop_run_metrics",)
 PI_ADAPTER_FILENAME = "llmtop_run_metrics.ts"
+_WEBUI_ENERGY_MONITORS = {}
+_WEBUI_ENERGY_LOCK = threading.RLock()
 
 log = logging.getLogger(__name__)
 
@@ -643,8 +645,59 @@ class OpenWebUIFinalMetricsReader:
             return {}
 
 
+def _prune_webui_energy_monitors():
+    """Beendet Energie-Sampler verwaister WebUI-Runs."""
+    cutoff = time.monotonic() - DEFAULT_RUN_MAX_AGE
+    stale = []
+    with _WEBUI_ENERGY_LOCK:
+        for key, (monitor, last_seen) in list(_WEBUI_ENERGY_MONITORS.items()):
+            if last_seen < cutoff:
+                stale.append(_WEBUI_ENERGY_MONITORS.pop(key)[0])
+    for monitor in stale:
+        try:
+            monitor.stop()
+        except Exception as exc:
+            log.debug("WebUI-Energiesampler konnte nicht beendet werden: %s", exc)
+
+
+def _start_webui_energy_monitor(run):
+    key = (run["source"], run["run_id"])
+    with _WEBUI_ENERGY_LOCK:
+        if key in _WEBUI_ENERGY_MONITORS:
+            _WEBUI_ENERGY_MONITORS[key] = (_WEBUI_ENERGY_MONITORS[key][0], time.monotonic())
+            return
+        try:
+            monitor = EnergyMonitor().start()
+        except Exception as exc:
+            log.debug("WebUI-Energiesampler konnte nicht gestartet werden: %s", exc)
+            return
+        _WEBUI_ENERGY_MONITORS[key] = (monitor, time.monotonic())
+
+
+def _touch_webui_energy_monitor(run):
+    key = (run["source"], run["run_id"])
+    with _WEBUI_ENERGY_LOCK:
+        item = _WEBUI_ENERGY_MONITORS.get(key)
+        if item:
+            _WEBUI_ENERGY_MONITORS[key] = (item[0], time.monotonic())
+
+
+def _finish_webui_energy_monitor(run):
+    key = (run["source"], run["run_id"])
+    with _WEBUI_ENERGY_LOCK:
+        item = _WEBUI_ENERGY_MONITORS.pop(key, None)
+    if not item:
+        return None
+    try:
+        return item[0].stop()
+    except Exception as exc:
+        log.debug("WebUI-Energiesampler konnte nicht beendet werden: %s", exc)
+        return None
+
+
 def process_run_event(event):
     """Validiert ein Collector-Ereignis und aktualisiert Live- und History-Datei."""
+    _prune_webui_energy_monitors()
     run = normalize_run(event)
     if not run or event.get("schema") != 2 or event.get("event") not in {
             "started", "updated", "completed", "error", "cancelled"}:
@@ -653,6 +706,11 @@ def process_run_event(event):
     now = _utc_now()
     if event["event"] == "started" and not _parse_time(run.get("started_at")):
         return False
+    if run.get("source") == "open-webui":
+        if event["event"] == "started":
+            _start_webui_energy_monitor(run)
+        else:
+            _touch_webui_energy_monitor(run)
     run.setdefault("updated_at", now)
     if run["status"] in FINAL_RUN_EVENTS:
         run.setdefault("finished_at", now)
@@ -669,6 +727,10 @@ def process_run_event(event):
             run.update({key: value for key, value in OpenWebUIFinalMetricsReader().read(
                 run.get("model"), run.get("started_at"), run.get("source_run_id")).items()
                        if key in missing})
+        if run.get("source") == "open-webui":
+            energy = _finish_webui_energy_monitor(run)
+            if energy:
+                run["energy"] = energy
         if not append_run_history(run):
             return False
     return write_live_run(run)

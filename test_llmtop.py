@@ -1,5 +1,6 @@
 import curses
 import json
+import os
 import tempfile
 import threading
 from datetime import datetime, timezone
@@ -189,6 +190,52 @@ def test_history_groups_keep_all_runs_and_sources_separate():
     _, expanded = llmtop_tui.history_display_items(runs, expanded={groups[1]['key']})
     assert [item['kind'] for item in expanded] == [
         'group', 'group', 'run', 'run', 'group', 'run']
+
+
+def test_webui_collector_captures_energy():
+    class FakeEnergyMonitor:
+        def start(self):
+            return self
+
+        def stop(self):
+            return {
+                'energy_j': 7.2, 'energy_scope': 'component-sum',
+                'energy_source': 'component-telemetry',
+                'measurement_started_at': '2026-11-05T20:00:00Z',
+                'measurement_finished_at': '2026-11-05T20:00:01Z',
+                'sources': [{'source': 'test', 'scope': 'gpu:test', 'energy_j': 7.2, 'samples': 2}],
+            }
+
+    original_monitor = llmtop.EnergyMonitor
+    original_run = os.environ.get('LLMTOP_RUN_FILE')
+    original_history = os.environ.get('LLMTOP_RUN_HISTORY_FILE')
+    try:
+        with tempfile.TemporaryDirectory() as directory:
+            os.environ['LLMTOP_RUN_FILE'] = str(Path(directory) / 'run.jsonl')
+            os.environ['LLMTOP_RUN_HISTORY_FILE'] = str(Path(directory) / 'runs.jsonl')
+            llmtop.EnergyMonitor = FakeEnergyMonitor
+            started = {
+                'schema': 2, 'event': 'started', 'run_id': 'web-energy',
+                'source': 'open-webui', 'model': 'model',
+                'started_at': '2026-11-05T20:00:00Z',
+            }
+            completed = dict(started, event='completed', finished_at='2026-11-05T20:00:01Z',
+                             prompt_tokens=10, output_tokens=20, eval_duration_s=1)
+            assert llmtop.process_run_event(started)
+            assert llmtop.process_run_event(completed)
+            result = llmtop.load_run_history(Path(directory) / 'runs.jsonl')
+            assert result[0]['energy']['energy_j'] == 7.2
+            assert not llmtop._WEBUI_ENERGY_MONITORS
+    finally:
+        llmtop.EnergyMonitor = original_monitor
+        if original_run is None:
+            os.environ.pop('LLMTOP_RUN_FILE', None)
+        else:
+            os.environ['LLMTOP_RUN_FILE'] = original_run
+        if original_history is None:
+            os.environ.pop('LLMTOP_RUN_HISTORY_FILE', None)
+        else:
+            os.environ['LLMTOP_RUN_HISTORY_FILE'] = original_history
 
 
 def test_webui_energy_column_and_group_sum():

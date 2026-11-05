@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.36 — 05.11.2026
+
+- Open-WebUI-Runs werden im lokalen Collector zwischen Start und Abschluss energetisch gemessen.
+- Verwaiste WebUI-Energiesampler werden nach dem Run-TTL beendet; ältere Runs bleiben ohne nachträgliche Schätzung.
+
 ### 2.3.35 — 05.11.2026
 
 - Wh-Spalte für Open-WebUI-Runs in Aktuelle Runs und History ergänzt.
