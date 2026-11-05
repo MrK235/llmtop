@@ -1,4 +1,4 @@
-/* llmtop 2.2.18 – globale Pi-Erweiterung für datensparsame Run-Metriken.
+/* llmtop 2.2.19 – globale Pi-Erweiterung für datensparsame Run-Metriken.
  * Installation: nach ~/.pi/agent/extensions/ kopieren und Pi neu starten oder /reload.
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -17,6 +17,7 @@ type Run = {
   metrics: Record<string, number>;
   context_reader?: () => number | undefined;
   last_progress_at?: number;
+  turn_started_at?: number;
   heartbeat?: ReturnType<typeof setInterval>;
 };
 
@@ -70,8 +71,9 @@ function number(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : undefined;
 }
 
-function eventRun(run: Run): Omit<Run, "heartbeat" | "metrics" | "context_reader"> {
-  const { heartbeat: _heartbeat, metrics: _metrics, context_reader: _context_reader, ...event } = run;
+function eventRun(run: Run): Omit<Run, "heartbeat" | "metrics" | "context_reader" | "turn_started_at"> {
+  const { heartbeat: _heartbeat, metrics: _metrics, context_reader: _context_reader,
+    turn_started_at: _turn_started_at, ...event } = run;
   return event;
 }
 
@@ -152,6 +154,12 @@ function usageMetrics(message: any): Record<string, number> {
   if (result.prompt_tokens !== undefined && result.output_tokens !== undefined) {
     result.context_tokens = result.prompt_tokens + result.output_tokens;
   }
+  const durationMs = number(message?.durationMs);
+  if (durationMs !== undefined && durationMs > 0) {
+    // Pi misst die Dauer jeder einzelnen Provider-Antwort separat. Diese
+    // Dauer ist für Tok/s maßgeblich; die Agentenlaufzeit enthält auch Tools.
+    result.eval_duration_s = durationMs / 1000;
+  }
   return result;
 }
 
@@ -177,8 +185,13 @@ export default function (pi: ExtensionAPI) {
     if (!force && run.last_progress_at !== undefined && current - run.last_progress_at < 1000) return;
     run.last_progress_at = current;
     const duration = Math.max(0, (current - Date.parse(run.started_at)) / 1000);
+    const turnDuration = run.turn_started_at === undefined
+      ? undefined : Math.max(0, (current - run.turn_started_at) / 1000);
     const metrics = { ...run.metrics, total_duration_s: duration };
-    if (metrics.output_tokens !== undefined && duration > 0) metrics.eval_duration_s = duration;
+    if (metrics.output_tokens !== undefined && metrics.eval_duration_s === undefined) {
+      const responseDuration = turnDuration && turnDuration > 0 ? turnDuration : duration;
+      if (responseDuration > 0) metrics.eval_duration_s = responseDuration;
+    }
     send({ schema: 2, event: "updated", source: "pi", ...eventRun(run),
       updated_at: now(), ...metrics });
   };
@@ -190,8 +203,13 @@ export default function (pi: ExtensionAPI) {
     if (run.heartbeat) clearInterval(run.heartbeat);
     const finished_at = now();
     const duration = Math.max(0, (Date.parse(finished_at) - Date.parse(run.started_at)) / 1000);
+    const turnDuration = run.turn_started_at === undefined
+      ? undefined : Math.max(0, (Date.now() - run.turn_started_at) / 1000);
     const metrics = { ...run.metrics, total_duration_s: duration };
-    if (metrics.output_tokens !== undefined && duration > 0) metrics.eval_duration_s = duration;
+    if (metrics.output_tokens !== undefined && metrics.eval_duration_s === undefined) {
+      const responseDuration = turnDuration && turnDuration > 0 ? turnDuration : duration;
+      if (responseDuration > 0) metrics.eval_duration_s = responseDuration;
+    }
     send({ schema: 2, event, source: "pi", ...eventRun(run),
       updated_at: finished_at, finished_at, ...metrics });
   };
@@ -217,6 +235,18 @@ export default function (pi: ExtensionAPI) {
     // Session-Kontext kann sich auch ohne neue Provider-Usage durch Tool- und
     // Folgeturns ändern. Ein kurzer Takt hält die Anzeige aktuell.
     run.heartbeat = setInterval(() => progress(run, true), 1000);
+  });
+
+  pi.on("turn_start", () => {
+    if (!active) return;
+    active.turn_started_at = Date.now();
+    // Ein neuer Modellturn darf weder die Token noch die Antwortdauer des
+    // vorherigen Turns weiter für die laufende Rate verwenden.
+    delete active.metrics.prompt_tokens;
+    delete active.metrics.output_tokens;
+    delete active.metrics.context_tokens;
+    delete active.metrics.eval_duration_s;
+    progress(active, true);
   });
 
   pi.on("message_update", (event: any) => {

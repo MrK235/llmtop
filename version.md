@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.38 — 05.11.2026
+
+- Pi/OpenAI-Codex-Tok/s verwendet die gemessene Dauer der jeweiligen Provider-Antwort statt der gesamten Agentenlaufzeit.
+- `total_duration_s` bleibt als separate Agentenlaufzeit erhalten.
+
 ### 2.3.37 — 05.11.2026
 
 - Open-WebUI-Tool-Loops verwenden für den Kontext die Einzelaufruf-Token statt kumulierter `input_tokens`/`output_tokens`.

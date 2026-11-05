@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.37** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.3.38** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -212,7 +212,9 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   Stati Rot. Bei 40 Spalten werden die Verbindungsstati als `Ollama OK/OFF` und
   `OW Collector OK/OFF` verdichtet.
 * **Aktuelle Runs**: Pi und Open WebUI senden auf getrennten Collector-Pfaden (`/v1/runs/pi`, `/v1/runs/open-webui`) mit demselben Bearer-Token. Quelle und Provider (etwa `Pi/OpenAI`, `Pi/Ollama`, `Open WebUI/Ollama`), Status, Modell, Session-/Chat-/Message-IDs und verfügbare Token-/Dauerwerte bleiben getrennt. Aktive Runs beider Quellen stehen vor frischen Ergebnissen; gleichartige Identitätsblöcke zeigen jeweils `aktiv N · Ergebnis N`, ohne eine Quelle oder Identität vorzuziehen. Ein Abschluss bleibt höchstens zehn Sekunden sichtbar und wird danach atomar aus `run.jsonl` entfernt, bleibt aber in der begrenzten Run-History erhalten. Bei mehr Runs als sichtbaren Zeilen ist der Bereich mit `a` und den Scrolltasten erreichbar. Verwaiste nicht-finale Live-Einträge werden nach 90 Sekunden ohne Lebenszeichen entfernt und nicht als aktuelle Runs angezeigt. Lange Streams senden regelmäßig Lebenszeichen. Schema-1-Daten bleiben als `Legacy` lesbar. Status, Modell, Kontextlimit und grafischer Kontextverbrauch (Prompt- plus Ausgabetoken),
-  Prompt-/Ausgabe-/Gesamttoken und Ausgabe-Rate. `--chat` und `--generate`
+  Prompt-/Ausgabe-/Gesamttoken und Ausgabe-Rate. Pi/OpenAI-Codex verwendet für Tok/s die
+  gemessene Dauer der jeweiligen Provider-Antwort; die Laufzeit von Tool-Aufrufen und
+  übrigen Agenten-Folgeturns wird nicht fälschlich als Antwortdauer verwendet. `--chat` und `--generate`
   instrumentieren eigene direkte Ollama-Aufrufe ohne Reverse Proxy. Während
   des Streamings liefert Ollama keine Tokenwerte; bis zum Abschluss stehen sie
   daher als `n/a` da. Ohne Ereignis wird nichts geschätzt. Direkte lokale Runs speichern

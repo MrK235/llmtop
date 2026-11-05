@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.37** · Stand 05.11.2026 · Status: Korrektur der Open-WebUI-Tool-Use-Kontextmetriken.
+**Version 2.3.38** · Stand 05.11.2026 · Status: Korrekte Pi-Provider-Antwortdauer für Tok/s.
 
 ## Aktueller Stand
 
@@ -37,6 +37,12 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.38
+
+- Pi-Runs verwenden für `eval_duration_s` jetzt die von Pi gemessene Dauer der einzelnen Provider-Antwort (`message.durationMs`).
+- Die gesamte Agentenlaufzeit bleibt separat als `total_duration_s` erhalten; Tool-Aufrufe und Folgeturns drücken die Tok/s-Anzeige nicht mehr künstlich.
+- Während eines laufenden Turns wird nur dessen eigene verstrichene Zeit als Fallback verwendet.
 
 ## Neu in 2.3.37
 
