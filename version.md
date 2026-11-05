@@ -12,6 +12,12 @@ gebracht.
 
 ## Changelog
 
+### 2.3.35 — 05.11.2026
+
+- Wh-Spalte für Open-WebUI-Runs in Aktuelle Runs und History ergänzt.
+- Gruppenzeilen summieren die Wh-Werte der enthaltenen Open-WebUI-Runs.
+- Andere Quellen bleiben in der ersten Anzeige ohne Energiewert.
+
 ### 2.3.34 — 05.11.2026
 
 - Optionalen CPU-RAPL-Zugriff für direkte Runs über vorhandene nicht-interaktive sudo-Anmeldung ergänzt.

@@ -191,6 +191,21 @@ def test_history_groups_keep_all_runs_and_sources_separate():
         'group', 'group', 'run', 'run', 'group', 'run']
 
 
+def test_webui_energy_column_and_group_sum():
+    runs = [
+        {'run_id': 'web-1', 'source': 'open-webui', 'chat_id': 'chat', 'model': 'm',
+         'status': 'completed', 'finished_at': '2026-11-05T20:00:02Z',
+         'energy': {'energy_j': 3600}},
+        {'run_id': 'web-2', 'source': 'open-webui', 'chat_id': 'chat', 'model': 'm',
+         'status': 'completed', 'finished_at': '2026-11-05T20:00:01Z',
+         'energy': {'energy_j': 1800}},
+    ]
+    group = llmtop_tui.build_history_groups(runs)[0]
+    assert llmtop_tui._webui_energy_wh(runs[0]) == 1.0
+    assert llmtop_tui._webui_energy_wh({'source': 'pi', 'energy': {'energy_j': 3600}}) is None
+    assert group['aggregate']['energy']['energy_j'] == 5400
+
+
 def test_history_group_uses_latest_run_without_cross_run_fallbacks():
     runs = [
         {'run_id': 'old', 'source': 'pi', 'session_id': 's', 'model': 'old-model',

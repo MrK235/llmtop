@@ -509,7 +509,7 @@ def context_text(run, model=None):
 HISTORY_COLUMNS = ("zeit", "quelle", "modell", "status", "tokens", "kontext", "rate", "dauer")
 HISTORY_COLUMN_LABELS = {
     "zeit": "Zeit", "quelle": "Quelle", "modell": "Modell", "status": "Status",
-    "tokens": "Tokens", "kontext": "Kontext", "rate": "Tok/s", "dauer": "Dauer",
+    "tokens": "Tokens", "kontext": "Kontext", "rate": "Tok/s", "dauer": "Dauer", "wh": "Wh",
 }
 
 

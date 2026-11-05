@@ -107,6 +107,15 @@ def _latest_history_run(runs):
                                       str(run.get("run_id", ""))))
 
 
+def _webui_energy_wh(run):
+    """Liefert Energie nur für Open-WebUI-Runs in Wh."""
+    if not isinstance(run, dict) or run.get("source") != "open-webui":
+        return None
+    energy = run.get("energy")
+    value = energy.get("energy_j") if isinstance(energy, dict) else None
+    return value / 3600.0 if isinstance(value, (int, float)) and value >= 0 else None
+
+
 def aggregate_history_group(group):
     """Erzeugt die Gruppenzeile ausschließlich aus dem neuesten finalen Run."""
     latest = _latest_history_run(group["runs"])
@@ -126,6 +135,15 @@ def aggregate_history_group(group):
         if started and finished and finished >= started:
             aggregate["total_duration_s"] = (finished - started).total_seconds()
 
+    if aggregate.get("source") == "open-webui":
+        energies = [_webui_energy_wh(run) for run in group["runs"]]
+        if all(value is not None for value in energies):
+            aggregate["energy"] = {"energy_j": sum(energies) * 3600.0,
+                                     "energy_scope": "group-sum"}
+        else:
+            aggregate.pop("energy", None)
+    else:
+        aggregate.pop("energy", None)
     source = source_label(aggregate.get("source"), aggregate.get("provider"))
     if aggregate.get("source") == "open-webui":
         source = source.replace("Open WebUI", "WebUI", 1)
@@ -362,7 +380,7 @@ def _draw(scr, st, host, interval):
         # Quelle/Provider bleibt auch in schmalen Ansichten sichtbar; weitere
         # Spalten folgen, sobald der verfügbare Platz dies zulässt.
         if w >= 118:
-            names = ("zeit", "quelle", "modell", "status", "tokens", "kontext", "rate", "dauer")
+            names = ("zeit", "quelle", "modell", "status", "tokens", "kontext", "rate", "dauer", "wh")
         elif w >= 80:
             names = ("zeit", "quelle", "modell", "status", "tokens", "kontext")
         else:
@@ -431,6 +449,9 @@ def _draw(scr, st, host, interval):
         if column == "dauer":
             duration = _token_value(run, "total_duration_s")
             return f"{duration:.1f}s" if duration is not None else "n/a"
+        if column == "wh":
+            value = _webui_energy_wh(run)
+            return f"{value:.3f}" if value is not None else "n/a" if run.get("source") == "open-webui" else ""
         return ""
 
     def current_run_cell(run, column):

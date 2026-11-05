@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.34** · Stand 05.11.2026 · Status: Komponentenenergie für direkte lokale Ollama-Runs.
+**Version 2.3.35** · Stand 05.11.2026 · Status: Wh-Anzeige für Open-WebUI-Runs.
 
 ## Aktueller Stand
 
@@ -37,6 +37,12 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.35
+
+- Breite TUI-Tabellen zeigen `Wh` für Open-WebUI-Runs in Aktuelle Runs und History.
+- History-Gruppen summieren die Energiewerte aller enthaltenen Open-WebUI-Runs.
+- Andere Run-Quellen bleiben in dieser ersten Anzeige ohne Wh-Wert.
 
 ## Neu in 2.3.34
 
