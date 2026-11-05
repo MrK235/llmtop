@@ -754,18 +754,23 @@ def _draw(scr, st, host, interval):
             vram_value = f"{vram_pct:.1f} %" if vram_pct is not None else "n/a"
             row = sensor(row, "VRAM", vram_pct, vram_value,
                          f"{g['mem_used']:.0f} / {g['mem_total']:.0f} MiB")
-        if g["power_watt"] is not None:
-            limit = g.get("power_limit")
-            if limit and limit > 0:
-                power_pct = min(100.0, 100.0 * g["power_watt"] / limit)
-                power_value = f"{power_pct:.1f} %"
-                power_detail = f"{g['power_watt']:.1f} W / {limit:.0f} W"
-            else:
-                power_pct = min(100.0, 100.0 * g["power_watt"] / GPU_POWER_DISPLAY_SCALE_W)
-                power_value = f"{g['power_watt']:.1f} W"
-                power_detail = "keine Leistungsgrenze"
+        if g["power_watt"] is not None or g.get("power_scope") == "cpu":
             power_attr = (colors["secondary"]
                           if g.get("power_scope") == "cpu" else None)
+            if g["power_watt"] is None:
+                power_pct = None
+                power_value = "n/a"
+                power_detail = "keine GPU-Powerquelle"
+            else:
+                limit = g.get("power_limit")
+                if limit and limit > 0:
+                    power_pct = min(100.0, 100.0 * g["power_watt"] / limit)
+                    power_value = f"{power_pct:.1f} %"
+                    power_detail = f"{g['power_watt']:.1f} W / {limit:.0f} W"
+                else:
+                    power_pct = min(100.0, 100.0 * g["power_watt"] / GPU_POWER_DISPLAY_SCALE_W)
+                    power_value = f"{g['power_watt']:.1f} W"
+                    power_detail = "keine Leistungsgrenze"
             row = sensor(row, "Power", power_pct, power_value, power_detail,
                          value_attr=power_attr, meter_attr=power_attr,
                          label_attr=power_attr, bracket_attr=power_attr)

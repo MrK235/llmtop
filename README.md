@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.39** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.3.40** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -240,7 +240,8 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   und zuletzt RAPL. Die erste RAPL-Messung bleibt bis zum zweiten
   Zählerstand `n/a`; Quelle und echte Leistungsgrenze werden angezeigt.
   Der GPU1-Wert bleibt als CPU-/APU-Wert sichtbar und wird in der TUI
-  gedimmt dargestellt. Wenn RAPL nur für root lesbar ist, aktiviert `x`/`X` in
+  gedimmt dargestellt; fehlt er, erscheint dort `n/a`. Wenn RAPL nur für root
+  lesbar ist, aktiviert `x`/`X` in
   der TUI nach einer sichtbaren `sudo -v`-Abfrage einen begrenzten RAPL-Helper,
   ohne llmtop neu zu starten. CPU-Power-Wert und Balken werden auch ohne
   Leistungsgrenze sichtbar farbig hervorgehoben. Die Systemzeile heißt

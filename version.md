@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.40 — 05.11.2026
+
+- Fehlende GPU1-Power wird als gedimmtes `n/a` angezeigt.
+- Andere GPU-Powerwerte werden bei verfügbarer Quelle weiterhin dargestellt.
+
 ### 2.3.39 — 05.11.2026
 
 - Lokale AMD-APU-Power von GPU1 wird als CPU-Powerquelle vor CPU-hwmon,

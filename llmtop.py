@@ -8,7 +8,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.3.39"  # Single Source of Truth; History in version.md
+VERSION = "2.3.40"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -121,14 +121,17 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
             vram_pct = g["vram_pct"]
             pct_text = f"{vram_pct:.1f}%" if vram_pct is not None else "n/a"
             lines.append(f"  VRAM {bar(vram_pct, 12)} {pct_text}  {g['mem_used']:.0f} / {g['mem_total']:.0f} MiB")
-        if g["power_watt"] is not None:
-            limit = g.get("power_limit")
-            if limit and limit > 0:
-                power_pct = min(100.0, 100.0 * g["power_watt"] / limit)
-                lines.append(f"  Power {bar(power_pct, 12)} {power_pct:.1f}%  {g['power_watt']:.1f} W / {limit:.0f} W")
+        if g["power_watt"] is not None or g.get("power_scope") == "cpu":
+            if g["power_watt"] is None:
+                lines.append("  Power [            ] n/a (keine GPU-Powerquelle)")
             else:
-                power_pct = min(100.0, 100.0 * g["power_watt"] / GPU_POWER_DISPLAY_SCALE_W)
-                lines.append(f"  Power {bar(power_pct, 12)} {g['power_watt']:.1f} W (keine Grenze)")
+                limit = g.get("power_limit")
+                if limit and limit > 0:
+                    power_pct = min(100.0, 100.0 * g["power_watt"] / limit)
+                    lines.append(f"  Power {bar(power_pct, 12)} {power_pct:.1f}%  {g['power_watt']:.1f} W / {limit:.0f} W")
+                else:
+                    power_pct = min(100.0, 100.0 * g["power_watt"] / GPU_POWER_DISPLAY_SCALE_W)
+                    lines.append(f"  Power {bar(power_pct, 12)} {g['power_watt']:.1f} W (keine Grenze)")
     if st["ok"] and not st["error"]:
         if st["models"]:
             for m in st["models"]:

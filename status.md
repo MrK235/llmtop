@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.39** · Stand 05.11.2026 · Status: AMD-APU-Powerquelle und gedimmte GPU1-Anzeige korrigiert.
+**Version 2.3.40** · Stand 05.11.2026 · Status: Fehlende GPU1-Power wird als `n/a` angezeigt.
 
 ## Aktueller Stand
 
@@ -25,8 +25,9 @@ und Rot darunter; CPU/RAM bleibt gedimmt grau. Beide Anteile verwenden `#`.
 CPU-Power wird zuerst aus dem lokalen AMD-APU-Powerwert von GPU1, danach
 über eindeutig zugeordnete CPU-hwmon-Geräte und optional TUXEDO Control Center
 per lesendem D-Bus-Fallback gemessen; RAPL bleibt die letzte direkte Instanz.
-Der GPU1-Wert bleibt sichtbar, wird aber als CPU-/APU-Leistung gedimmt.
-Fehlende Berechtigungen oder Zählerstände bleiben als `n/a` sichtbar. History speichert begrenzte,
+Der GPU1-Wert bleibt sichtbar, wird aber als CPU-/APU-Leistung gedimmt;
+fehlt er, erscheint GPU1-Power als `n/a`. Andere vorhandene GPU-Powerwerte
+werden weiterhin angezeigt. Fehlende Berechtigungen oder Zählerstände bleiben als `n/a` sichtbar. History speichert begrenzte,
 datensparsame JSONL-Snapshots mit UTC-Zeitstempeln. Die Run-History hält bis zu 500 abgeschlossene Runs als scrollbare und sortierbare Tabelle vor; instrumentierte Runs enthalten optional Kontexttoken und Kontextlimit. Die TUI gruppiert diese Anzeige quellengetrennt nach Session-, Chat- oder Message-ID, lässt Gruppen per Cursor aufklappen und zeigt beim Aufklappen weiterhin jeden einzelnen Run.
 Aktive Run-Metriken können über einen token-geschützten lokalen HTTP-Collector
 (`POST /v1/runs`) geliefert werden. Er verwaltet mehrere parallele Runs,
@@ -38,6 +39,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.40
+
+- Fehlende GPU1-Power wird explizit als gedimmtes `n/a` angezeigt.
+- Andere GPU-Powerwerte bleiben sichtbar, sobald die jeweilige Quelle Daten liefert.
 
 ## Neu in 2.3.39
 
