@@ -754,6 +754,11 @@ def _draw(scr, st, host, interval):
             vram_value = f"{vram_pct:.1f} %" if vram_pct is not None else "n/a"
             row = sensor(row, "VRAM", vram_pct, vram_value,
                          f"{g['mem_used']:.0f} / {g['mem_total']:.0f} MiB")
+        # Die interne GPU1/AMD-APU liefert denselben CPU-Powerwert; bei
+        # vorhandener CPU-Power wird die doppelte GPU1-Zeile unterdrückt.
+        if (g.get("power_scope") == "cpu"
+                and st.get("cpu_power_watt") is not None):
+            continue
         if g["power_watt"] is not None or g.get("power_scope") == "cpu":
             power_attr = (colors["secondary"]
                           if g.get("power_scope") == "cpu" else None)

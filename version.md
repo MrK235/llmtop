@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.42 — 05.11.2026
+
+- Die interne GPU1-/APU-Powerzeile wird bei vorhandener CPU-Power nicht
+  doppelt dargestellt; andere GPU-Powerwerte bleiben sichtbar.
+
 ### 2.3.41 — 05.11.2026
 
 - Der Pi-Adapter liest den Session-Kontext unmittelbar vor dem Abschluss

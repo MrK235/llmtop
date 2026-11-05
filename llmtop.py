@@ -8,7 +8,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.3.41"  # Single Source of Truth; History in version.md
+VERSION = "2.3.42"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -121,6 +121,10 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
             vram_pct = g["vram_pct"]
             pct_text = f"{vram_pct:.1f}%" if vram_pct is not None else "n/a"
             lines.append(f"  VRAM {bar(vram_pct, 12)} {pct_text}  {g['mem_used']:.0f} / {g['mem_total']:.0f} MiB")
+        # Die interne GPU1/AMD-APU liefert denselben CPU-Powerwert; bei
+        # vorhandener CPU-Power wird die doppelte GPU1-Zeile unterdrückt.
+        if (g.get("power_scope") == "cpu" and power_watt is not None):
+            continue
         if g["power_watt"] is not None or g.get("power_scope") == "cpu":
             if g["power_watt"] is None:
                 lines.append("  Power [            ] n/a (keine GPU-Powerquelle)")
