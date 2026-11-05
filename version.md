@@ -12,6 +12,12 @@ gebracht.
 
 ## Changelog
 
+### 2.3.31 — 05.11.2026
+
+- Standard-Logging mit `--debug` und optionalem `--log-file` ergänzt.
+- TUI-Debugmeldungen werden ohne direkte Terminalausgabe in die lokale Zustandsdatei geschrieben.
+- Technische Diagnosepunkte für Ollama, GPU-Quellen, JSONL-Speicherung, Collector und RAPL ergänzt.
+
 ### 2.3.30 — 03.11.2026
 
 - Die zusätzliche Breite eingerückter Zeitfelder wird auch bei der gemeinsamen

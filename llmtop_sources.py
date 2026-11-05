@@ -2,6 +2,7 @@
 import csv
 import glob
 import io
+import logging
 import math
 import os
 import re
@@ -14,6 +15,8 @@ import time
 from datetime import datetime
 import urllib.request
 import json
+
+log = logging.getLogger(__name__)
 
 GPU_POWER_DISPLAY_SCALE_W = 115.0
 # Reine Darstellungsskala, keine gemeldete CPU-Leistungsgrenze.
@@ -51,6 +54,7 @@ def collect_ollama(host):
         st["models"] = models
     except Exception as exc:
         st["error"] = f"{type(exc).__name__}: {exc}"
+        log.debug("Ollama-Abfrage fehlgeschlagen: %s", exc, exc_info=True)
     return st
 def _read_text(path):
     try:
@@ -844,6 +848,8 @@ def collect_gpus(use_nvidia):
         else:
             gpus.append(item)
     gpus.extend(remaining)
+    log.debug("GPU-Quellen: nvidia=%s, sysfs=%s, Ergebnis=%s",
+              use_nvidia, len(sysfs), len(gpus))
     if not gpus:
         return [], "keine GPU-Quelle gefunden"
     return gpus, None

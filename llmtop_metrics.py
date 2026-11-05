@@ -1,6 +1,7 @@
 """Run-Metriken, JSONL-Historie, Collector und Open-WebUI-Integration."""
 import hmac
 import json
+import logging
 import os
 import sqlite3
 import subprocess
@@ -28,6 +29,8 @@ RUN_FILE_LOCK = threading.RLock()
 OPEN_WEBUI_FUNCTION_ID = "llmtop_run_metrics"
 LEGACY_OPEN_WEBUI_FUNCTION_IDS = ("otop_run_metrics",)
 PI_ADAPTER_FILENAME = "llmtop_run_metrics.ts"
+
+log = logging.getLogger(__name__)
 
 
 def history_path():
@@ -170,7 +173,8 @@ def write_jsonl(records, path):
             except OSError:
                 pass
             raise
-    except OSError:
+    except OSError as exc:
+        log.warning("JSONL-Datei konnte nicht geschrieben werden: %s (%s)", path, exc)
         return False
     return True
 
@@ -579,6 +583,7 @@ def process_run_event(event):
     run = normalize_run(event)
     if not run or event.get("schema") != 2 or event.get("event") not in {
             "started", "updated", "completed", "error", "cancelled"}:
+        log.debug("Collector-Ereignis abgelehnt: ungültiges Schema oder Ereignis")
         return False
     now = _utc_now()
     if event["event"] == "started" and not _parse_time(run.get("started_at")):
@@ -756,9 +761,11 @@ class CollectorService:
                 self.addresses.append(address)
         except OSError as exc:
             self.error = "extern/Port belegt" if getattr(exc, "errno", None) == 98 else f"Fehler: {exc}"
+            log.warning("Collector konnte nicht starten: %s", exc)
             self.stop()
             return False
         for server in self.servers:
+            log.debug("Collector lauscht auf %s:%s", server.server_address[0], server.server_address[1])
             threading.Thread(target=server.serve_forever, daemon=True).start()
         return True
 

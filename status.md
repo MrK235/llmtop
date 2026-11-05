@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.30** · Stand 03.11.2026 · Status: Vollständiges, eingerücktes Zeitfeld in History-Unterzeilen.
+**Version 2.3.31** · Stand 05.11.2026 · Status: Diagnose-Logging für CLI und TUI.
 
 ## Aktueller Stand
 
@@ -37,6 +37,12 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.31
+
+- Standard-Logging mit `--debug` und optionalem `--log-file` ergänzt.
+- Im TUI-Modus werden Debugmeldungen standardmäßig in `$XDG_STATE_HOME/llmtop/llmtop.log` geschrieben, damit die curses-Anzeige sauber bleibt.
+- Logs enthalten nur technische Diagnoseinformationen und keine Prompts, Modellantworten oder API-Schlüssel.
 
 ## Neu in 2.3.30
 

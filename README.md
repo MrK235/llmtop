@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.30** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.3.31** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -65,6 +65,8 @@ python3 llmtop.py --collector          # Loopback und privates Open-WebUI-Docker
 python3 llmtop.py --install-open-webui-adapter  # Filter per Open-WebUI-API installieren
 python3 llmtop.py --emit event.json    # Schema-2-Testevent an den Collector senden
 python3 llmtop.py --no-nvidia          # nvidia-smi überspringen (sysfs-Pfad)
+python3 llmtop.py --debug               # Diagnose-Logging aktivieren
+python3 llmtop.py --log-file llmtop.log # Diagnosemeldungen in Datei schreiben
 python3 llmtop.py --version            # Versionsnummer, danach Exit 0 (kein TUI)
 ```
 
@@ -79,6 +81,8 @@ Datenbank-Fallback kann `LLMTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 | `--interval` | Refresh-Sekunden im TUI; Default 0,5 s, **auf 0,2–60 s begrenzt** (`--interval 0.1` → 0,2 s) |
 | `--once` | ein Snapshot, kein Vollbild; ignoriert `--interval` (CPU-Messung 1 s) |
 | `--no-nvidia` | `nvidia-smi` nicht aufrufen, sysfs benutzen |
+| `--debug` | detaillierte Diagnosemeldungen aktivieren; im TUI-Modus standardmäßig nach `$XDG_STATE_HOME/llmtop/llmtop.log` schreiben |
+| `--log-file DATEI` | Diagnosemeldungen in die angegebene Datei schreiben; Datei und übergeordnete Verzeichnisse werden mit privaten Rechten angelegt |
 | `--chat JSON` | direkter Streaming-Aufruf an `/api/chat`, Abschlussmetriken lokal speichern |
 | `--generate JSON` | direkter Streaming-Aufruf an `/api/generate`, Abschlussmetriken lokal speichern |
 | `--collector` | lokalen, token-geschützten Collector für `POST /v1/runs` starten |

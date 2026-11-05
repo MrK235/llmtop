@@ -1,5 +1,6 @@
 """curses-Oberflaeche fuer llmtop."""
 import curses
+import logging
 import os
 import shutil
 import subprocess
@@ -19,6 +20,8 @@ from llmtop_metrics import (
     source_label, token_rate, total_tokens,
     write_history,
 )
+log = logging.getLogger(__name__)
+
 from llmtop_sources import (
     CPU_POWER_DISPLAY_SCALE_W, GPU_POWER_DISPLAY_SCALE_W, PrivilegedRaplReader,
     bar, collect_cpu_power,
@@ -1013,6 +1016,7 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
         except (OSError, PermissionError, subprocess.SubprocessError) as exc:
             with lock:
                 state["rapl_status"] = f"Fehler: {exc}"
+            log.warning("RAPL-Leser nicht aktiviert: %s", exc, exc_info=True)
             print(f"llmtop: RAPL-Leser nicht aktiviert: {exc}", file=sys.stderr, flush=True)
         finally:
             if suspended:

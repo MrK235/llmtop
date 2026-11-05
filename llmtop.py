@@ -1,13 +1,44 @@
 #!/usr/bin/env python3
 """llmtop - LLM Terminal Monitor für Ollama."""
 import argparse
+import logging
 import os
 import sys
 import urllib.error
 
-VERSION = "2.3.30"  # Single Source of Truth; History in version.md
+VERSION = "2.3.31"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
+
+
+def configure_logging(debug=False, log_file=None, tui=False):
+    """Konfiguriert Diagnose-Logging ohne die curses-TUI zu überschreiben."""
+    level = logging.DEBUG if debug else logging.WARNING
+    if tui and debug and not log_file:
+        state_home = os.environ.get("XDG_STATE_HOME", os.path.expanduser("~/.local/state"))
+        log_file = os.path.join(state_home, "llmtop", "llmtop.log")
+    if log_file:
+        path = os.path.abspath(os.path.expanduser(log_file))
+        directory = os.path.dirname(path)
+        if directory:
+            os.makedirs(directory, mode=0o700, exist_ok=True)
+        handler = logging.FileHandler(path, encoding="utf-8")
+        try:
+            os.chmod(path, 0o600)
+        except OSError:
+            pass
+        handlers = [handler]
+    elif tui:
+        handlers = [logging.NullHandler()]
+    else:
+        handlers = [logging.StreamHandler()]
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%S",
+        handlers=handlers,
+        force=True,
+    )
 
 
 def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
@@ -122,9 +153,19 @@ def main(argv=None):
     ap.add_argument("--collector-bind", help="Collector-Bind-Adresse (Default 127.0.0.1)")
     ap.add_argument("--collector-port", type=int, help="Collector-Port (Default 11435)")
     ap.add_argument("--once", action="store_true", help="ein Einzel-Snapshot, kein Vollbild")
+    ap.add_argument("--debug", action="store_true", help="detaillierte Diagnosemeldungen aktivieren")
+    ap.add_argument("--log-file", metavar="DATEI", help="Diagnosemeldungen in diese Datei schreiben")
     ap.add_argument("--no-nvidia", action="store_true", help="nvidia-smi nicht verwenden")
     ap.add_argument("--rapl-helper", action="store_true", help=argparse.SUPPRESS)
     args = ap.parse_args(argv)
+    is_tui = not (args.install_open_webui_adapter or args.collector or args.emit
+                  or args.chat or args.generate or args.once or args.rapl_helper)
+    try:
+        configure_logging(args.debug, args.log_file, tui=is_tui)
+    except OSError as exc:
+        sys.stderr.write(f"Logging konnte nicht eingerichtet werden: {type(exc).__name__}: {exc}\n")
+        return 2
+    logging.getLogger(__name__).debug("Start: once=%s, tui=%s", args.once, is_tui)
     if args.rapl_helper:
         from llmtop_sources import run_rapl_helper
         return run_rapl_helper()
