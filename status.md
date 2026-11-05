@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.32** · Stand 05.11.2026 · Status: I/O-, Sensor- und Debug-Optimierung.
+**Version 2.3.33** · Stand 05.11.2026 · Status: Komponentenenergie für direkte lokale Ollama-Runs.
 
 ## Aktueller Stand
 
@@ -37,6 +37,13 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.33
+
+- Direkte `--chat`-/`--generate`-Runs erfassen verfügbare Komponentenenergie zeitlich begrenzt.
+- CPU-RAPL-Zähler, AMD-sysfs-Leistung und kontinuierliche NVIDIA-`nvidia-smi`-Leistung werden als getrennte Quellen gespeichert.
+- Benchmarkkennzahlen wie Joule pro Ausgabe- oder Gesamttoken stehen über `energy_metrics()` bereit.
+- Überlappende CPU-/integrierte-GPU-Messbereiche werden nicht zu einer irreführenden Gesamtsumme addiert; Steckdosenmessung bleibt außerhalb des Umfangs.
 
 ## Neu in 2.3.32
 

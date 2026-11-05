@@ -8,7 +8,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.3.32"  # Single Source of Truth; History in version.md
+VERSION = "2.3.33"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -213,7 +213,8 @@ def main(argv=None):
     if args.chat or args.generate:
         try:
             payload = read_request_payload(args.chat or args.generate)
-            run_ollama_request(host, "/api/chat" if args.chat else "/api/generate", payload)
+            run_ollama_request(host, "/api/chat" if args.chat else "/api/generate", payload,
+                               use_nvidia=not args.no_nvidia)
             return 0
         except (OSError, ValueError, urllib.error.URLError) as exc:
             sys.stderr.write(f"Ollama-Run fehlgeschlagen: {type(exc).__name__}: {exc}\n")

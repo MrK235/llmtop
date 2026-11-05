@@ -12,7 +12,7 @@ import subprocess
 import sys
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 import urllib.request
 import json
 
@@ -896,6 +896,197 @@ def collect_gpus(use_nvidia):
     if not gpus:
         return [], "keine GPU-Quelle gefunden"
     return gpus, None
+
+
+def _utc_timestamp():
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _read_rapl_energy():
+    """Liest den ersten zugänglichen CPU-Package-Energiezähler in Joule."""
+    for directory, name in _powercap_zones():
+        value = _read_float(os.path.join(directory, "energy_uj"))
+        if value is not None and value >= 0:
+            return {"scope": f"cpu-package:{name}", "energy_j": value / 1_000_000.0}
+    return None
+
+
+def _sysfs_gpu_power_sources():
+    """Liefert AMD-GPU-Leistungspfade für die Energieintegration."""
+    sources = []
+    for static in _sysfs_gpu_layout():
+        if static.get("vendor") != "AMD":
+            continue
+        device = static["device"]
+        paths = []
+        for hwmon in _gpu_hwmon_dirs(device):
+            paths.extend(sorted(glob.glob(os.path.join(hwmon, "power*_average"))))
+            paths.extend(sorted(glob.glob(os.path.join(hwmon, "power*_input"))))
+        if paths:
+            sources.append({"path": paths[0],
+                            "scope": f"gpu:{static.get('pci_id') or static['name']}",
+                            "source": "amd-sysfs"})
+    return sources
+
+
+class _NvidiaPowerReader:
+    """Liest NVIDIA-Leistung kontinuierlich und integriert sie zeitlich."""
+    def __init__(self, interval_ms=200):
+        self.interval_ms = interval_ms
+        self.process = None
+        self.thread = None
+        self.stop_event = threading.Event()
+        self.lock = threading.Lock()
+        self.values = {}
+
+    def start(self):
+        command = _nvidia_command()
+        if not command:
+            return False
+        try:
+            self.process = subprocess.Popen(
+                [command, "--query-gpu=pci.bus_id,power.draw",
+                 "--format=csv,noheader,nounits", f"--loop-ms={self.interval_ms}"],
+                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                text=True, bufsize=1, close_fds=True)
+        except OSError:
+            return False
+        self.thread = threading.Thread(target=self._read, name="llmtop-nvidia-energy",
+                                       daemon=True)
+        self.thread.start()
+        return True
+
+    def _read(self):
+        try:
+            for raw in self.process.stdout:
+                if self.stop_event.is_set():
+                    break
+                values = next(csv.reader([raw]), [])
+                if len(values) != 2:
+                    continue
+                pci_id = _normalize_pci_id(values[0])
+                power = _number(values[1])
+                if not pci_id or power is None or not math.isfinite(power) or power < 0:
+                    continue
+                now = time.monotonic()
+                with self.lock:
+                    item = self.values.get(pci_id)
+                    if item is None:
+                        self.values[pci_id] = {"power_w": power, "last_t": now,
+                                               "energy_j": 0.0, "samples": 1}
+                    else:
+                        dt = max(0.0, now - item["last_t"])
+                        item["energy_j"] += (item["power_w"] + power) * 0.5 * dt
+                        item.update(power_w=power, last_t=now, samples=item["samples"] + 1)
+        except (OSError, TypeError, ValueError):
+            return
+
+    def stop(self):
+        if self.process is None:
+            return []
+        self.stop_event.set()
+        if self.process.poll() is None:
+            self.process.terminate()
+            try:
+                self.process.wait(timeout=1.0)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+                self.process.wait(timeout=1.0)
+        if self.thread is not None:
+            self.thread.join(timeout=1.0)
+        with self.lock:
+            values = [dict(item, pci_id=pci_id) for pci_id, item in self.values.items()]
+        try:
+            self.process.stdout.close()
+        except (AttributeError, OSError):
+            pass
+        return values
+
+
+class EnergyMonitor:
+    """Misst lokale Komponentenenergie während eines begrenzten Vorgangs."""
+    def __init__(self, interval=0.2, use_nvidia=True):
+        self.interval = max(0.1, float(interval))
+        self.use_nvidia = use_nvidia
+        self.started_at = None
+        self.started_mono = None
+        self.stop_event = threading.Event()
+        self.thread = None
+        self.amd_sources = []
+        self.amd_values = {}
+        self.rapl_start = None
+        self.nvidia = _NvidiaPowerReader(round(self.interval * 1000)) if use_nvidia else None
+
+    def start(self):
+        self.started_at = _utc_timestamp()
+        self.started_mono = time.monotonic()
+        self.rapl_start = _read_rapl_energy()
+        self.amd_sources = _sysfs_gpu_power_sources()
+        if self.nvidia is not None:
+            self.nvidia.start()
+        self.thread = threading.Thread(target=self._sample_amd, name="llmtop-amd-energy",
+                                       daemon=True)
+        self.thread.start()
+        return self
+
+    def _sample_amd(self):
+        while not self.stop_event.is_set():
+            now = time.monotonic()
+            for source in self.amd_sources:
+                watt = _read_float(source["path"], 1e-6)
+                if watt is None or not math.isfinite(watt) or watt < 0:
+                    continue
+                item = self.amd_values.get(source["scope"])
+                if item is None:
+                    self.amd_values[source["scope"]] = {
+                        "source": source["source"], "scope": source["scope"],
+                        "power_w": watt, "last_t": now, "energy_j": 0.0, "samples": 1}
+                else:
+                    dt = max(0.0, now - item["last_t"])
+                    item["energy_j"] += (item["power_w"] + watt) * 0.5 * dt
+                    item.update(power_w=watt, last_t=now, samples=item["samples"] + 1)
+            self.stop_event.wait(self.interval)
+
+    def stop(self):
+        if self.started_mono is None:
+            return None
+        self.stop_event.set()
+        if self.thread is not None:
+            self.thread.join(timeout=max(1.0, self.interval * 3))
+        if self.nvidia is not None:
+            nvidia_values = self.nvidia.stop()
+        else:
+            nvidia_values = []
+        rapl_end = _read_rapl_energy()
+        finished_at = _utc_timestamp()
+        sources = []
+        for item in self.amd_values.values():
+            sources.append({"source": item["source"], "scope": item["scope"],
+                            "energy_j": item["energy_j"], "samples": item["samples"]})
+        for item in nvidia_values:
+            sources.append({"source": "nvidia-smi", "scope": f"gpu:{item['pci_id']}",
+                            "energy_j": item["energy_j"], "samples": item["samples"]})
+        if self.rapl_start and rapl_end and self.rapl_start["scope"] == rapl_end["scope"]:
+            delta = max(0.0, rapl_end["energy_j"] - self.rapl_start["energy_j"])
+            sources.append({"source": "rapl", "scope": rapl_end["scope"],
+                            "energy_j": delta, "samples": 2})
+        if not sources:
+            return None
+        has_rapl = any(item["source"] == "rapl" for item in sources)
+        has_amd = any(item["source"] == "amd-sysfs" for item in sources)
+        total = None if has_rapl and has_amd else sum(item["energy_j"] for item in sources)
+        return {
+            "energy_j": total,
+            "energy_incremental_j": None,
+            "energy_source": "component-telemetry",
+            "energy_scope": "overlap-unknown" if total is None else "component-sum",
+            "energy_sample_count": sum(item["samples"] for item in sources),
+            "measurement_started_at": self.started_at,
+            "measurement_finished_at": finished_at,
+            "baseline_power_w": None,
+            "duration_s": max(0.0, time.monotonic() - self.started_mono),
+            "sources": sources,
+        }
 
 
 def fmt_bytes(n):

@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.32** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.3.33** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -83,8 +83,8 @@ Datenbank-Fallback kann `LLMTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 | `--no-nvidia` | `nvidia-smi` nicht aufrufen, sysfs benutzen |
 | `--debug` | detaillierte Diagnosemeldungen aktivieren; im TUI-Modus standardmäßig nach `$XDG_STATE_HOME/llmtop/llmtop.log` schreiben |
 | `--log-file DATEI` | Diagnosemeldungen in die angegebene Datei schreiben; private Datei mit 1 MiB/3 Rotationen |
-| `--chat JSON` | direkter Streaming-Aufruf an `/api/chat`, Abschlussmetriken lokal speichern |
-| `--generate JSON` | direkter Streaming-Aufruf an `/api/generate`, Abschlussmetriken lokal speichern |
+| `--chat JSON` | direkter Streaming-Aufruf an `/api/chat`, Abschlussmetriken und verfügbare Komponentenenergie lokal speichern |
+| `--generate JSON` | direkter Streaming-Aufruf an `/api/generate`, Abschlussmetriken und verfügbare Komponentenenergie lokal speichern |
 | `--collector` | lokalen, token-geschützten Collector für `POST /v1/runs` starten |
 | `--collector-bind` / `--collector-port` | Listen-Adresse und Port; Default bleibt `127.0.0.1:11435` |
 | `--emit DATEI` | Schema-2-Event aus Datei oder `-` für stdin an den Collector senden |
@@ -213,7 +213,11 @@ Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
   Prompt-/Ausgabe-/Gesamttoken und Ausgabe-Rate. `--chat` und `--generate`
   instrumentieren eigene direkte Ollama-Aufrufe ohne Reverse Proxy. Während
   des Streamings liefert Ollama keine Tokenwerte; bis zum Abschluss stehen sie
-  daher als `n/a` da. Ohne Ereignis wird nichts geschätzt.
+  daher als `n/a` da. Ohne Ereignis wird nichts geschätzt. Direkte lokale Runs speichern
+  zusätzlich verfügbare Komponentenenergie aus CPU-RAPL, AMD-sysfs und NVIDIA-
+  `nvidia-smi`; die Quellen werden getrennt ausgewiesen und bei möglicher
+  Überlappung nicht zu einer Gesamtsumme addiert. Eine Steckdosenmessung ist
+  nicht enthalten.
 * **Geladene Modelle** (`/api/ps`): Name, Parametergröße, Quantisierung,
   `context_length`, Runner, Restzeit bis Auto-Unload (`expires_at`),
   `size_vram` / `size` → Aufteilung GPU % / CPU %. Der Ollama-Bereich ist in

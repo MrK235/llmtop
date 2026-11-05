@@ -33,6 +33,28 @@ def test_history_group_is_gray_and_cursor_is_not_bold():
         curses.color_pair = original_color_pair
 
 
+def test_energy_metrics_and_normalization():
+    run = {
+        'schema': 2, 'run_id': 'energy', 'source': 'ollama-cli', 'model': 'model',
+        'status': 'completed', 'finished_at': '2026-11-05T20:00:01Z',
+        'prompt_tokens': 100, 'output_tokens': 50,
+        'energy': {
+            'energy_j': 12.5, 'energy_scope': 'component-sum',
+            'energy_source': 'component-telemetry',
+            'measurement_started_at': '2026-11-05T20:00:00Z',
+            'measurement_finished_at': '2026-11-05T20:00:01Z',
+            'sources': [{'source': 'nvidia-smi', 'scope': 'gpu:0',
+                         'energy_j': 12.5, 'samples': 5}],
+        },
+    }
+    normalized = llmtop.normalize_run(run, final=True)
+    assert normalized['energy']['energy_j'] == 12.5
+    assert normalized['energy']['sources'][0]['samples'] == 5
+    metrics = llmtop.energy_metrics(normalized)
+    assert metrics['joule_per_output_token'] == 0.25
+    assert metrics['joule_per_1000_total_tokens'] == 83.33333333333333
+
+
 def test_run_metric_detail():
     assert llmtop.run_metric_detail({}) == 'Tokens: warten auf Provider · Tok/s: n/a'
     text = llmtop.run_metric_detail({'prompt_tokens': 1000, 'output_tokens': 250,

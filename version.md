@@ -12,6 +12,12 @@ gebracht.
 
 ## Changelog
 
+### 2.3.33 — 05.11.2026
+
+- Komponentenenergie für direkte lokale `--chat`-/`--generate`-Runs ergänzt.
+- RAPL-Zähler sowie AMD-sysfs- und NVIDIA-Leistungsintegration als getrennte Quellen gespeichert.
+- Benchmarkkennzahlen pro Ausgabe- und Gesamttoken ergänzt; keine Steckdosenmessung.
+
 ### 2.3.32 — 05.11.2026
 
 - System-Snapshot-History im TUI-Modus auf höchstens einen Schreibvorgang je fünf Sekunden gedrosselt.

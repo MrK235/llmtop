@@ -15,7 +15,7 @@ import uuid
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from llmtop_sources import normalize_host
+from llmtop_sources import EnergyMonitor, normalize_host
 
 DEFAULT_COLLECTOR_URL = "http://127.0.0.1:11435"
 DEFAULT_HISTORY_LIMIT = 500
@@ -81,6 +81,46 @@ def load_dotenv(path=".env"):
         pass
 
 
+def normalize_energy(value):
+    """Validiert datensparsame Energie-Messdaten eines lokalen Runs."""
+    if not isinstance(value, dict):
+        return None
+    result = {}
+    for key in ("energy_j", "energy_incremental_j", "baseline_power_w", "duration_s"):
+        item = value.get(key)
+        if isinstance(item, (int, float)) and not isinstance(item, bool) and item >= 0:
+            result[key] = float(item)
+    for key in ("energy_source", "energy_scope"):
+        item = value.get(key)
+        if isinstance(item, str) and item:
+            result[key] = item[:80]
+    for key in ("measurement_started_at", "measurement_finished_at"):
+        if _parse_time(value.get(key)):
+            result[key] = value[key]
+    samples = value.get("energy_sample_count")
+    if isinstance(samples, int) and not isinstance(samples, bool) and samples >= 0:
+        result["energy_sample_count"] = samples
+    sources = []
+    for item in value.get("sources", ()):
+        if not isinstance(item, dict):
+            continue
+        source = item.get("source")
+        scope = item.get("scope")
+        energy = item.get("energy_j")
+        count = item.get("samples")
+        if (not isinstance(source, str) or not source or not isinstance(scope, str)
+                or not scope or not isinstance(energy, (int, float))
+                or isinstance(energy, bool) or energy < 0):
+            continue
+        entry = {"source": source[:80], "scope": scope[:120], "energy_j": float(energy)}
+        if isinstance(count, int) and not isinstance(count, bool) and count >= 0:
+            entry["samples"] = count
+        sources.append(entry)
+    if sources:
+        result["sources"] = sources[:16]
+    return result or None
+
+
 def normalize_run(run, final=False):
     """Validiert Schema 1/2 und normalisiert auf das persistierte Schema 2."""
     if not isinstance(run, dict) or not isinstance(run.get("run_id"), str) or not run["run_id"]:
@@ -129,6 +169,9 @@ def normalize_run(run, final=False):
         if isinstance(value, str) and value:
             # Provider-Metadaten bleiben klein und enthalten keine Inhalte.
             out[key] = value[:120]
+    energy = normalize_energy(run.get("energy"))
+    if energy:
+        out["energy"] = energy
     if "context_tokens" not in out and "prompt_tokens" in out and "output_tokens" in out:
         out["context_tokens"] = out["prompt_tokens"] + out["output_tokens"]
     if status in FINAL_RUN_EVENTS and not _parse_time(out.get("finished_at")):
@@ -330,6 +373,28 @@ def clear_run_history(path=None):
 def _token_value(run, key):
     value = run.get(key)
     return value if isinstance(value, (int, float)) and value >= 0 else None
+
+
+def energy_metrics(run):
+    """Berechnet benchmarkfähige Energiekennzahlen aus einem finalen Run."""
+    energy = run.get("energy") if isinstance(run, dict) else None
+    gross = energy.get("energy_j") if isinstance(energy, dict) else None
+    result = {"energy_j": gross, "energy_incremental_j": None,
+              "joule_per_output_token": None, "joule_per_total_token": None,
+              "joule_per_1000_output_tokens": None, "joule_per_1000_total_tokens": None}
+    if not isinstance(energy, dict):
+        return result
+    incremental = energy.get("energy_incremental_j")
+    result["energy_incremental_j"] = incremental if isinstance(incremental, (int, float)) else None
+    output = _token_value(run, "output_tokens")
+    total = total_tokens(run)
+    if isinstance(gross, (int, float)) and output:
+        result["joule_per_output_token"] = gross / output
+        result["joule_per_1000_output_tokens"] = gross * 1000.0 / output
+    if isinstance(gross, (int, float)) and total:
+        result["joule_per_total_token"] = gross / total
+        result["joule_per_1000_total_tokens"] = gross * 1000.0 / total
+    return result
 
 
 def token_rate(run):
@@ -939,7 +1004,7 @@ def emit_run_event(path):
         return response.status == 202
 
 
-def final_run(run, response=None, error=None):
+def final_run(run, response=None, error=None, energy=None):
     """Erzeugt aus der finalen Ollama-Antwort ein persistierbares Run-Ereignis."""
     result = dict(run)
     options = run.get("options") if isinstance(run.get("options"), dict) else {}
@@ -949,6 +1014,8 @@ def final_run(run, response=None, error=None):
         result["context_limit_source"] = "request"
     result["finished_at"] = _utc_now()
     result["updated_at"] = result["finished_at"]
+    if energy:
+        result["energy"] = energy
     if error:
         result["status"] = "error"
         result["error"] = str(error)
@@ -972,8 +1039,8 @@ def final_run(run, response=None, error=None):
     return result
 
 
-def run_ollama_request(host, endpoint, payload):
-    """Direkter opt-in Ollama-Client; kein Server und kein Reverse Proxy."""
+def run_ollama_request(host, endpoint, payload, use_nvidia=True):
+    """Direkter opt-in Ollama-Client mit optionaler Komponentenenergiemessung."""
     model = payload.get("model")
     if not isinstance(model, str) or not model:
         raise ValueError("--chat/--generate benötigt ein Modell im JSON-Payload")
@@ -987,6 +1054,7 @@ def run_ollama_request(host, endpoint, payload):
         host.rstrip("/") + endpoint, data=json.dumps(payload).encode("utf-8"),
         headers={"Content-Type": "application/json"}, method="POST")
     final = None
+    energy_monitor = EnergyMonitor(use_nvidia=use_nvidia).start()
     try:
         with urllib.request.urlopen(request, timeout=600) as response:
             for raw in response:
@@ -1001,12 +1069,14 @@ def run_ollama_request(host, endpoint, payload):
                     break
         if final is None:
             raise ValueError("Ollama lieferte kein finales done-Objekt")
-        result = final_run(run, final)
+        energy = energy_monitor.stop()
+        result = final_run(run, final, energy=energy)
         append_run_history(result)
         write_live_run(result)
         return result
     except Exception as exc:
-        result = final_run(run, error=exc)
+        energy = energy_monitor.stop()
+        result = final_run(run, error=exc, energy=energy)
         append_run_history(result)
         write_live_run(result)
         raise
