@@ -12,6 +12,13 @@ gebracht.
 
 ## Changelog
 
+### 2.3.32 — 05.11.2026
+
+- System-Snapshot-History im TUI-Modus auf höchstens einen Schreibvorgang je fünf Sekunden gedrosselt.
+- Stabile sysfs-/PCI-/hwmon-GPU-Metadaten zwischen Samples gecacht.
+- Wiederkehrende Debugmeldungen gedrosselt und Logdateien auf 1 MiB mit drei Rotationen begrenzt.
+- Unbenutzte Imports und dynamische CLI-Imports bereinigt.
+
 ### 2.3.31 — 05.11.2026
 
 - Standard-Logging mit `--debug` und optionalem `--log-file` ergänzt.

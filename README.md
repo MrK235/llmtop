@@ -11,7 +11,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.31** · Python-Terminal-Anwendung aus der Standardbibliothek.
+> **Version 2.3.32** · Python-Terminal-Anwendung aus der Standardbibliothek.
 > llmtop liest den Ollama-Status und lokale System-Sensoren direkt aus und
 > zeigt laufende sowie abgeschlossene Modell-Runs datensparsam im Terminal.
 
@@ -82,7 +82,7 @@ Datenbank-Fallback kann `LLMTOP_OPEN_WEBUI_DB` auf einen zugänglichen Pfad zu
 | `--once` | ein Snapshot, kein Vollbild; ignoriert `--interval` (CPU-Messung 1 s) |
 | `--no-nvidia` | `nvidia-smi` nicht aufrufen, sysfs benutzen |
 | `--debug` | detaillierte Diagnosemeldungen aktivieren; im TUI-Modus standardmäßig nach `$XDG_STATE_HOME/llmtop/llmtop.log` schreiben |
-| `--log-file DATEI` | Diagnosemeldungen in die angegebene Datei schreiben; Datei und übergeordnete Verzeichnisse werden mit privaten Rechten angelegt |
+| `--log-file DATEI` | Diagnosemeldungen in die angegebene Datei schreiben; private Datei mit 1 MiB/3 Rotationen |
 | `--chat JSON` | direkter Streaming-Aufruf an `/api/chat`, Abschlussmetriken lokal speichern |
 | `--generate JSON` | direkter Streaming-Aufruf an `/api/generate`, Abschlussmetriken lokal speichern |
 | `--collector` | lokalen, token-geschützten Collector für `POST /v1/runs` starten |
@@ -183,7 +183,7 @@ bleiben `n/a`. Die Daten bleiben
 als begrenzte JSONL-Datei gespeichert; eine Datenbank ist bei 500 Einträgen
 nicht nötig. Zusätzlich speichert llmtop lokale, begrenzte System-Snapshots. Der
 Snapshot-Pfad kann über `LLMTOP_HISTORY_FILE`, die Run-Historie über
-`LLMTOP_RUN_HISTORY_FILE` oder `XDG_STATE_HOME` angepasst werden.
+`LLMTOP_RUN_HISTORY_FILE` oder `XDG_STATE_HOME` angepasst werden. Im TUI-Modus werden System-Snapshots aus Rücksicht auf I/O höchstens alle fünf Sekunden persistiert; die Live-Anzeige aktualisiert sich weiterhin mit dem eingestellten Intervall. `--once` schreibt sofort einen Snapshot.
 
 ## Angezeigte Werte
 

@@ -1,14 +1,28 @@
 #!/usr/bin/env python3
 """llmtop - LLM Terminal Monitor für Ollama."""
 import argparse
+import json
 import logging
+from logging.handlers import RotatingFileHandler
 import os
 import sys
 import urllib.error
 
-VERSION = "2.3.31"  # Single Source of Truth; History in version.md
+VERSION = "2.3.32"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
+
+
+class PrivateRotatingFileHandler(RotatingFileHandler):
+    """Rotierender Handler mit privaten Dateirechten."""
+
+    def _open(self):
+        stream = super()._open()
+        try:
+            os.chmod(self.baseFilename, 0o600)
+        except OSError:
+            pass
+        return stream
 
 
 def configure_logging(debug=False, log_file=None, tui=False):
@@ -22,7 +36,8 @@ def configure_logging(debug=False, log_file=None, tui=False):
         directory = os.path.dirname(path)
         if directory:
             os.makedirs(directory, mode=0o700, exist_ok=True)
-        handler = logging.FileHandler(path, encoding="utf-8")
+        handler = PrivateRotatingFileHandler(
+            path, maxBytes=1_048_576, backupCount=3, encoding="utf-8")
         try:
             os.chmod(path, 0o600)
         except OSError:
@@ -46,7 +61,7 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
     from llmtop_metrics import (backfill_context_limits, collector_config, context_text,
                               format_run_line, load_run_events, load_run_history,
                               model_for_run, run_metric_detail, snapshot_record,
-                              source_label, token_rate, write_history)
+                              source_label, write_history, _parse_time)
     from llmtop_sources import (CPU_POWER_DISPLAY_SCALE_W, GPU_POWER_DISPLAY_SCALE_W,
                               bar, collect_gpus,
                               collect_ollama, cpu_count, cpu_name, cpu_percent,
@@ -131,7 +146,7 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
         lines.append("Aktuelle Runs: keine instrumentierten Requests")
     lines.append(f"History-Snapshots {'aktiv' if history_ok else 'nicht verfügbar'}")
     for item in runs:
-        finished = __import__('llmtop_metrics')._parse_time(item.get("finished_at"))
+        finished = _parse_time(item.get("finished_at"))
         when = finished.strftime("%H:%M") if finished else "?"
         lines.append(format_run_line(item, f"Run-History {when}  {source_label(item.get('source'), item.get('provider'))}  "
                                      f"{item['model']}  {item['status']}  ",
@@ -192,7 +207,7 @@ def main(argv=None):
     if args.emit:
         try:
             return 0 if emit_run_event(args.emit) else 2
-        except (OSError, ValueError, urllib.error.URLError, __import__('json').JSONDecodeError) as exc:
+        except (OSError, ValueError, urllib.error.URLError, json.JSONDecodeError) as exc:
             sys.stderr.write(f"Event konnte nicht gesendet werden: {type(exc).__name__}: {exc}\n")
             return 2
     if args.chat or args.generate:

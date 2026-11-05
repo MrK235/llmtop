@@ -25,6 +25,12 @@ VENDOR_NAMES = {
     "0x10de": "NVIDIA", "0x1002": "AMD", "0x8086": "Intel",
     "0x15ad": "VMware", "0x1af4": "Virtio",
 }
+_SYSFS_GPU_LAYOUT = None
+_SYSFS_GPU_SIGNATURE = None
+_GPU_HWMON_DIR_CACHE = {}
+_LAST_OLLAMA_ERROR = None
+_LAST_GPU_DEBUG_STATE = None
+
 def http_json(host, path, timeout=2.0):
     with urllib.request.urlopen(host.rstrip("/") + path, timeout=timeout) as resp:
         payload = json.loads(resp.read().decode("utf-8"))
@@ -44,6 +50,7 @@ def normalize_host(value):
 
 
 def collect_ollama(host):
+    global _LAST_OLLAMA_ERROR
     st = {"ok": False, "version": None, "models": [], "error": None}
     try:
         st["version"] = http_json(host, "/api/version").get("version")
@@ -54,7 +61,15 @@ def collect_ollama(host):
         st["models"] = models
     except Exception as exc:
         st["error"] = f"{type(exc).__name__}: {exc}"
-        log.debug("Ollama-Abfrage fehlgeschlagen: %s", exc, exc_info=True)
+        now = time.monotonic()
+        if (_LAST_OLLAMA_ERROR is None or _LAST_OLLAMA_ERROR[0] != st["error"]
+                or now - _LAST_OLLAMA_ERROR[1] >= 60.0):
+            log.debug("Ollama-Abfrage fehlgeschlagen: %s", exc, exc_info=True)
+        _LAST_OLLAMA_ERROR = (st["error"], now)
+    else:
+        if _LAST_OLLAMA_ERROR is not None:
+            log.debug("Ollama-Abfrage wieder verfügbar")
+        _LAST_OLLAMA_ERROR = None
     return st
 def _read_text(path):
     try:
@@ -729,6 +744,11 @@ def _gpu_util(device):
 
 def _gpu_hwmon_dirs(device):
     device_real = os.path.realpath(device)
+    cached = _GPU_HWMON_DIR_CACHE.get(device_real)
+    if cached is not None and all(os.path.exists(path) for path in cached):
+        return list(cached)
+    if cached is not None:
+        _GPU_HWMON_DIR_CACHE.pop(device_real, None)
     candidates = glob.glob("/sys/class/hwmon/hwmon*")
     candidates += glob.glob(os.path.join(device, "hwmon", "hwmon*"))
     result = []
@@ -737,7 +757,9 @@ def _gpu_hwmon_dirs(device):
         if real == device_real or real.startswith(device_real + os.sep):
             if path not in result:
                 result.append(path)
-    return sorted(result)
+    result = sorted(result)
+    _GPU_HWMON_DIR_CACHE[device_real] = tuple(result)
+    return result
 
 
 def _gpu_hwmon_values(device):
@@ -787,22 +809,24 @@ def _read_vram(device):
     return used, total, pct
 
 
-def sysfs_gpus():
-    gpus = []
+def _sysfs_gpu_layout():
+    """Ermittelt stabile GPU-Metadaten und hält sie zwischen Samples vor."""
+    global _SYSFS_GPU_LAYOUT, _SYSFS_GPU_SIGNATURE
     cards = [path for path in glob.glob("/sys/class/drm/card[0-9]*")
              if re.search(r"card(\d+)$", path)]
     cards.sort(key=lambda path: int(re.search(r"card(\d+)$", path).group(1)))
-    for card in cards:
-        device = os.path.join(card, "device")
-        if not os.path.exists(device):
-            continue
+    devices = [(card, os.path.join(card, "device")) for card in cards
+               if os.path.exists(os.path.join(card, "device"))]
+    signature = tuple((card, os.path.realpath(device)) for card, device in devices)
+    if _SYSFS_GPU_LAYOUT is not None and signature == _SYSFS_GPU_SIGNATURE:
+        return _SYSFS_GPU_LAYOUT
+    layout = []
+    _GPU_HWMON_DIR_CACHE.clear()
+    for _card, device in devices:
         vendor_id = (_read_text(os.path.join(device, "vendor")) or "").lower()
         vendor = VENDOR_NAMES.get(vendor_id, "GPU")
         driver_path = os.path.realpath(os.path.join(device, "driver"))
         driver = os.path.basename(driver_path) if driver_path else None
-        busy = _gpu_util(device)
-        mem_used, mem_total, vram_pct = _read_vram(device)
-        temp_c, temp_source, power_watt, power_limit = _gpu_hwmon_values(device)
         pci_id = _normalize_pci_id(os.path.basename(os.path.realpath(device)))
         pci_name = _pci_device_name(device)
         vendor_short = vendor_id[2:] if vendor_id.startswith("0x") else vendor_id
@@ -811,11 +835,25 @@ def sysfs_gpus():
         name = (_read_text(os.path.join(device, "product_name")) or
                 (f"{vendor} {pci_name}" if pci_name else None) or
                 (f"{vendor} GPU ({fallback_id})" if fallback_id else f"{vendor} GPU"))
+        layout.append({"device": device, "name": name, "source": "sysfs",
+                       "pci_id": pci_id, "vendor": vendor, "driver": driver})
+    _SYSFS_GPU_SIGNATURE = signature
+    _SYSFS_GPU_LAYOUT = layout
+    return layout
+
+
+def sysfs_gpus():
+    gpus = []
+    for static in _sysfs_gpu_layout():
+        device = static["device"]
+        busy = _gpu_util(device)
+        mem_used, mem_total, vram_pct = _read_vram(device)
+        temp_c, temp_source, power_watt, power_limit = _gpu_hwmon_values(device)
         gpus.append({
-            "name": name, "util": busy, "mem_used": mem_used, "mem_total": mem_total,
+            **{key: value for key, value in static.items() if key != "device"},
+            "util": busy, "mem_used": mem_used, "mem_total": mem_total,
             "vram_pct": vram_pct, "power_watt": power_watt, "power_limit": power_limit,
-            "temp_c": temp_c, "temp_source": temp_source, "source": "sysfs",
-            "pci_id": pci_id, "vendor": vendor, "driver": driver,
+            "temp_c": temp_c, "temp_source": temp_source,
         })
     return gpus
 
@@ -830,6 +868,7 @@ def _merge_gpu(primary, fallback):
 
 
 def collect_gpus(use_nvidia):
+    global _LAST_GPU_DEBUG_STATE
     sysfs = sysfs_gpus()
     external = nvidia_gpus() if use_nvidia else []
     remaining = list(sysfs)
@@ -848,8 +887,12 @@ def collect_gpus(use_nvidia):
         else:
             gpus.append(item)
     gpus.extend(remaining)
-    log.debug("GPU-Quellen: nvidia=%s, sysfs=%s, Ergebnis=%s",
-              use_nvidia, len(sysfs), len(gpus))
+    debug_state = (use_nvidia, tuple((item.get("pci_id"), item.get("source"), item.get("name"))
+                                     for item in gpus))
+    if debug_state != _LAST_GPU_DEBUG_STATE:
+        log.debug("GPU-Quellen: nvidia=%s, sysfs=%s, Ergebnis=%s",
+                  use_nvidia, len(sysfs), len(gpus))
+        _LAST_GPU_DEBUG_STATE = debug_state
     if not gpus:
         return [], "keine GPU-Quelle gefunden"
     return gpus, None

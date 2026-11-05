@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.31** · Stand 05.11.2026 · Status: Diagnose-Logging für CLI und TUI.
+**Version 2.3.32** · Stand 05.11.2026 · Status: I/O-, Sensor- und Debug-Optimierung.
 
 ## Aktueller Stand
 
@@ -37,6 +37,13 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.32
+
+- System-Snapshot-History im TUI-Modus auf höchstens einen Schreibvorgang je fünf Sekunden gedrosselt; `--once` bleibt sofortig.
+- Stabile sysfs-/PCI-/hwmon-GPU-Metadaten werden zwischen Samples wiederverwendet; bei geänderter GPU-Topologie wird neu erkannt.
+- Wiederkehrende Debugmeldungen werden gedrosselt; Logdateien rotieren mit privaten Dateirechten.
+- Unbenutzte Imports und dynamische CLI-Imports bereinigt.
 
 ## Neu in 2.3.31
 

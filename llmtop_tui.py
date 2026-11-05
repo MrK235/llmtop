@@ -11,12 +11,13 @@ from datetime import datetime
 
 VERSION = "?"
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")
+HISTORY_WRITE_INTERVAL = 5.0
 
 from llmtop_metrics import (
     DEFAULT_RUN_HISTORY_LIMIT, HISTORY_COLUMNS, CollectorService, _parse_time, _token_value,
     backfill_context_limits, clear_run_history, compact_tokens, context_values,
     history_header_label, load_run_events, load_run_history, model_for_run,
-    run_group_key, run_identity_label, run_metric_detail, snapshot_record, sort_run_history,
+    run_group_key, run_identity_label, snapshot_record, sort_run_history,
     source_label, token_rate, total_tokens,
     write_history,
 )
@@ -945,9 +946,10 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
     lock = threading.Lock()
     stop = threading.Event()
     refresh = threading.Event()
+    last_history_write = None
 
     def sample():
-        nonlocal interval
+        nonlocal interval, last_history_write
         while not stop.is_set():
             with lock:
                 history_generation = state["history_generation"]
@@ -965,9 +967,16 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
             cpu = cpu_percent(previous, cur)
             ram = get_ram_pct()
             cpu_temp, cpu_temp_source = cpu_temperature()
-            history_ok = write_history(snapshot_record(
-                host, ollama, cpu, ram, gpus, gpu_err, runs[0] if runs else None,
-                cpu_power))
+            now = time.monotonic()
+            if (last_history_write is None
+                    or now - last_history_write >= HISTORY_WRITE_INTERVAL):
+                history_ok = write_history(snapshot_record(
+                    host, ollama, cpu, ram, gpus, gpu_err, runs[0] if runs else None,
+                    cpu_power))
+                last_history_write = now
+            else:
+                with lock:
+                    history_ok = state["history_ok"]
             with lock:
                 state.update({"ollama": ollama, "runs": runs,
                               "gpus": gpus, "gpu_err": gpu_err, "prev_cpu": cur,
