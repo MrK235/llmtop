@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.37 — 05.11.2026
+
+- Open-WebUI-Tool-Loops verwenden für den Kontext die Einzelaufruf-Token statt kumulierter `input_tokens`/`output_tokens`.
+- Regressionstest für die korrigierte Usage-Feldauswahl ergänzt.
+
 ### 2.3.36 — 05.11.2026
 
 - Open-WebUI-Runs werden im lokalen Collector zwischen Start und Abschluss energetisch gemessen.

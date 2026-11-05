@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.36** · Stand 05.11.2026 · Status: Open-WebUI-Energiemessung und Wh-Anzeige.
+**Version 2.3.37** · Stand 05.11.2026 · Status: Korrektur der Open-WebUI-Tool-Use-Kontextmetriken.
 
 ## Aktueller Stand
 
@@ -37,6 +37,12 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.37
+
+- Open-WebUI-Usage aus Tool-Loops bevorzugt jetzt die Token des aktuellen Modellaufrufs (`prompt_tokens`/`completion_tokens` beziehungsweise Ollama-Felder).
+- Kumulierte `input_tokens`/`output_tokens` werden nur noch als Fallback verwendet und nicht mehr fälschlich als Kontext eines einzelnen Aufrufs angezeigt.
+- Der reproduzierte Tool-Use-Fall mit über 100 % Kontext ist durch einen Adapter-Regressionstest abgesichert.
 
 ## Neu in 2.3.36
 

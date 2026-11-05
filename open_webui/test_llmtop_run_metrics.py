@@ -22,6 +22,12 @@ def test_find_metrics():
         "output_tokens": 3, "total_duration": 4}
     assert MODULE.find_metrics({"usage": {"output_tokens": 3, "response_token/s": 4}}) == {
         "output_tokens": 3, "output_rate": 4}
+    # Open WebUI summiert input/output über Tool-Use-Modellaufrufe. Für den
+    # Kontext ist der aktuelle Einzelaufruf aus prompt/completion maßgeblich.
+    assert MODULE.find_metrics({"usage": {
+        "input_tokens": 126382, "output_tokens": 1526,
+        "prompt_tokens": 21208, "completion_tokens": 766,
+    }}) == {"prompt_tokens": 21208, "output_tokens": 766}
 
 
 async def exercise():
@@ -32,8 +38,8 @@ async def exercise():
         sent.append(event)
 
     adapter._send = capture
-    assert not adapter._is_ollama({"model": "remote:model"}, {"id": "remote:model", "owned_by": "openai"})
-    assert not adapter._is_ollama({"model": "unknown"}, None)
+    assert adapter._provider({"id": "remote:model", "owned_by": "openai"}) == "openai"
+    assert adapter._provider(None) is None
     model = {"id": "qwen:test", "owned_by": "ollama"}
     metadata = {"message_id": "message-1"}
     body = {"model": "qwen:test", "messages": [{"role": "user", "content": "secret"}]}
@@ -64,7 +70,9 @@ async def exercise():
     starts_before = len([event for event in sent if event["event"] == "started"])
     await adapter.request(body, None, model)
     await adapter.request(body, None, model)
-    assert len([event for event in sent if event["event"] == "started"]) == starts_before + 2
+    # Zwei direkte Aufrufe ohne Identität werden im kurzen Debounce-Fenster
+    # als derselbe Filterdurchlauf behandelt.
+    assert len([event for event in sent if event["event"] == "started"]) == starts_before + 1
 
 
 if __name__ == "__main__":

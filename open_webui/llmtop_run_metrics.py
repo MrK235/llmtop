@@ -1,7 +1,7 @@
 """
 title: llmtop Run Metrics
 author: llmtop
-version: 2.2.9
+version: 2.2.10
 required_open_webui_version: 0.12.3
 description: Meldet datensparsame Provider-Runmetriken an den lokalen llmtop-Collector.
 """
@@ -50,8 +50,20 @@ def find_metrics(value: Any) -> Optional[dict]:
         usage = value.get("usage")
         if isinstance(usage, dict):
             result = {}
-            prompt = number(usage.get("input_tokens") or usage.get("prompt_tokens") or usage.get("prompt_eval_count"))
-            output = number(usage.get("output_tokens") or usage.get("completion_tokens") or usage.get("eval_count"))
+
+            def first_number(*names: str) -> Optional[float]:
+                for name in names:
+                    value = number(usage.get(name))
+                    if value is not None:
+                        return value
+                return None
+
+            # Open WebUI summiert input/output bei Tool-Loops über mehrere
+            # Modellaufrufe. prompt/completion beziehungsweise die Ollama-
+            # Felder beschreiben dagegen den jeweils aktuellen Aufruf und
+            # müssen deshalb für den Kontext Vorrang haben.
+            prompt = first_number("prompt_tokens", "prompt_eval_count", "input_tokens")
+            output = first_number("completion_tokens", "eval_count", "output_tokens")
             if prompt is not None:
                 result["prompt_tokens"] = prompt
             if output is not None:
