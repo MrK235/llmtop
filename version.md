@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.46 — 07.11.2026
+
+- Aktuelle Runs werden unabhängig von der History-Sortierung nach unveränderlicher Startzeit angeordnet.
+- Ein Run behält beim laufenden Aktualisieren und beim Abschluss seine Position.
+
 ### 2.3.45 — 07.11.2026
 
 - Run-Zeilen unter „Aktuelle Runs“ werden cyan dargestellt.

@@ -810,8 +810,9 @@ def _draw(scr, st, host, interval):
     row += 1
     final_statuses = ("completed", "error", "cancelled")
 
-    def run_sort_key(run):
-        stamp = _parse_time(run.get("updated_at") or run.get("finished_at") or run.get("started_at"))
+    def current_run_sort_key(run):
+        """Sortiert aktuelle Runs unveränderlich nach ihrer Startzeit."""
+        stamp = _parse_time(run.get("started_at") or run.get("finished_at"))
         return (stamp or datetime.min.replace(tzinfo=datetime.now().astimezone().tzinfo),
                 str(run.get("source", "")), str(run.get("run_id", "")))
 
@@ -821,7 +822,7 @@ def _draw(scr, st, host, interval):
     groups = []
     for source in sources:
         source_runs = sorted((run for run in active_runs if run.get("source") == source),
-                             key=run_sort_key, reverse=True)
+                             key=current_run_sort_key)
         if not source_runs:
             continue
         identity_groups = {}
@@ -829,13 +830,16 @@ def _draw(scr, st, host, interval):
             identity_groups.setdefault(run_group_key(run), []).append(run)
         for identity_runs in identity_groups.values():
             running = sorted((run for run in identity_runs
-                              if run.get("status") not in final_statuses), key=run_sort_key)
+                              if run.get("status") not in final_statuses), key=current_run_sort_key)
             finished = sorted((run for run in identity_runs
-                              if run.get("status") in final_statuses), key=run_sort_key)
+                              if run.get("status") in final_statuses), key=current_run_sort_key)
             groups.append((source, identity_runs[0], running, finished))
     row = section(row, "Aktuelle Runs")
-    grouped_runs = ([run for _source, _identity, running, _finished in groups for run in running] +
-                    [run for _source, _identity, _running, finished in groups for run in finished])
+    # Die aktuelle Ansicht verwendet ausschließlich die unveränderliche
+    # Startzeit. Running und abgeschlossene Runs bleiben dabei gemeinsam in
+    # dieser Reihenfolge, damit ein Abschluss keine Zeile verschiebt.
+    grouped_runs = [run for _source, _identity, running, finished in groups
+                    for run in sorted(running + finished, key=current_run_sort_key)]
     # Beide Tabellen teilen eine Breitenberechnung, damit aktuelle Runs und
     # History unabhängig vom sichtbaren Ausschnitt exakt untereinander stehen.
     sorted_history = sort_run_history(runs, st["history_sort"], st["history_desc"])
@@ -855,7 +859,8 @@ def _draw(scr, st, host, interval):
     if visible:
         for index, (name, width) in enumerate(columns):
             offset = sum(item[1] + 1 for item in columns[:index])
-            _add(scr, row, offset, history_header_label(name, st["history_sort"], st["history_desc"]),
+            # Aktuelle Runs sind unabhängig von der History-Sortierung.
+            _add(scr, row, offset, history_header_label(name, None, False),
                  colors["structure"])
         row += 1
         visible_groups = [(source, identity, running, finished) for source, identity, running, finished in groups

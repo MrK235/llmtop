@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.45** · Stand 07.11.2026 · Status: Aktuelle Runs mit cyanfarbenen Run-Zeilen und grauen, unterstrichenen Gruppenüberschriften.
+**Version 2.3.46** · Stand 07.11.2026 · Status: Aktuelle Runs stabil nach Startzeit angeordnet.
 
 ## Aktueller Stand
 
@@ -49,6 +49,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.46
+
+- Aktuelle Runs werden unabhängig von der History-Sortierung nach unveränderlicher Startzeit angeordnet.
+- Ein Run behält beim laufenden Aktualisieren und beim Abschluss seine Position.
 
 ## Neu in 2.3.45
 
