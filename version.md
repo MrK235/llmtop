@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.55 — 07.11.2026
+
+- Die Wh-Spalte heißt jetzt `Verbrauch`; die Werte tragen die Einheit `Wh`.
+
 ### 2.3.54 — 07.11.2026
 
 - History-Gruppen zeigen die aufsummierte Dauer aller enthaltenen Läufe.

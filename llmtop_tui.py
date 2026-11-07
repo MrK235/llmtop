@@ -484,7 +484,7 @@ def _draw(scr, st, host, interval):
             supported = (run.get("source") == "open-webui" or
                          (run.get("source") == "pi" and
                           str(run.get("provider", "")).casefold() == "ollama"))
-            return f"{value:.3f}" if value is not None else "n/a" if supported else ""
+            return f"{value:.3f} Wh" if value is not None else "n/a" if supported else ""
         return ""
 
     def current_run_cell(run, column):

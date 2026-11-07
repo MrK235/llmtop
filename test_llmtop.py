@@ -291,6 +291,7 @@ def test_webui_energy_column_and_group_sum():
          'energy': {'energy_j': 1800}},
     ]
     group = llmtop_tui.build_history_groups(runs)[0]
+    assert llmtop.history_header_label('wh', 'wh', False) == 'Verbrauch▴'
     assert llmtop_tui._webui_energy_wh(runs[0]) == 1.0
     assert llmtop_tui._webui_energy_wh(
         {'source': 'pi', 'provider': 'ollama', 'energy': {'energy_j': 3600}}) == 1.0
