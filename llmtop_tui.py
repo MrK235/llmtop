@@ -447,8 +447,12 @@ def _draw(scr, st, host, interval):
                 used = total_tokens(run)
             if used is None:
                 return "n/a"
-            return (f"{compact_tokens(used)}/{compact_tokens(limit)}"
-                    if limit is not None else compact_tokens(used))
+            if limit is None:
+                return compact_tokens(used)
+            used_text = compact_tokens(used)
+            if used_text.endswith("k"):
+                used_text = used_text[:-1]
+            return f"{used_text}/{compact_tokens(limit)}"
         if column == "kontext":
             return context_table_cell(run, model)
         if column == "rate":

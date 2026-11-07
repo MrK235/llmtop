@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.47** · Stand 07.11.2026 · Status: Kontextlimit in der Tokenspalte und Prozentwert direkt am Kontextbalken.
+**Version 2.3.48** · Stand 07.11.2026 · Status: Kompakte Kontextdarstellung mit nur einem `k` in der Tokenspalte.
 
 ## Aktueller Stand
 
@@ -49,6 +49,10 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.48
+
+- Die Tokenspalte zeigt Kontextwerte platzsparend als `16.7/32.8k` mit nur einem `k`.
 
 ## Neu in 2.3.47
 

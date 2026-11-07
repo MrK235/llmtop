@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.48 — 07.11.2026
+
+- Die Tokenspalte zeigt Kontextwerte platzsparend als `16.7/32.8k` mit nur einem `k`.
+
 ### 2.3.47 — 07.11.2026
 
 - Kontextverbrauch und Kontextlimit stehen in Aktuelle Runs und History gemeinsam in der Tokenspalte.
