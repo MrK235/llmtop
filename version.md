@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.66 — 07.11.2026
+
+- Session-Tokenchart als gefülltes Stufendiagramm umgesetzt; Kompaktierungsabfälle sind klarer sichtbar.
+
 ### 2.3.65 — 07.11.2026
 
 - Tokenchart ohne Alt-/Neu-Beschriftung; die Run-Achse steht direkt über Kompaktions- und Modellmarkern.

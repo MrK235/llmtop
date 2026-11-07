@@ -184,29 +184,19 @@ def _history_token_chart(values, compactions, models):
         points.append((x, y, index))
     grid = [[" " for _ in range(width)] for _ in range(height)]
 
-    def raster(x1, y1, x2, y2):
-        """Bresenham-Rasterung verbindet auch steile Tokenänderungen lückenlos."""
-        dx, dy = abs(x2 - x1), -abs(y2 - y1)
-        sx, sy = (1 if x1 < x2 else -1), (1 if y1 < y2 else -1)
-        error = dx + dy
-        result = []
-        while True:
-            result.append((x1, y1))
-            if x1 == x2 and y1 == y2:
-                return result
-            twice = 2 * error
-            if twice >= dy:
-                error += dy
-                x1 += sx
-            if twice <= dx:
-                error += dx
-                y1 += sy
-
-    for (x1, y1, _index1), (x2, y2, _index2) in zip(points, points[1:]):
-        path = raster(x1, y1, x2, y2)
-        for (x, y), (next_x, next_y) in zip(path, path[1:]):
-            dx, dy = next_x - x, next_y - y
-            grid[y][x] = "─" if dy == 0 else "│" if dx == 0 else "╲" if dx == dy else "╱"
+    # Kontextwerte gelten bis zum nächsten Run. Das Stufenprofil zeigt daher
+    # Kompaktierungsabfälle klarer als eine künstlich diagonale Interpolation.
+    spans = list(zip(points, points[1:] + [(width, points[-1][1], None)]))
+    for (x1, y1, _index1), (x2, _y2, _index2) in spans:
+        for x in range(x1, max(x1 + 1, x2)):
+            if x >= width:
+                continue
+            grid[y1][x] = "━"
+            for y in range(y1 + 1, height):
+                grid[y][x] = "░"
+    for (_x1, y1, _index1), (x2, y2, _index2) in zip(points, points[1:]):
+        for y in range(min(y1, y2), max(y1, y2) + 1):
+            grid[y][x2] = "┃"
     for x, y, _index in points:
         grid[y][x] = "●"
 
