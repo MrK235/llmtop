@@ -168,50 +168,82 @@ def aggregate_history_group(group):
     return aggregate
 
 
-def _history_token_chart(values, compactions):
-    """Erstellt ein fein aufgelöstes Token-Zeitdiagramm für das Overlay."""
+def _history_token_chart(values, compactions, models):
+    """Erstellt ein präzises Token-Zeitdiagramm für das Overlay."""
     present = [(index, value) for index, value in enumerate(values)
                if isinstance(value, (int, float))]
     if not present:
         return [("Tokens: keine Werte", False)]
-    width = max(20, min(68, max(1, len(values) - 1) * 4))
+    width = max(24, min(72, max(1, len(values) - 1) * 4))
     height = 8
-    maximum = max(value for _index, value in present)
-    maximum = max(1.0, float(maximum))
-    positions = {}
+    maximum = max(1.0, float(max(value for _index, value in present)))
+    points = []
     for index, value in present:
         x = round(index * (width - 1) / max(1, len(values) - 1))
         y = round((height - 1) * (1.0 - value / maximum))
-        positions[x] = (y, value, index)
+        points.append((x, y, index))
     grid = [[" " for _ in range(width)] for _ in range(height)]
-    ordered = sorted(positions.items())
-    for (x1, (y1, _value1, _index1)), (x2, (y2, _value2, _index2)) in zip(ordered, ordered[1:]):
-        if x2 <= x1:
-            continue
-        previous_y = y1
-        for x in range(x1, x2 + 1):
-            fraction = (x - x1) / (x2 - x1)
-            y = round(y1 + (y2 - y1) * fraction)
-            if y < previous_y:
-                grid[y][x] = "╱"
-            elif y > previous_y:
-                grid[y][x] = "╲"
-            else:
-                grid[y][x] = "─"
-            previous_y = y
-    for x, (y, _value, _index) in positions.items():
+
+    def raster(x1, y1, x2, y2):
+        """Bresenham-Rasterung verbindet auch steile Tokenänderungen lückenlos."""
+        dx, dy = abs(x2 - x1), -abs(y2 - y1)
+        sx, sy = (1 if x1 < x2 else -1), (1 if y1 < y2 else -1)
+        error = dx + dy
+        result = []
+        while True:
+            result.append((x1, y1))
+            if x1 == x2 and y1 == y2:
+                return result
+            twice = 2 * error
+            if twice >= dy:
+                error += dy
+                x1 += sx
+            if twice <= dx:
+                error += dx
+                y1 += sy
+
+    for (x1, y1, _index1), (x2, y2, _index2) in zip(points, points[1:]):
+        path = raster(x1, y1, x2, y2)
+        for (x, y), (next_x, next_y) in zip(path, path[1:]):
+            dx, dy = next_x - x, next_y - y
+            grid[y][x] = "─" if dy == 0 else "│" if dx == 0 else "╲" if dx == dy else "╱"
+    for x, y, _index in points:
         grid[y][x] = "●"
+
+    def marker_row(predicate, marker):
+        row = [" " for _ in range(width)]
+        for x, _y, index in points:
+            if predicate(index):
+                row[x] = marker
+        return "".join(row)
+
+    def compaction_marker(index):
+        return index < len(compactions) and compactions[index] > 0
+
+    def model_marker(index):
+        return (index > 0 and index < len(models) and models[index] and
+                index - 1 < len(models) and models[index - 1] and
+                models[index] != models[index - 1])
+
+    run_labels = [" " for _ in range(width)]
+    used = set()
+    for x, _y, index in points:
+        label = str(index + 1)
+        start = max(0, min(width - len(label), x - len(label) // 2))
+        if any(column in used for column in range(start, start + len(label))):
+            continue
+        for offset, char in enumerate(label):
+            run_labels[start + offset] = char
+            used.add(start + offset)
     lines = []
     for row, cells in enumerate(grid):
         label_value = maximum * (height - 1 - row) / (height - 1)
         lines.append((f"{compact_tokens(label_value):>7} ┤" + "".join(cells), False))
-    markers = [" " for _ in range(width)]
-    for x, (y, _value, index) in positions.items():
-        if index < len(compactions) and compactions[index] > 0:
-            markers[x] = "C"
     lines.append(("        └" + "─" * width, False))
-    lines.append(("         " + "".join(markers) + "  C=Kompaktion", False))
-    lines.append(("         alt" + " " * max(0, width - 8) + "neu", False))
+    lines.append(("Komp.   " + marker_row(compaction_marker, "C") + "  C=Kompaktion", False))
+    lines.append(("Modell  " + marker_row(model_marker, "M") + "  M=Modellwechsel", False))
+    lines.append(("Run     " + "".join(run_labels), False))
+    lines.append(("        alt" + " " * max(0, width - 8) + "neu", False))
     return lines
 
 
@@ -245,7 +277,8 @@ def history_overlay_lines(overlay):
         last_time = _parse_time(chronological[-1].get("finished_at"))
         first_label = first_time.strftime("%d.%m %H:%M") if first_time else "n/a"
         last_label = last_time.strftime("%d.%m %H:%M") if last_time else "n/a"
-        lines.extend(_history_token_chart(token_values, compactions))
+        lines.extend(_history_token_chart(
+            token_values, compactions, [run.get("model") for run in chronological]))
         lines.extend((text, False) for text in (
             f"Zeit       {first_label} → {last_label}",
         ))

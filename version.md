@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.64 — 07.11.2026
+
+- Tokenchart mit präziserer lückenloser Linie, Modellwechsel-Markern `M` und Run-Nummern auf der unteren Achse erweitert.
+
 ### 2.3.63 — 07.11.2026
 
 - Die Token-Diagrammlinie wird mit diagonalen und horizontalen Verbindungen gezeichnet.

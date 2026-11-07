@@ -177,7 +177,12 @@ def test_history_groups_keep_all_runs_and_sources_separate():
     assert "Session-Verlauf Tokens (alt → neu)" in overlay_text
     assert "Tokens (alt → neu)" in overlay_text
     assert "C=Kompaktion" in overlay_text
+    assert "M=Modellwechsel" in overlay_text
+    assert "Run     1" in overlay_text
     assert "alt" in overlay_text and "neu" in overlay_text
+    chart = "\n".join(text for text, _heading in llmtop_tui._history_token_chart(
+        [10, 20], [0, 1], ["model-a", "model-b"]))
+    assert "M" in chart
     assert "compactions" in overlay_text
     assert groups[1]['key'] == ('open-webui', ('chat_id', 'chat-a'))
     assert groups[2]['key'] == ('open-webui', ('chat_id', 'chat-b'))
