@@ -300,10 +300,11 @@ def history_overlay_lines(overlay, chart_width=None):
 def draw_history_overlay(scr, overlay, colors, offset=0):
     """Zeichnet ein scrollbares Detailfenster über der TUI."""
     h, w = scr.getmaxyx()
-    chart_width = max(8, w - 16)
+    # Breiter als das klassische Overlay, aber bewusst nicht fensterfüllend.
+    chart_width = min(96, max(8, w - 16))
     lines = history_overlay_lines(overlay, chart_width)
     content_width = max((len(text) for text, _attr in lines), default=1)
-    bw = max(1, min(w - 2, max(50, content_width + 4)))
+    bw = max(1, min(w - 2, 112, max(50, content_width + 4)))
     visible = max(1, min(len(lines), h - 4))
     max_offset = max(0, len(lines) - visible)
     offset = max(0, min(offset, max_offset))

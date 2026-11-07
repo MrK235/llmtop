@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.77 — 07.11.2026
+
+- Breite des Session-Overlays und Diagramms auf eine moderate Größe begrenzt.
+
 ### 2.3.76 — 07.11.2026
 
 - Session-Diagramm nutzt bei breiten Terminals zusätzliche Fensterbreite für weitere Runs; maximal vier Zeichen je Run bleiben erhalten.
