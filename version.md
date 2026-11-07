@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.67 — 07.11.2026
+
+- Datenpunkte aus dem Token-Stufendiagramm entfernt.
+
 ### 2.3.66 — 07.11.2026
 
 - Session-Tokenchart als gefülltes Stufendiagramm umgesetzt; Kompaktierungsabfälle sind klarer sichtbar.
