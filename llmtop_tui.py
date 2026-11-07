@@ -176,9 +176,9 @@ def _history_token_chart(values, compactions, models, run_labels=None, time_text
         return [("Tokens: keine Werte", False)]
     count = len(values)
     run_labels = run_labels or [str(index + 1) for index in range(count)]
-    # Ein einzelner Run beansprucht höchstens zehn Zeichen; lange Sessions
-    # bleiben dadurch im festen Overlay lesbar.
-    width = max(20, min(72, count * 10))
+    # Ein einzelner Run beansprucht höchstens sechs Zeichen; damit bleiben
+    # deutlich mehr Runs im festen Overlay gleichzeitig sichtbar.
+    width = min(72, max(12, count * 6))
     height = 8
     maximum = max(1.0, float(max(value for _index, value in present)))
     bars = []
@@ -259,10 +259,10 @@ def history_overlay_lines(overlay):
         last_label = last_time.strftime("%d.%m %H:%M") if last_time else "n/a"
         chart_runs = chronological
         chart_labels = [str(index + 1) for index in range(len(chart_runs))]
-        if len(chronological) > 18:
-            # Bei langen Sessions werden höchstens zwölf Zeitabschnitte gezeigt.
+        if len(chronological) > 24:
+            # Bei langen Sessions werden höchstens 24 Zeitabschnitte gezeigt.
             # Die Nummer im Balken bezeichnet jeweils den ersten Run des Abschnitts.
-            chunk_size = (len(chronological) + 11) // 12
+            chunk_size = (len(chronological) + 23) // 24
             chart_runs = [chronological[start:start + chunk_size]
                           for start in range(0, len(chronological), chunk_size)]
             chart_labels = [str(start + 1) for start in range(

@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.73** · Stand 07.11.2026 · Status: Kompaktes Overlay mit begrenzter Run-Breite.
+**Version 2.3.74** · Stand 07.11.2026 · Status: Dichtere Session-Diagramme.
 
 ## Aktueller Stand
 
@@ -50,6 +50,10 @@ gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
 
+## Neu in 2.3.74
+
+- Ein Run nutzt im Diagramm höchstens sechs Zeichen; bis zu 24 Runs werden ohne Verdichtung angezeigt.
+
 ## Neu in 2.3.73
 
 - Das Session-Overlay verwendet wieder seine kompakte feste Breite; ein Run ist im Diagramm auf höchstens zehn Zeichen begrenzt.
@@ -68,7 +72,7 @@ Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und Hist
 
 ## Neu in 2.3.69
 
-- Run-Nummern stehen mittig in der Token-Füllfläche; lange Sessions werden in höchstens zwölf nummerierte Zeitabschnitte verdichtet. Zeit steht über den `C`-/`M`-Legenden.
+- Run-Nummern stehen mittig in der Token-Füllfläche; lange Sessions werden in höchstens 24 nummerierte Zeitabschnitte verdichtet. Zeit steht über den `C`-/`M`-Legenden.
 
 ## Neu in 2.3.68
 
