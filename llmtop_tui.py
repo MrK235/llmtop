@@ -168,23 +168,12 @@ def aggregate_history_group(group):
     return aggregate
 
 
-def _history_sparkline(values):
-    """Verdichtet numerische Laufwerte zu einer kleinen Terminal-Grafik."""
-    levels = "▁▂▃▄▅▆▇█"
-    present = [value for value in values if isinstance(value, (int, float))]
-    if not present:
-        return "—"
-    maximum = max(present)
-    if maximum <= 0:
-        return "".join("▁" if value is not None else "·" for value in values)
-    result = []
-    for value in values:
-        if not isinstance(value, (int, float)):
-            result.append("·")
-            continue
-        index = min(len(levels) - 1, int(round(value / maximum * (len(levels) - 1))))
-        result.append(levels[index])
-    return "".join(result)
+def _history_bar(value, maximum, width=18):
+    """Erstellt einen gut lesbaren, proportionalen Balken für einen Laufwert."""
+    if not isinstance(value, (int, float)) or maximum is None:
+        return "·" * width
+    filled = width if maximum <= 0 else int(round(max(0.0, value) / maximum * width))
+    return "█" * min(width, filled) + "·" * max(0, width - filled)
 
 
 def history_overlay_lines(overlay):
@@ -209,12 +198,21 @@ def history_overlay_lines(overlay):
     ))
     if len(chronological) > 1:
         lines.append(("Verlauf (alt → neu)", True))
-        lines.extend((text, False) for text in (
-            f"Dauer        {_history_sparkline([_history_duration(run) for run in chronological])}",
-            f"Tokens       {_history_sparkline([total_tokens(run) for run in chronological])}",
-            f"Komp.        {_history_sparkline([_token_value(run, 'compactions') for run in chronological])}",
-            "            jeder Punkt/Balken = ein Lauf",
-        ))
+        metrics = (
+            ("Dauer", [_history_duration(run) for run in chronological], "s"),
+            ("Tokens", [total_tokens(run) for run in chronological], ""),
+            ("Kontext", [_token_value(run, "context_tokens") for run in chronological], ""),
+            ("Komp.", [_token_value(run, "compactions") for run in chronological], ""),
+        )
+        for index, run in enumerate(chronological, 1):
+            lines.append((f"Lauf {index:02d} · {run.get('run_id', 'n/a')}", True))
+            for label, values, unit in metrics:
+                value = values[index - 1]
+                maximum = max((item for item in values
+                               if isinstance(item, (int, float))), default=None)
+                value_text = f"{value:g}{unit}" if isinstance(value, (int, float)) else "n/a"
+                lines.append((f"  {label:<8} {_history_bar(value, maximum)} {value_text}", False))
+        lines.append(("  Balkenlänge = relativer Wert innerhalb der Session", False))
     for index, run in enumerate(runs, 1):
         lines.append((f"Lauf {index} · {run.get('run_id', 'n/a')}", True))
         for key in sorted(run):

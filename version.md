@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.58 — 07.11.2026
+
+- Session-Verläufe im Overlay auf größere relative Balken umgestellt und um Kontextwerte ergänzt.
+
 ### 2.3.57 — 07.11.2026
 
 - Das Session-Metadatenoverlay zeigt kompakte chronologische Verläufe für Dauer, Tokens und Kompaktierungen.
