@@ -108,8 +108,13 @@ def _latest_history_run(runs):
 
 
 def _webui_energy_wh(run):
-    """Liefert Energie nur für Open-WebUI-Runs in Wh."""
-    if not isinstance(run, dict) or run.get("source") != "open-webui":
+    """Liefert gemessene Energie für WebUI- und lokale Pi-Ollama-Runs in Wh."""
+    if not isinstance(run, dict):
+        return None
+    supported = (run.get("source") == "open-webui" or
+                 (run.get("source") == "pi" and
+                  str(run.get("provider", "")).casefold() == "ollama"))
+    if not supported:
         return None
     energy = run.get("energy")
     value = energy.get("energy_j") if isinstance(energy, dict) else None
@@ -135,13 +140,10 @@ def aggregate_history_group(group):
         if started and finished and finished >= started:
             aggregate["total_duration_s"] = (finished - started).total_seconds()
 
-    if aggregate.get("source") == "open-webui":
-        energies = [_webui_energy_wh(run) for run in group["runs"]]
-        if all(value is not None for value in energies):
-            aggregate["energy"] = {"energy_j": sum(energies) * 3600.0,
-                                     "energy_scope": "group-sum"}
-        else:
-            aggregate.pop("energy", None)
+    energies = [_webui_energy_wh(run) for run in group["runs"]]
+    if energies and all(value is not None for value in energies):
+        aggregate["energy"] = {"energy_j": sum(energies) * 3600.0,
+                                 "energy_scope": "group-sum"}
     else:
         aggregate.pop("energy", None)
     source = source_label(aggregate.get("source"), aggregate.get("provider"))
@@ -466,7 +468,10 @@ def _draw(scr, st, host, interval):
             return format_duration(duration)
         if column == "wh":
             value = _webui_energy_wh(run)
-            return f"{value:.3f}" if value is not None else "n/a" if run.get("source") == "open-webui" else ""
+            supported = (run.get("source") == "open-webui" or
+                         (run.get("source") == "pi" and
+                          str(run.get("provider", "")).casefold() == "ollama"))
+            return f"{value:.3f}" if value is not None else "n/a" if supported else ""
         return ""
 
     def current_run_cell(run, column):

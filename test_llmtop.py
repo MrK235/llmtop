@@ -249,8 +249,55 @@ def test_webui_energy_column_and_group_sum():
     ]
     group = llmtop_tui.build_history_groups(runs)[0]
     assert llmtop_tui._webui_energy_wh(runs[0]) == 1.0
-    assert llmtop_tui._webui_energy_wh({'source': 'pi', 'energy': {'energy_j': 3600}}) is None
+    assert llmtop_tui._webui_energy_wh(
+        {'source': 'pi', 'provider': 'ollama', 'energy': {'energy_j': 3600}}) == 1.0
+    assert llmtop_tui._webui_energy_wh(
+        {'source': 'pi', 'provider': 'openai', 'energy': {'energy_j': 3600}}) is None
     assert group['aggregate']['energy']['energy_j'] == 5400
+
+
+def test_pi_ollama_collector_captures_energy_but_cloud_does_not():
+    class FakeEnergyMonitor:
+        def start(self):
+            return self
+
+        def stop(self):
+            return {'energy_j': 3.6, 'energy_scope': 'component-sum'}
+
+    original_monitor = llmtop.EnergyMonitor
+    original_run = os.environ.get('LLMTOP_RUN_FILE')
+    original_history = os.environ.get('LLMTOP_RUN_HISTORY_FILE')
+    try:
+        with tempfile.TemporaryDirectory() as directory:
+            os.environ['LLMTOP_RUN_FILE'] = str(Path(directory) / 'run.jsonl')
+            os.environ['LLMTOP_RUN_HISTORY_FILE'] = str(Path(directory) / 'runs.jsonl')
+            llmtop.EnergyMonitor = FakeEnergyMonitor
+            started = {
+                'schema': 2, 'event': 'started', 'run_id': 'pi-energy',
+                'source': 'pi', 'provider': 'ollama', 'model': 'model',
+                'started_at': '2026-11-05T20:00:00Z',
+            }
+            completed = dict(started, event='completed',
+                             finished_at='2026-11-05T20:00:01Z')
+            assert llmtop.process_run_event(started)
+            assert llmtop.process_run_event(completed)
+            result = llmtop.load_run_history(Path(directory) / 'runs.jsonl')
+            assert result[0]['energy']['energy_j'] == 3.6
+
+            cloud = dict(started, run_id='pi-cloud', provider='openai')
+            assert llmtop.process_run_event(cloud)
+            assert ('pi', 'pi-cloud') not in llmtop._WEBUI_ENERGY_MONITORS
+    finally:
+        llmtop.EnergyMonitor = original_monitor
+        llmtop._WEBUI_ENERGY_MONITORS.clear()
+        if original_run is None:
+            os.environ.pop('LLMTOP_RUN_FILE', None)
+        else:
+            os.environ['LLMTOP_RUN_FILE'] = original_run
+        if original_history is None:
+            os.environ.pop('LLMTOP_RUN_HISTORY_FILE', None)
+        else:
+            os.environ['LLMTOP_RUN_HISTORY_FILE'] = original_history
 
 
 def test_history_group_uses_latest_run_without_cross_run_fallbacks():

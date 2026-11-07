@@ -5,7 +5,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.50** · Python-Anwendung aus der Standardbibliothek für Linux.
+> **Version 2.3.51** · Python-Anwendung aus der Standardbibliothek für Linux.
 
 `llmtop` zeigt den Ollama-Status, lokale CPU-/RAM-/GPU-Sensoren sowie laufende
 und abgeschlossene Modell-Runs in einer curses-TUI oder als einmaligen
@@ -152,7 +152,7 @@ Instrumentierte Runs zeigen, soweit vom Provider geliefert:
 - Ausgabe-Rate und Dauer
 - Anzahl erfolgreicher Kontext-Compactions für Pi und Open WebUI
 - Dauer kompakt in Minuten und Stunden, sofern verfügbar
-- bei Open WebUI zusätzlich Energie in Wh, sofern gemessen
+- bei Open WebUI und lokalen Pi-Ollama-Runs zusätzlich Energie in Wh, sofern gemessen
 
 Aktuelle Runs und History verwenden dieselben Tabellenwerte. In Aktuelle Runs
 werden die Run-Zeilen cyan dargestellt; Gruppenüberschriften sind grau und

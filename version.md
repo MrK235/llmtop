@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.51 — 07.11.2026
+
+- Energie-Sampler und Wh-Anzeige auf lokale Pi-Ollama-Runs erweitert.
+- Pi-Gruppen summieren gemessene Wh-Werte; Cloud-Runs bleiben ohne Energieangabe.
+
 ### 2.3.50 — 07.11.2026
 
 - Die Dauerspalte zeigt Laufzeiten als Minuten und bei langen Runs als Stunden, z. B. `12m 04s` oder `2h 07m`.

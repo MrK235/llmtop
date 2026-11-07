@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.50** · Stand 07.11.2026 · Status: Laufzeiten werden kompakt in Minuten und Stunden angezeigt.
+**Version 2.3.51** · Stand 07.11.2026 · Status: Wh-Anzeige für lokale Pi-Ollama-Runs ergänzt.
 
 ## Aktueller Stand
 
@@ -49,6 +49,12 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.51
+
+- Der Collector misst neben Open-WebUI-Runs jetzt auch lokale Pi-Ollama-Runs.
+- Aktuelle Runs und History zeigen deren Energie in Wh; Pi-Gruppen summieren
+  die gemessenen Werte. Cloud-Runs im Pi bleiben ohne Wh-Wert.
 
 ## Neu in 2.3.50
 

@@ -732,8 +732,18 @@ class OpenWebUIFinalMetricsReader:
             return {}
 
 
+def _energy_monitor_enabled(run):
+    """Erlaubt Energie-Messungen für WebUI und lokale Pi-Ollama-Runs."""
+    if not isinstance(run, dict):
+        return False
+    if run.get("source") == "open-webui":
+        return True
+    return (run.get("source") == "pi" and
+            str(run.get("provider", "")).casefold() == "ollama")
+
+
 def _prune_webui_energy_monitors():
-    """Beendet Energie-Sampler verwaister WebUI-Runs."""
+    """Beendet Energie-Sampler verwaister instrumentierter Runs."""
     cutoff = time.monotonic() - DEFAULT_RUN_MAX_AGE
     stale = []
     with _WEBUI_ENERGY_LOCK:
@@ -793,7 +803,7 @@ def process_run_event(event):
     now = _utc_now()
     if event["event"] == "started" and not _parse_time(run.get("started_at")):
         return False
-    if run.get("source") == "open-webui":
+    if _energy_monitor_enabled(run):
         if event["event"] == "started":
             _start_webui_energy_monitor(run)
         else:
@@ -814,7 +824,7 @@ def process_run_event(event):
             run.update({key: value for key, value in OpenWebUIFinalMetricsReader().read(
                 run.get("model"), run.get("started_at"), run.get("source_run_id")).items()
                        if key in missing})
-        if run.get("source") == "open-webui":
+        if _energy_monitor_enabled(run):
             energy = _finish_webui_energy_monitor(run)
             if energy:
                 run["energy"] = energy
