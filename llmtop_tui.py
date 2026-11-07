@@ -140,6 +140,9 @@ def aggregate_history_group(group):
         if started and finished and finished >= started:
             aggregate["total_duration_s"] = (finished - started).total_seconds()
 
+    aggregate["compactions"] = sum(
+        _token_value(run, "compactions") or 0 for run in group["runs"])
+
     energies = [_webui_energy_wh(run) for run in group["runs"]]
     if energies and all(value is not None for value in energies):
         aggregate["energy"] = {"energy_j": sum(energies) * 3600.0,

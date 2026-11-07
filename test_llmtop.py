@@ -134,11 +134,13 @@ def test_history_groups_keep_all_runs_and_sources_separate():
         {'run_id': 'pi-1', 'source': 'pi', 'session_id': 'session-a', 'model': 'm',
          'status': 'completed', 'finished_at': '2026-11-02T21:02:00Z',
          'prompt_tokens': 400, 'output_tokens': 40, 'context_tokens': 440,
-         'context_limit': 2000, 'eval_duration_s': 4, 'total_duration_s': 6},
+         'context_limit': 2000, 'eval_duration_s': 4, 'total_duration_s': 6,
+         'compactions': 3},
         {'run_id': 'pi-2', 'source': 'pi', 'session_id': 'session-a', 'model': 'm',
          'status': 'completed', 'finished_at': '2026-11-02T21:01:00Z',
          'prompt_tokens': 500, 'output_tokens': 60, 'context_tokens': 560,
-         'context_limit': 2000, 'eval_duration_s': 6, 'total_duration_s': 8},
+         'context_limit': 2000, 'eval_duration_s': 6, 'total_duration_s': 8,
+         'compactions': 2},
         {'run_id': 'web-1', 'source': 'open-webui', 'session_id': 'browser-a',
          'chat_id': 'chat-a', 'message_id': 'message-1', 'model': 'm',
          'status': 'completed', 'finished_at': '2026-11-02T21:00:00Z',
@@ -168,6 +170,7 @@ def test_history_groups_keep_all_runs_and_sources_separate():
     assert llmtop.token_rate(pi_aggregate) == 10
     assert pi_aggregate['_source_label'] == 'Pi · session'
     assert pi_aggregate['model'] == 'm ×2'
+    assert pi_aggregate['compactions'] == 5
     assert groups[1]['key'] == ('open-webui', ('chat_id', 'chat-a'))
     assert groups[2]['key'] == ('open-webui', ('chat_id', 'chat-b'))
     aggregate = groups[1]['aggregate']

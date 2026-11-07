@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.52 — 07.11.2026
+
+- History-Gruppen zeigen die Summe der Kompaktionszähler ihrer enthaltenen Läufe.
+
 ### 2.3.51 — 07.11.2026
 
 - Energie-Sampler und Wh-Anzeige auf lokale Pi-Ollama-Runs erweitert.
