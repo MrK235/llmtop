@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.76 — 07.11.2026
+
+- Session-Diagramm nutzt bei breiten Terminals zusätzliche Fensterbreite für weitere Runs; maximal vier Zeichen je Run bleiben erhalten.
+
 ### 2.3.75 — 07.11.2026
 
 - Breite je Run im Session-Diagramm auf höchstens vier Zeichen reduziert.

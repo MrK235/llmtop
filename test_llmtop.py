@@ -190,6 +190,9 @@ def test_history_groups_keep_all_runs_and_sources_separate():
     many_chart = llmtop_tui._history_token_chart(
         list(range(1, 25)), [0] * 24, ["model"] * 24)
     assert len(many_chart[0][0]) == 81
+    wide_chart = llmtop_tui._history_token_chart(
+        list(range(1, 41)), [0] * 40, ["model"] * 40, width=144)
+    assert len(wide_chart[0][0]) == 153
     assert "compactions" in overlay_text
     assert groups[1]['key'] == ('open-webui', ('chat_id', 'chat-a'))
     assert groups[2]['key'] == ('open-webui', ('chat_id', 'chat-b'))

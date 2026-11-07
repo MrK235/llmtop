@@ -168,7 +168,8 @@ def aggregate_history_group(group):
     return aggregate
 
 
-def _history_token_chart(values, compactions, models, run_labels=None, time_text=None):
+def _history_token_chart(values, compactions, models, run_labels=None, time_text=None,
+                         width=None):
     """Erstellt ein gefülltes Token-Zeitdiagramm mit zentrierter Run-Achse."""
     present = [(index, value) for index, value in enumerate(values)
                if isinstance(value, (int, float))]
@@ -176,9 +177,10 @@ def _history_token_chart(values, compactions, models, run_labels=None, time_text
         return [("Tokens: keine Werte", False)]
     count = len(values)
     run_labels = run_labels or [str(index + 1) for index in range(count)]
-    # Ein einzelner Run beansprucht höchstens vier Zeichen; damit bleiben
-    # deutlich mehr Runs im festen Overlay gleichzeitig sichtbar.
-    width = min(72, max(8, count * 4))
+    # Ein einzelner Run beansprucht höchstens vier Zeichen. Bei breitem
+    # Terminal darf das Diagramm entsprechend mehr Runs gleichzeitig zeigen.
+    default_width = min(72, max(8, count * 4))
+    width = min(max(8, int(width)), max(8, count * 4)) if width is not None else default_width
     height = 8
     maximum = max(1.0, float(max(value for _index, value in present)))
     bars = []
@@ -227,7 +229,7 @@ def _history_token_chart(values, compactions, models, run_labels=None, time_text
     return lines
 
 
-def history_overlay_lines(overlay):
+def history_overlay_lines(overlay, chart_width=None):
     """Erstellt geordnete, scrollbare Detailzeilen für eine History-Gruppe."""
     group = overlay.get("group", {})
     aggregate = group.get("aggregate", {})
@@ -259,10 +261,11 @@ def history_overlay_lines(overlay):
         last_label = last_time.strftime("%d.%m %H:%M") if last_time else "n/a"
         chart_runs = chronological
         chart_labels = [str(index + 1) for index in range(len(chart_runs))]
-        if len(chronological) > 24:
-            # Bei langen Sessions werden höchstens 24 Zeitabschnitte gezeigt.
-            # Die Nummer im Balken bezeichnet jeweils den ersten Run des Abschnitts.
-            chunk_size = (len(chronological) + 23) // 24
+        max_chart_runs = max(24, chart_width // 3) if chart_width else 24
+        if len(chronological) > max_chart_runs:
+            # Bei langen Sessions werden die verfügbaren Diagrammspalten
+            # gleichmäßig auf nummerierte Zeitabschnitte verteilt.
+            chunk_size = (len(chronological) + max_chart_runs - 1) // max_chart_runs
             chart_runs = [chronological[start:start + chunk_size]
                           for start in range(0, len(chronological), chunk_size)]
             chart_labels = [str(start + 1) for start in range(
@@ -281,7 +284,7 @@ def history_overlay_lines(overlay):
             models = [run.get("model") for run in chart_runs]
         lines.extend(_history_token_chart(
             token_values, compactions, models, chart_labels,
-            f"{first_label} → {last_label}"))
+            f"{first_label} → {last_label}", chart_width))
     for index, run in enumerate(runs, 1):
         lines.append((f"Lauf {index} · {run.get('run_id', 'n/a')}", True))
         for key in sorted(run):
@@ -297,8 +300,10 @@ def history_overlay_lines(overlay):
 def draw_history_overlay(scr, overlay, colors, offset=0):
     """Zeichnet ein scrollbares Detailfenster über der TUI."""
     h, w = scr.getmaxyx()
-    lines = history_overlay_lines(overlay)
-    bw = max(1, min(w - 2, 86))
+    chart_width = max(8, w - 16)
+    lines = history_overlay_lines(overlay, chart_width)
+    content_width = max((len(text) for text, _attr in lines), default=1)
+    bw = max(1, min(w - 2, max(50, content_width + 4)))
     visible = max(1, min(len(lines), h - 4))
     max_offset = max(0, len(lines) - visible)
     offset = max(0, min(offset, max_offset))
