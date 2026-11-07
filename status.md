@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.62** · Stand 07.11.2026 · Status: Fein aufgelöstes Session-Token-Diagramm.
+**Version 2.3.63** · Stand 07.11.2026 · Status: Diagonale Token-Verlaufslinie ergänzt.
 
 ## Aktueller Stand
 
@@ -49,6 +49,10 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.63
+
+- Die Token-Verlaufslinie nutzt diagonale und horizontale Verbindungen für eine klarere Darstellung.
 
 ## Neu in 2.3.62
 

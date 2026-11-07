@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.63 — 07.11.2026
+
+- Die Token-Diagrammlinie wird mit diagonalen und horizontalen Verbindungen gezeichnet.
+
 ### 2.3.62 — 07.11.2026
 
 - Der Session-Tokenverlauf erscheint als fein aufgelöstes Diagramm mit Achse, Linie und Kompaktionsmarkern.

@@ -188,10 +188,17 @@ def _history_token_chart(values, compactions):
     for (x1, (y1, _value1, _index1)), (x2, (y2, _value2, _index2)) in zip(ordered, ordered[1:]):
         if x2 <= x1:
             continue
+        previous_y = y1
         for x in range(x1, x2 + 1):
             fraction = (x - x1) / (x2 - x1)
             y = round(y1 + (y2 - y1) * fraction)
-            grid[y][x] = "─"
+            if y < previous_y:
+                grid[y][x] = "╱"
+            elif y > previous_y:
+                grid[y][x] = "╲"
+            else:
+                grid[y][x] = "─"
+            previous_y = y
     for x, (y, _value, _index) in positions.items():
         grid[y][x] = "●"
     lines = []
