@@ -1,5 +1,6 @@
 """curses-Oberflaeche fuer llmtop."""
 import curses
+import json
 import logging
 import os
 import shutil
@@ -165,6 +166,61 @@ def aggregate_history_group(group):
     identity = run_identity_label(aggregate)
     aggregate["_source_label"] = f"{source} · {identity}"
     return aggregate
+
+
+def history_overlay_lines(overlay):
+    """Erstellt geordnete, scrollbare Detailzeilen für eine History-Gruppe."""
+    group = overlay.get("group", {})
+    aggregate = group.get("aggregate", {})
+    runs = group.get("runs", [])
+    lines = [("Zusammenfassung", True)]
+    source = aggregate.get("_source_label") or source_label(
+        aggregate.get("source"), aggregate.get("provider"))
+    lines.extend((text, False) for text in (
+        f"Gruppe       {source}",
+        f"Modell       {aggregate.get('model', '?')}",
+        f"Läufe        {len(runs)}",
+        f"Status       {aggregate.get('status', 'n/a')}",
+        f"Dauer        {format_duration(_token_value(aggregate, 'total_duration_s'))}",
+        f"Tokens       {compact_tokens(total_tokens(aggregate)) if total_tokens(aggregate) is not None else 'n/a'}",
+        f"Komp.        {_token_value(aggregate, 'compactions') or 0}",
+        f"Verbrauch    {(_webui_energy_wh(aggregate) or 0):.3f} Wh"
+        if _webui_energy_wh(aggregate) is not None else "Verbrauch    n/a",
+    ))
+    for index, run in enumerate(runs, 1):
+        lines.append((f"Lauf {index} · {run.get('run_id', 'n/a')}", True))
+        for key in sorted(run):
+            if key.startswith("_") or key == "age_seconds":
+                continue
+            value = run[key]
+            if isinstance(value, (dict, list)):
+                value = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+            lines.append((f"{key:<18} {value}", False))
+    return lines
+
+
+def draw_history_overlay(scr, overlay, colors, offset=0):
+    """Zeichnet ein scrollbares Detailfenster über der TUI."""
+    h, w = scr.getmaxyx()
+    lines = history_overlay_lines(overlay)
+    bw = max(1, min(w - 2, 86))
+    visible = max(1, min(len(lines), h - 4))
+    max_offset = max(0, len(lines) - visible)
+    offset = max(0, min(offset, max_offset))
+    bh = visible + 2
+    x0 = max(0, (w - bw) // 2)
+    y0 = max(0, (h - bh) // 2)
+    title = " Session-Metadaten "
+    inner = max(0, bw - 2)
+    top = "╭" + title + "─" * max(0, inner - len(title)) + "╮"
+    bottom = "╰" + "─" * inner + "╯"
+    _add(scr, y0, x0, top[:bw], colors["structure"], indent=False)
+    for row, (text, heading) in enumerate(lines[offset:offset + visible], 1):
+        attr = colors["structure"] if heading else colors["secondary"]
+        body = text[:max(0, inner - 2)].ljust(max(0, inner - 2))
+        _add(scr, y0 + row, x0, "│ " + body + " │", attr, indent=False)
+    _add(scr, y0 + bh - 1, x0, bottom[:bw], colors["structure"], indent=False)
+    return offset
 
 
 def indented_history_run(run):
@@ -918,7 +974,10 @@ def _draw(scr, st, host, interval):
     draw_history_table(row, h - row - 2, columns)
 
     draw_footer("q quit   r reload   x sudo   c clear   ▴▾ return   ↑↓ cursor   h help")
-    if st["help"]:
+    if st.get("history_overlay"):
+        draw_history_overlay(scr, st["history_overlay"], colors,
+                             st.get("history_overlay_offset", 0))
+    if st["help"] and not st.get("history_overlay"):
         def short_source(value, limit=28):
             value = str(value or "n/a")
             return value if len(value) <= limit else value[:limit - 1] + "…"
@@ -1012,6 +1071,7 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
              "collector_status": collector.status(), "pi_adapter_active": pi_adapter_active,
              "history_sort": "zeit", "history_desc": True, "history_offset": 0,
              "history_cursor": None, "history_expanded": set(), "history_generation": 0,
+             "history_overlay": None, "history_overlay_offset": 0,
              "run_offset": 0,
              "run_focus": False}
     lock = threading.Lock()
@@ -1169,6 +1229,17 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
                 continue
             with lock:
                 normalize_history_state(state)
+                if state.get("history_overlay"):
+                    if key in (10, 13, getattr(curses, "KEY_ENTER", 343), 27, ord(" ")):
+                        state["history_overlay"] = None
+                        state["history_overlay_offset"] = 0
+                    elif key in (curses.KEY_UP, curses.KEY_DOWN,
+                                  curses.KEY_PPAGE, curses.KEY_NPAGE):
+                        delta = {curses.KEY_UP: -1, curses.KEY_DOWN: 1,
+                                 curses.KEY_PPAGE: -5, curses.KEY_NPAGE: 5}[key]
+                        state["history_overlay_offset"] = max(
+                            0, state.get("history_overlay_offset", 0) + delta)
+                    continue
                 if key in (ord("h"), ord("H")):
                     state["help"] = not state["help"]
                 elif key in (ord("+"), ord("=")):
@@ -1193,7 +1264,21 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
                     state["history_desc"] = not state["history_desc"]
                     state["history_offset"] = 0
                     state["history_cursor"] = None
-                elif key in (10, 13, getattr(curses, "KEY_ENTER", 343), ord(" ")):
+                elif key in (10, 13, getattr(curses, "KEY_ENTER", 343)):
+                    if not state["run_focus"]:
+                        _sorted, items = normalize_history_state(state)
+                        selected = next((item for item in items
+                                         if item["key"] == state.get("history_cursor")), None)
+                        if selected:
+                            group = selected.get("group")
+                            if group is None:
+                                group = next((candidate for candidate in build_history_groups(
+                                    state.get("run_history", []))
+                                    if candidate["key"] == selected.get("group_key")), None)
+                            if group:
+                                state["history_overlay"] = {"group": group}
+                                state["history_overlay_offset"] = 0
+                elif key == ord(" "):
                     if not state["run_focus"]:
                         _sorted, items = normalize_history_state(state)
                         selected = next((item for item in items

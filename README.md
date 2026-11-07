@@ -5,7 +5,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.55** · Python-Anwendung aus der Standardbibliothek für Linux.
+> **Version 2.3.56** · Python-Anwendung aus der Standardbibliothek für Linux.
 
 `llmtop` zeigt den Ollama-Status, lokale CPU-/RAM-/GPU-Sensoren sowie laufende
 und abgeschlossene Modell-Runs in einer curses-TUI oder als einmaligen
@@ -96,7 +96,8 @@ verwende dann `--once`.
 | `a` / `A` | Fokus zwischen aktuellen Runs und History wechseln |
 | `Tab` / `Shift-Tab` | History-Sortierspalte wechseln |
 | `s` / `S` | Sortierrichtung wechseln |
-| `Enter` / `Leertaste` | History-Gruppe auf- oder zuklappen |
+| `Enter` | Metadaten des History-Eintrags als Overlay anzeigen |
+| `Leertaste` | History-Gruppe auf- oder zuklappen |
 | `←` / `→` | Gruppe zu- oder aufklappen |
 | `↑` / `↓` | Cursor bewegen |
 | `Bild↑` / `Bild↓` | seitenweise bewegen |

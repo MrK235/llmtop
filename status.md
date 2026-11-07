@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.55** · Stand 07.11.2026 · Status: Verbrauchsspalte in der History korrigiert.
+**Version 2.3.56** · Stand 07.11.2026 · Status: History-Metadatenoverlay ergänzt.
 
 ## Aktueller Stand
 
@@ -49,6 +49,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.56
+
+- `Enter` öffnet ein geordnetes, scrollbares Overlay mit den Session- und Laufmetadaten des History-Eintrags.
+- `Leertaste` sowie `←`/`→` behalten das Auf- und Zuklappen der Gruppen.
 
 ## Neu in 2.3.55
 

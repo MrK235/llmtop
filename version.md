@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.56 — 07.11.2026
+
+- History-Einträge öffnen mit `Enter` ein geordnetes, scrollbares Overlay mit Session- und Laufmetadaten.
+- Gruppensteuerung über Leertaste sowie Pfeil links/rechts bleibt erhalten.
+
 ### 2.3.55 — 07.11.2026
 
 - Die Wh-Spalte heißt jetzt `Verbrauch`; die Werte tragen die Einheit `Wh`.
