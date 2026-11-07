@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.52** · Stand 07.11.2026 · Status: Kompaktionssummen in History-Gruppen ergänzt.
+**Version 2.3.53** · Stand 07.11.2026 · Status: Laufende Energieanzeige für instrumentierte Runs ergänzt.
 
 ## Aktueller Stand
 
@@ -49,6 +49,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.53
+
+- Energiewerte laufender Open-WebUI- und Pi-Ollama-Runs werden bereits vor dem Abschluss in der Live-Anzeige aktualisiert.
+- Die History übernimmt neue Energie-Werte ohne Neustart der TUI.
 
 ## Neu in 2.3.52
 

@@ -792,6 +792,19 @@ def _finish_webui_energy_monitor(run):
         return None
 
 
+def _snapshot_webui_energy_monitor(run):
+    key = (run["source"], run["run_id"])
+    with _WEBUI_ENERGY_LOCK:
+        item = _WEBUI_ENERGY_MONITORS.get(key)
+    if not item:
+        return None
+    try:
+        return item[0].snapshot()
+    except Exception as exc:
+        log.debug("WebUI-Energiesampler konnte nicht gelesen werden: %s", exc)
+        return None
+
+
 def process_run_event(event):
     """Validiert ein Collector-Ereignis und aktualisiert Live- und History-Datei."""
     _prune_webui_energy_monitors()
@@ -808,6 +821,9 @@ def process_run_event(event):
             _start_webui_energy_monitor(run)
         else:
             _touch_webui_energy_monitor(run)
+            energy = _snapshot_webui_energy_monitor(run)
+            if energy:
+                run["energy"] = energy
     run.setdefault("updated_at", now)
     if run["status"] in FINAL_RUN_EVENTS:
         run.setdefault("finished_at", now)

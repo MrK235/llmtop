@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.53 — 07.11.2026
+
+- Energie-Snapshots laufender instrumentierter Runs werden in die Live-Datei geschrieben.
+- Die TUI aktualisiert Live- und History-Wh-Werte ohne Neustart.
+
 ### 2.3.52 — 07.11.2026
 
 - History-Gruppen zeigen die Summe der Kompaktionszähler ihrer enthaltenen Läufe.

@@ -1152,6 +1152,11 @@ class _NvidiaPowerReader:
         except (OSError, TypeError, ValueError):
             return
 
+    def snapshot(self):
+        """Liefert integrierte NVIDIA-Werte ohne den Leser zu beenden."""
+        with self.lock:
+            return [dict(item, pci_id=pci_id) for pci_id, item in self.values.items()]
+
     def stop(self):
         if self.process is None:
             return []
@@ -1220,20 +1225,8 @@ class EnergyMonitor:
                     item.update(power_w=watt, last_t=now, samples=item["samples"] + 1)
             self.stop_event.wait(self.interval)
 
-    def stop(self):
-        if self.started_mono is None:
-            return None
-        self.stop_event.set()
-        if self.thread is not None:
-            self.thread.join(timeout=max(1.0, self.interval * 3))
-        if self.nvidia is not None:
-            nvidia_values = self.nvidia.stop()
-        else:
-            nvidia_values = []
-        rapl_end = (self.rapl_reader.energy_snapshot()
-                    if self.rapl_reader is not None else _read_rapl_energy())
-        if self.rapl_reader is not None:
-            self.rapl_reader.stop()
+    def _result(self, nvidia_values=(), rapl_end=None):
+        """Erstellt einen aktuellen, nicht-destruktiven Energiestand."""
         finished_at = _utc_timestamp()
         sources = []
         for item in self.amd_values.values():
@@ -1263,6 +1256,31 @@ class EnergyMonitor:
             "duration_s": max(0.0, time.monotonic() - self.started_mono),
             "sources": sources,
         }
+
+    def snapshot(self):
+        """Liefert den bisher gemessenen Stand, ohne den Sampler zu beenden."""
+        if self.started_mono is None:
+            return None
+        nvidia_values = self.nvidia.snapshot() if self.nvidia is not None else []
+        rapl_end = (self.rapl_reader.energy_snapshot()
+                    if self.rapl_reader is not None else _read_rapl_energy())
+        return self._result(nvidia_values, rapl_end)
+
+    def stop(self):
+        if self.started_mono is None:
+            return None
+        self.stop_event.set()
+        if self.thread is not None:
+            self.thread.join(timeout=max(1.0, self.interval * 3))
+        if self.nvidia is not None:
+            nvidia_values = self.nvidia.stop()
+        else:
+            nvidia_values = []
+        rapl_end = (self.rapl_reader.energy_snapshot()
+                    if self.rapl_reader is not None else _read_rapl_energy())
+        if self.rapl_reader is not None:
+            self.rapl_reader.stop()
+        return self._result(nvidia_values, rapl_end)
 
 
 def fmt_bytes(n):

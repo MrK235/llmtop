@@ -241,6 +241,46 @@ def test_webui_collector_captures_energy():
             os.environ['LLMTOP_RUN_HISTORY_FILE'] = original_history
 
 
+def test_live_webui_energy_is_written_before_completion():
+    class FakeEnergyMonitor:
+        def start(self):
+            return self
+
+        def snapshot(self):
+            return {'energy_j': 1.5, 'energy_scope': 'component-sum'}
+
+        def stop(self):
+            return {'energy_j': 2.5, 'energy_scope': 'component-sum'}
+
+    original_monitor = llmtop.EnergyMonitor
+    original_run = os.environ.get('LLMTOP_RUN_FILE')
+    original_history = os.environ.get('LLMTOP_RUN_HISTORY_FILE')
+    try:
+        with tempfile.TemporaryDirectory() as directory:
+            os.environ['LLMTOP_RUN_FILE'] = str(Path(directory) / 'run.jsonl')
+            os.environ['LLMTOP_RUN_HISTORY_FILE'] = str(Path(directory) / 'runs.jsonl')
+            llmtop.EnergyMonitor = FakeEnergyMonitor
+            started = {
+                'schema': 2, 'event': 'started', 'run_id': 'live-energy',
+                'source': 'open-webui', 'model': 'model',
+                'started_at': '2026-11-05T20:00:00Z',
+            }
+            updated = dict(started, event='updated', output_tokens=2)
+            assert llmtop.process_run_event(started)
+            assert llmtop.process_run_event(updated)
+            assert llmtop.load_run_events()[0]['energy']['energy_j'] == 1.5
+    finally:
+        llmtop.EnergyMonitor = original_monitor
+        if original_run is None:
+            os.environ.pop('LLMTOP_RUN_FILE', None)
+        else:
+            os.environ['LLMTOP_RUN_FILE'] = original_run
+        if original_history is None:
+            os.environ.pop('LLMTOP_RUN_HISTORY_FILE', None)
+        else:
+            os.environ['LLMTOP_RUN_HISTORY_FILE'] = original_history
+
+
 def test_webui_energy_column_and_group_sum():
     runs = [
         {'run_id': 'web-1', 'source': 'open-webui', 'chat_id': 'chat', 'model': 'm',
