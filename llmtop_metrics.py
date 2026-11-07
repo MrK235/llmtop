@@ -501,6 +501,18 @@ def duration_seconds(value):
     return value / 1_000_000_000 if isinstance(value, (int, float)) and value >= 0 else None
 
 
+def format_duration(seconds):
+    """Formatiert Laufzeiten kompakt mit Minuten und optional Stunden."""
+    if not isinstance(seconds, (int, float)) or isinstance(seconds, bool) or seconds < 0:
+        return "n/a"
+    total = int(round(seconds))
+    minutes, remainder = divmod(total, 60)
+    if minutes < 60:
+        return f"{minutes}m {remainder:02d}s" if minutes else f"{remainder}s"
+    hours, minutes = divmod(minutes, 60)
+    return f"{hours}h {minutes:02d}m"
+
+
 def source_label(source, provider=None):
     """Kurzlabel aus Clientquelle und optionalem Modellprovider."""
     label = {"pi": "Pi", "open-webui": "Open WebUI", "ollama-cli": "Ollama CLI",

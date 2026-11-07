@@ -16,7 +16,7 @@ HISTORY_WRITE_INTERVAL = 5.0
 from llmtop_metrics import (
     DEFAULT_RUN_HISTORY_LIMIT, HISTORY_COLUMNS, CollectorService, _parse_time, _token_value,
     backfill_context_limits, clear_run_history, compact_tokens, context_values,
-    history_header_label, load_run_events, load_run_history, model_for_run,
+    format_duration, history_header_label, load_run_events, load_run_history, model_for_run,
     run_group_key, run_identity_label, snapshot_record, sort_run_history,
     source_label, token_rate, total_tokens,
     write_history,
@@ -463,7 +463,7 @@ def _draw(scr, st, host, interval):
             return f"{rate:.1f}" if rate is not None else "n/a"
         if column == "dauer":
             duration = _token_value(run, "total_duration_s")
-            return f"{duration:.1f}s" if duration is not None else "n/a"
+            return format_duration(duration)
         if column == "wh":
             value = _webui_energy_wh(run)
             return f"{value:.3f}" if value is not None else "n/a" if run.get("source") == "open-webui" else ""

@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.50 — 07.11.2026
+
+- Die Dauerspalte zeigt Laufzeiten als Minuten und bei langen Runs als Stunden, z. B. `12m 04s` oder `2h 07m`.
+
 ### 2.3.49 — 07.11.2026
 
 - Pi meldet erfolgreiche automatische und manuelle Compactions pro Run.
