@@ -5,7 +5,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.72** · Python-Anwendung aus der Standardbibliothek für Linux.
+> **Version 2.3.73** · Python-Anwendung aus der Standardbibliothek für Linux.
 
 `llmtop` zeigt den Ollama-Status, lokale CPU-/RAM-/GPU-Sensoren sowie laufende
 und abgeschlossene Modell-Runs in einer curses-TUI oder als einmaligen
@@ -169,7 +169,7 @@ abgeschlossenen Run; die Gruppenzeile summiert Komp.-Zähler und Dauer aller ent
 Runs. Bei mehreren Läufen zeigt das Overlay zusätzlich ein gefülltes Token-Stufendiagramm über die Session; Kompaktierungen werden im
 Diagramm markiert. Run-Nummern stehen zentriert unter dem Diagramm; bei langen
 Sessions fasst das Diagramm die Runs in nummerierte Zeitabschnitte zusammen. Das
-Diagramm nutzt im Session-Overlay die verfügbare Fensterbreite. Aufgeklappt erscheinen die Einzelruns.
+Overlay bleibt kompakt; einzelne Runs belegen im Diagramm höchstens zehn Zeichen. Aufgeklappt erscheinen die Einzelruns.
 
 Der Pi-Adapter aktualisiert den Session-Kontext während des laufenden Agenten-
 Laufs und unmittelbar vor dem Abschluss erneut. Dadurch übernimmt die History

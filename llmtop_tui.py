@@ -168,8 +168,7 @@ def aggregate_history_group(group):
     return aggregate
 
 
-def _history_token_chart(values, compactions, models, run_labels=None, time_text=None,
-                         width=None):
+def _history_token_chart(values, compactions, models, run_labels=None, time_text=None):
     """Erstellt ein gefülltes Token-Zeitdiagramm mit zentrierter Run-Achse."""
     present = [(index, value) for index, value in enumerate(values)
                if isinstance(value, (int, float))]
@@ -177,9 +176,9 @@ def _history_token_chart(values, compactions, models, run_labels=None, time_text
         return [("Tokens: keine Werte", False)]
     count = len(values)
     run_labels = run_labels or [str(index + 1) for index in range(count)]
-    label_width = max((len(label) for label in run_labels), default=1)
-    default_width = max(24, min(72, count * max(4, label_width + 2)))
-    width = max(24, int(width)) if width is not None else default_width
+    # Ein einzelner Run beansprucht höchstens zehn Zeichen; lange Sessions
+    # bleiben dadurch im festen Overlay lesbar.
+    width = max(20, min(72, count * 10))
     height = 8
     maximum = max(1.0, float(max(value for _index, value in present)))
     bars = []
@@ -228,7 +227,7 @@ def _history_token_chart(values, compactions, models, run_labels=None, time_text
     return lines
 
 
-def history_overlay_lines(overlay, chart_width=None):
+def history_overlay_lines(overlay):
     """Erstellt geordnete, scrollbare Detailzeilen für eine History-Gruppe."""
     group = overlay.get("group", {})
     aggregate = group.get("aggregate", {})
@@ -282,7 +281,7 @@ def history_overlay_lines(overlay, chart_width=None):
             models = [run.get("model") for run in chart_runs]
         lines.extend(_history_token_chart(
             token_values, compactions, models, chart_labels,
-            f"{first_label} → {last_label}", chart_width))
+            f"{first_label} → {last_label}"))
     for index, run in enumerate(runs, 1):
         lines.append((f"Lauf {index} · {run.get('run_id', 'n/a')}", True))
         for key in sorted(run):
@@ -298,11 +297,8 @@ def history_overlay_lines(overlay, chart_width=None):
 def draw_history_overlay(scr, overlay, colors, offset=0):
     """Zeichnet ein scrollbares Detailfenster über der TUI."""
     h, w = scr.getmaxyx()
-    # Das Diagramm nutzt bei kurzen Sessions die gesamte verfügbare Breite.
-    # Ein Sicherheitsrand hält Achsen und Rahmen innerhalb des Fensters.
-    lines = history_overlay_lines(overlay, chart_width=max(24, w - 16))
-    content_width = max((len(text) for text, _attr in lines), default=1)
-    bw = max(1, min(w - 2, max(50, content_width + 4)))
+    lines = history_overlay_lines(overlay)
+    bw = max(1, min(w - 2, 86))
     visible = max(1, min(len(lines), h - 4))
     max_offset = max(0, len(lines) - visible)
     offset = max(0, min(offset, max_offset))

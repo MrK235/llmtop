@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.73 — 07.11.2026
+
+- Session-Overlay auf die frühere kompakte Breite zurückgesetzt; ein Run erhält im Diagramm höchstens zehn Zeichen.
+
 ### 2.3.72 — 07.11.2026
 
 - Session-Diagramm und Overlay nutzen die verfügbare Fensterbreite; kurze Sessions werden entsprechend groß dargestellt.
