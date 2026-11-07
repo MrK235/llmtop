@@ -1,8 +1,14 @@
 # status.md — llmtop
 
-**Version 2.3.42** · Stand 05.11.2026 · Status: Doppelte GPU1-/CPU-APU-Poweranzeige unterdrückt.
+**Version 2.3.43** · Stand 05.11.2026 · Status: Lokaler Collector und Pi-Adapter arbeiten im TUI-Betrieb autonom.
 
 ## Aktueller Stand
+
+Beim normalen TUI-Start wird der lokale Collector bei Bedarf automatisch mit
+zufälligem Token gestartet. Der Pi-Adapter und seine privaten Laufzeitdaten
+werden unabhängig von Ollama und Open WebUI eingerichtet; ein erreichbarer
+Ollama-Server bleibt nur für Modellstatus und -liste erforderlich. Ein explizit
+konfigurierter entfernter Collector wird nicht durch einen lokalen ersetzt.
 
 `llmtop.py` ist der Programmeinstieg einer Python-Standardbibliotheks-Anwendung
 mit curses-TUI und `--once`-Ausgabe. Die Datenerfassung liegt in
@@ -39,6 +45,13 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.43
+
+- Lokalen Collector im normalen TUI-Start automatisch starten und bei fehlendem
+  Token ein zufälliges lokales Token erzeugen.
+- Pi-Adapter und Collector-Laufzeitdaten ohne Ollama- oder Open-WebUI-Setup
+  einrichten.
 
 ## Neu in 2.3.42
 

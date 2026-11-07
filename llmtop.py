@@ -8,7 +8,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.3.42"  # Single Source of Truth; History in version.md
+VERSION = "2.3.43"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -198,9 +198,10 @@ def main(argv=None):
         return run_rapl_helper()
     from llmtop_sources import normalize_host
     host = normalize_host(args.host)
-    from llmtop_metrics import (emit_run_event, ensure_open_webui_adapter,
-                                ensure_pi_adapter, install_open_webui_adapter,
-                                read_request_payload, run_collector, run_ollama_request)
+    from llmtop_metrics import (emit_run_event, ensure_local_collector,
+                                ensure_open_webui_adapter, ensure_pi_adapter,
+                                install_open_webui_adapter, read_request_payload,
+                                run_collector, run_ollama_request)
     if args.install_open_webui_adapter:
         try:
             action, function_id = install_open_webui_adapter()
@@ -241,8 +242,9 @@ def main(argv=None):
     if not sys.stdout.isatty():
         sys.stderr.write("kein Terminal gefunden; bitte --once verwenden\n")
         return 1
-    # Adapter bleiben ohne lokale Collector-Konfiguration No-ops. Der Pi-Adapter
-    # wird global aktualisiert und erhält private Laufzeitdaten für neue Pi-Prozesse.
+    # Im TUI-Betrieb werden Collector, Pi-Adapter und Laufzeitdaten lokal
+    # aufgebaut. Ollama und Open WebUI sind dafür nicht erforderlich.
+    local_collector = ensure_local_collector()
     pi_adapter_active = ensure_pi_adapter()
     from threading import Thread
     Thread(target=ensure_open_webui_adapter, name="llmtop-open-webui", daemon=True).start()

@@ -12,6 +12,12 @@ gebracht.
 
 ## Changelog
 
+### 2.3.43 — 05.11.2026
+
+- Lokalen Collector im TUI-Betrieb automatisch starten.
+- Pi-Adapter und private Collector-Daten unabhängig von Ollama und Open WebUI
+  einrichten; bei fehlendem Token wird ein zufälliges lokales Token erzeugt.
+
 ### 2.3.42 — 05.11.2026
 
 - Die interne GPU1-/APU-Powerzeile wird bei vorhandener CPU-Power nicht

@@ -3,6 +3,7 @@ import hmac
 import json
 import logging
 import os
+import secrets
 import sqlite3
 import subprocess
 import sys
@@ -738,8 +739,17 @@ def process_run_event(event):
 
 def collector_config():
     load_dotenv()
-    return (os.environ.get("LLMTOP_COLLECTOR_TOKEN", ""),
-            os.environ.get("LLMTOP_COLLECTOR_URL", DEFAULT_COLLECTOR_URL))
+    token = os.environ.get("LLMTOP_COLLECTOR_TOKEN", "")
+    url = os.environ.get("LLMTOP_COLLECTOR_URL", DEFAULT_COLLECTOR_URL)
+    if not token:
+        try:
+            with open(pi_adapter_state_path(), encoding="utf-8") as fh:
+                state = json.load(fh)
+            token = state.get("collector_token", "")
+            url = state.get("collector_url", url)
+        except (OSError, ValueError, TypeError):
+            pass
+    return token, url
 
 
 def pi_adapter_state_path():
@@ -752,11 +762,7 @@ def pi_adapter_source_path():
 
 
 def ensure_pi_adapter():
-    """Installiert den Pi-Adapter und dessen private Collector-Laufzeitdaten.
-
-    Nur ein konfigurierter Collector aktiviert den Adapter. Fehler bleiben ein
-    No-op, damit der Monitor ohne Pi-Installation unverändert startet.
-    """
+    """Installiert den Pi-Adapter und dessen private Collector-Laufzeitdaten."""
     token, url = collector_config()
     if not token:
         return False
@@ -789,6 +795,33 @@ def ensure_pi_adapter():
     except OSError:
         return False
     return True
+
+
+def ensure_local_collector():
+    """Startet den lokalen Collector für den autonomen TUI-Betrieb."""
+    token, url = collector_config()
+    if token and url.rstrip("/") != DEFAULT_COLLECTOR_URL:
+        return None
+    generated = not token
+    if generated:
+        token = secrets.token_urlsafe(32)
+        url = DEFAULT_COLLECTOR_URL
+    service = CollectorService(token=token)
+    if not service.start():
+        return None
+    if generated:
+        state = pi_adapter_state_path()
+        try:
+            os.makedirs(os.path.dirname(state), mode=0o700, exist_ok=True)
+            url = f"http://127.0.0.1:{service.port}"
+            with open(state, "w", encoding="utf-8") as fh:
+                json.dump({"collector_url": url, "collector_token": token},
+                          fh, separators=(",", ":"))
+            os.chmod(state, 0o600)
+        except OSError:
+            service.stop()
+            return None
+    return service
 
 
 def collector_listen_address(bind=None, port=None):
@@ -867,8 +900,8 @@ def open_webui_gateway():
 
 class CollectorService:
     """Gemeinsam genutzter Collector für Dienstmodus und TUI."""
-    def __init__(self, bind=None, port=None):
-        self.token, _url = collector_config()
+    def __init__(self, bind=None, port=None, token=None):
+        self.token = token if token is not None else collector_config()[0]
         self.bind, self.port = collector_listen_address(bind, port)
         self.addresses = []
         self.servers = []

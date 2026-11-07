@@ -5,7 +5,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.42** · Python-Anwendung aus der Standardbibliothek für Linux.
+> **Version 2.3.43** · Python-Anwendung aus der Standardbibliothek für Linux.
 
 `llmtop` zeigt den Ollama-Status, lokale CPU-/RAM-/GPU-Sensoren sowie laufende
 und abgeschlossene Modell-Runs in einer curses-TUI oder als einmaligen
@@ -175,7 +175,13 @@ auf dem privaten Docker-Gateway von Open WebUI. Ein Bearer-Token ist
 standardmäßig erforderlich. Für isolierte lokale Tests kann ausnahmsweise
 `LLMTOP_COLLECTOR_INSECURE=1` verwendet werden.
 
-Collector starten:
+Im normalen TUI-Start werden ein lokaler Collector mit zufälligem Token und
+– sofern Pi installiert ist – der Pi-Adapter automatisch eingerichtet. Dafür
+sind weder Ollama noch Open WebUI erforderlich. Die private Verbindung wird in
+`$XDG_STATE_HOME/llmtop/pi-collector.json` gespeichert.
+
+Für einen separat betriebenen oder entfernten Collector kann weiterhin
+`.env` verwendet werden:
 
 ```bash
 cp .env.example .env
