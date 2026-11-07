@@ -176,9 +176,9 @@ def _history_token_chart(values, compactions, models, run_labels=None, time_text
         return [("Tokens: keine Werte", False)]
     count = len(values)
     run_labels = run_labels or [str(index + 1) for index in range(count)]
-    # Ein einzelner Run beansprucht höchstens sechs Zeichen; damit bleiben
+    # Ein einzelner Run beansprucht höchstens vier Zeichen; damit bleiben
     # deutlich mehr Runs im festen Overlay gleichzeitig sichtbar.
-    width = min(72, max(12, count * 6))
+    width = min(72, max(8, count * 4))
     height = 8
     maximum = max(1.0, float(max(value for _index, value in present)))
     bars = []

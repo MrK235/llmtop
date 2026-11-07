@@ -186,7 +186,7 @@ def test_history_groups_keep_all_runs_and_sources_separate():
     assert "M" in chart
     short_chart = llmtop_tui._history_token_chart(
         [10, 20], [0, 0], ["model", "model"])
-    assert len(short_chart[0][0]) == 21
+    assert len(short_chart[0][0]) == 17
     many_chart = llmtop_tui._history_token_chart(
         list(range(1, 25)), [0] * 24, ["model"] * 24)
     assert len(many_chart[0][0]) == 81
