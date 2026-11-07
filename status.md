@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.68** · Stand 07.11.2026 · Status: Tokenchart als reine Füllfläche.
+**Version 2.3.69** · Stand 07.11.2026 · Status: Run-Nummern im Tokenchart ergänzt.
 
 ## Aktueller Stand
 
@@ -49,6 +49,10 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.69
+
+- Run-Nummern stehen mittig in der Token-Füllfläche; lange Sessions werden in höchstens zwölf nummerierte Zeitabschnitte verdichtet. Zeit steht über den `C`-/`M`-Legenden.
 
 ## Neu in 2.3.68
 

@@ -177,7 +177,8 @@ def test_history_groups_keep_all_runs_and_sources_separate():
     assert "Session-Verlauf Tokens" in overlay_text
     assert "C=Kompaktion" in overlay_text
     assert "M=Modellwechsel" in overlay_text
-    assert "Run     1" in overlay_text
+    assert "Zeit    " in overlay_text
+    assert "Run     " not in overlay_text
     assert "alt" not in overlay_text and "neu" not in overlay_text
     chart = "\n".join(text for text, _heading in llmtop_tui._history_token_chart(
         [10, 20], [0, 1], ["model-a", "model-b"]))

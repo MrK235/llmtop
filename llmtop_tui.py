@@ -168,36 +168,42 @@ def aggregate_history_group(group):
     return aggregate
 
 
-def _history_token_chart(values, compactions, models):
-    """Erstellt ein präzises Token-Zeitdiagramm für das Overlay."""
+def _history_token_chart(values, compactions, models, run_labels=None, time_text=None):
+    """Erstellt ein gefülltes Token-Zeitdiagramm mit Run-Nummern in den Balken."""
     present = [(index, value) for index, value in enumerate(values)
                if isinstance(value, (int, float))]
     if not present:
         return [("Tokens: keine Werte", False)]
-    width = max(24, min(72, max(1, len(values) - 1) * 4))
+    count = len(values)
+    run_labels = run_labels or [str(index + 1) for index in range(count)]
+    label_width = max((len(label) for label in run_labels), default=1)
+    width = max(24, min(72, count * max(4, label_width + 2)))
     height = 8
     maximum = max(1.0, float(max(value for _index, value in present)))
-    points = []
+    bars = []
     for index, value in present:
-        x = round(index * (width - 1) / max(1, len(values) - 1))
+        x1 = round(index * width / count)
+        x2 = max(x1 + 1, round((index + 1) * width / count))
         y = round((height - 1) * (1.0 - value / maximum))
-        points.append((x, y, index))
+        bars.append((x1, min(width, x2), y, index))
     grid = [[" " for _ in range(width)] for _ in range(height)]
 
-    # Kontextwerte gelten bis zum nächsten Run. Das Stufenprofil zeigt daher
-    # Kompaktierungsabfälle klarer als eine künstlich diagonale Interpolation.
-    spans = list(zip(points, points[1:] + [(width, points[-1][1], None)]))
-    for (x1, y1, _index1), (x2, _y2, _index2) in spans:
-        for x in range(x1, max(x1 + 1, x2)):
-            if x >= width:
-                continue
+    for x1, x2, y1, index in bars:
+        for x in range(x1, x2):
             for y in range(y1, height):
                 grid[y][x] = "░"
+        label = run_labels[index] if index < len(run_labels) else str(index + 1)
+        if len(label) + 2 <= x2 - x1:
+            label_y = y1 + (height - 1 - y1) // 2
+            label_x = x1 + (x2 - x1 - len(label)) // 2
+            for offset, char in enumerate(label):
+                grid[label_y][label_x + offset] = char
+
     def marker_row(predicate, marker):
         row = [" " for _ in range(width)]
-        for x, _y, index in points:
+        for x1, x2, _y, index in bars:
             if predicate(index):
-                row[x] = marker
+                row[min(width - 1, x1 + (x2 - x1) // 2)] = marker
         return "".join(row)
 
     def compaction_marker(index):
@@ -208,22 +214,13 @@ def _history_token_chart(values, compactions, models):
                 index - 1 < len(models) and models[index - 1] and
                 models[index] != models[index - 1])
 
-    run_labels = [" " for _ in range(width)]
-    used = set()
-    for x, _y, index in points:
-        label = str(index + 1)
-        start = max(0, min(width - len(label), x - len(label) // 2))
-        if any(column in used for column in range(start, start + len(label))):
-            continue
-        for offset, char in enumerate(label):
-            run_labels[start + offset] = char
-            used.add(start + offset)
     lines = []
     for row, cells in enumerate(grid):
         label_value = maximum * (height - 1 - row) / (height - 1)
         lines.append((f"{compact_tokens(label_value):>7} ┤" + "".join(cells), False))
     lines.append(("        └" + "─" * width, False))
-    lines.append(("Run     " + "".join(run_labels), False))
+    if time_text:
+        lines.append((f"Zeit    {time_text}", False))
     lines.append(("Komp.   " + marker_row(compaction_marker, "C") + "  C=Kompaktion", False))
     lines.append(("Modell  " + marker_row(model_marker, "M") + "  M=Modellwechsel", False))
     return lines
@@ -259,11 +256,31 @@ def history_overlay_lines(overlay):
         last_time = _parse_time(chronological[-1].get("finished_at"))
         first_label = first_time.strftime("%d.%m %H:%M") if first_time else "n/a"
         last_label = last_time.strftime("%d.%m %H:%M") if last_time else "n/a"
+        chart_runs = chronological
+        chart_labels = [str(index + 1) for index in range(len(chart_runs))]
+        if len(chronological) > 18:
+            # Bei langen Sessions werden höchstens zwölf Zeitabschnitte gezeigt.
+            # Die Nummer im Balken bezeichnet jeweils den ersten Run des Abschnitts.
+            chunk_size = (len(chronological) + 11) // 12
+            chart_runs = [chronological[start:start + chunk_size]
+                          for start in range(0, len(chronological), chunk_size)]
+            chart_labels = [str(start + 1) for start in range(
+                0, len(chronological), chunk_size)]
+            token_values = [next(((_token_value(run, "context_tokens")
+                                   if _token_value(run, "context_tokens") is not None
+                                   else total_tokens(run))
+                                  for run in reversed(chunk)
+                                  if (_token_value(run, "context_tokens") is not None
+                                      or total_tokens(run) is not None)), None)
+                            for chunk in chart_runs]
+            compactions = [max((_token_value(run, "compactions") or 0 for run in chunk),
+                               default=0) for chunk in chart_runs]
+            models = [chunk[-1].get("model") for chunk in chart_runs]
+        else:
+            models = [run.get("model") for run in chart_runs]
         lines.extend(_history_token_chart(
-            token_values, compactions, [run.get("model") for run in chronological]))
-        lines.extend((text, False) for text in (
-            f"Zeit       {first_label} → {last_label}",
-        ))
+            token_values, compactions, models, chart_labels,
+            f"{first_label} → {last_label}"))
     for index, run in enumerate(runs, 1):
         lines.append((f"Lauf {index} · {run.get('run_id', 'n/a')}", True))
         for key in sorted(run):

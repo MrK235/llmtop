@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.69 — 07.11.2026
+
+- Run-Nummern in die Mitte der Füllbalken verschoben; lange Sessions werden in nummerierte Zeitabschnitte verdichtet und die `C`-/`M`-Legenden folgen der Zeitzeile.
+
 ### 2.3.68 — 07.11.2026
 
 - Linien aus dem Tokenchart entfernt; es bleibt ausschließlich die Füllfläche.
