@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.47 — 07.11.2026
+
+- Kontextverbrauch und Kontextlimit stehen in Aktuelle Runs und History gemeinsam in der Tokenspalte.
+- Der Kontextbalken zeigt den Prozentwert ohne separates Limit direkt neben dem Balken.
+
 ### 2.3.46 — 07.11.2026
 
 - Aktuelle Runs werden unabhängig von der History-Sortierung nach unveränderlicher Startzeit angeordnet.
