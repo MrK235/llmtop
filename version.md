@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.54 — 07.11.2026
+
+- History-Gruppen zeigen die aufsummierte Dauer aller enthaltenen Läufe.
+
 ### 2.3.53 — 07.11.2026
 
 - Energie-Snapshots laufender instrumentierter Runs werden in die Live-Datei geschrieben.

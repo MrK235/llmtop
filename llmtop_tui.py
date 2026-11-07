@@ -121,8 +121,20 @@ def _webui_energy_wh(run):
     return value / 3600.0 if isinstance(value, (int, float)) and value >= 0 else None
 
 
+def _history_duration(run):
+    """Liefert die Laufzeit eines Runs, ersatzweise aus Start und Ende."""
+    duration = _token_value(run, "total_duration_s")
+    if duration is not None:
+        return duration
+    started = _parse_time(run.get("started_at"))
+    finished = _parse_time(run.get("finished_at"))
+    if started and finished and finished >= started:
+        return (finished - started).total_seconds()
+    return None
+
+
 def aggregate_history_group(group):
-    """Erzeugt die Gruppenzeile ausschließlich aus dem neuesten finalen Run."""
+    """Erzeugt die Gruppenzeile aus neuesten Werten und Gruppensummen."""
     latest = _latest_history_run(group["runs"])
     aggregate = dict(latest)
     aggregate["run_id"] = f"group:{group['key']}"
@@ -134,11 +146,9 @@ def aggregate_history_group(group):
             _token_value(aggregate, "output_tokens") is not None):
         aggregate["context_tokens"] = (aggregate["prompt_tokens"] +
                                         aggregate["output_tokens"])
-    if aggregate.get("total_duration_s") is None:
-        started = _parse_time(aggregate.get("started_at"))
-        finished = _parse_time(aggregate.get("finished_at"))
-        if started and finished and finished >= started:
-            aggregate["total_duration_s"] = (finished - started).total_seconds()
+    durations = [_history_duration(run) for run in group["runs"]]
+    if durations and all(value is not None for value in durations):
+        aggregate["total_duration_s"] = sum(durations)
 
     aggregate["compactions"] = sum(
         _token_value(run, "compactions") or 0 for run in group["runs"])

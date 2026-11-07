@@ -5,7 +5,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.53** · Python-Anwendung aus der Standardbibliothek für Linux.
+> **Version 2.3.54** · Python-Anwendung aus der Standardbibliothek für Linux.
 
 `llmtop` zeigt den Ollama-Status, lokale CPU-/RAM-/GPU-Sensoren sowie laufende
 und abgeschlossene Modell-Runs in einer curses-TUI oder als einmaligen
@@ -164,7 +164,7 @@ Startzeit angeordnet. In der Tokenspalte werden Kontextverbrauch und Limit als
 Die History kann nach Zeit, Quelle, Modell, Status, Tokens, Kontextverbrauch, Tok/s
 und Dauer sortiert werden; zusätzlich kann nach `Komp.` sortiert werden. Pi-Runs werden nach `session_id`, Open-WebUI-Runs bevorzugt
 nach `chat_id` gruppiert. Eingeklappte Gruppen repräsentieren den neuesten
-abgeschlossenen Run; die Gruppenzeile summiert die Komp.-Zähler aller enthaltenen
+abgeschlossenen Run; die Gruppenzeile summiert Komp.-Zähler und Dauer aller enthaltenen
 Runs. Aufgeklappt erscheinen die Einzelruns.
 
 Der Pi-Adapter aktualisiert den Session-Kontext während des laufenden Agenten-
