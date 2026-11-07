@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.62 — 07.11.2026
+
+- Der Session-Tokenverlauf erscheint als fein aufgelöstes Diagramm mit Achse, Linie und Kompaktionsmarkern.
+
 ### 2.3.61 — 07.11.2026
 
 - Der Session-Graph zeigt nur noch Tokens über die Zeit; Kompaktierungen sind als `C` erkennbar.

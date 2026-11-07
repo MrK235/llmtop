@@ -168,22 +168,44 @@ def aggregate_history_group(group):
     return aggregate
 
 
-def _history_sparkline(values, cell_width=2):
-    """Zeigt einen Metrikverlauf horizontal von links nach rechts."""
-    levels = "▁▂▃▄▅▆▇█"
-    present = [value for value in values if isinstance(value, (int, float))]
+def _history_token_chart(values, compactions):
+    """Erstellt ein fein aufgelöstes Token-Zeitdiagramm für das Overlay."""
+    present = [(index, value) for index, value in enumerate(values)
+               if isinstance(value, (int, float))]
     if not present:
-        return " " * (len(values) * cell_width)
-    maximum = max(present)
-    result = []
-    for value in values:
-        if not isinstance(value, (int, float)):
-            result.append("·".ljust(cell_width))
+        return [("Tokens: keine Werte", False)]
+    width = max(20, min(68, max(1, len(values) - 1) * 4))
+    height = 8
+    maximum = max(value for _index, value in present)
+    maximum = max(1.0, float(maximum))
+    positions = {}
+    for index, value in present:
+        x = round(index * (width - 1) / max(1, len(values) - 1))
+        y = round((height - 1) * (1.0 - value / maximum))
+        positions[x] = (y, value, index)
+    grid = [[" " for _ in range(width)] for _ in range(height)]
+    ordered = sorted(positions.items())
+    for (x1, (y1, _value1, _index1)), (x2, (y2, _value2, _index2)) in zip(ordered, ordered[1:]):
+        if x2 <= x1:
             continue
-        index = 0 if maximum <= 0 else min(
-            len(levels) - 1, int(round(value / maximum * (len(levels) - 1))))
-        result.append((levels[index] * cell_width)[:cell_width])
-    return "".join(result)
+        for x in range(x1, x2 + 1):
+            fraction = (x - x1) / (x2 - x1)
+            y = round(y1 + (y2 - y1) * fraction)
+            grid[y][x] = "─"
+    for x, (y, _value, _index) in positions.items():
+        grid[y][x] = "●"
+    lines = []
+    for row, cells in enumerate(grid):
+        label_value = maximum * (height - 1 - row) / (height - 1)
+        lines.append((f"{compact_tokens(label_value):>7} ┤" + "".join(cells), False))
+    markers = [" " for _ in range(width)]
+    for x, (y, _value, index) in positions.items():
+        if index < len(compactions) and compactions[index] > 0:
+            markers[x] = "C"
+    lines.append(("        └" + "─" * width, False))
+    lines.append(("         " + "".join(markers) + "  C=Kompaktion", False))
+    lines.append(("         alt" + " " * max(0, width - 8) + "neu", False))
+    return lines
 
 
 def history_overlay_lines(overlay):
@@ -212,18 +234,13 @@ def history_overlay_lines(overlay):
                         if _token_value(run, "context_tokens") is not None
                         else total_tokens(run)) for run in chronological]
         compactions = [_token_value(run, "compactions") or 0 for run in chronological]
-        present = [value for value in token_values if isinstance(value, (int, float))]
-        maximum = max(present, default=None)
         first_time = _parse_time(chronological[0].get("finished_at"))
         last_time = _parse_time(chronological[-1].get("finished_at"))
         first_label = first_time.strftime("%d.%m %H:%M") if first_time else "n/a"
         last_label = last_time.strftime("%d.%m %H:%M") if last_time else "n/a"
+        lines.extend(_history_token_chart(token_values, compactions))
         lines.extend((text, False) for text in (
-            f"Tokens     {_history_sparkline(token_values)}",
-            "Komp.      " + "".join("C " if value else "· " for value in compactions),
-            f"Skala      0 … {compact_tokens(maximum) if maximum is not None else 'n/a'}",
             f"Zeit       {first_label} → {last_label}",
-            "            C = mindestens eine Kompaktierung",
         ))
     for index, run in enumerate(runs, 1):
         lines.append((f"Lauf {index} · {run.get('run_id', 'n/a')}", True))

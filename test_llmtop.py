@@ -175,9 +175,9 @@ def test_history_groups_keep_all_runs_and_sources_separate():
     overlay_text = "\n".join(text for text, _heading in overlay)
     assert "Zusammenfassung" in overlay_text
     assert "Session-Verlauf Tokens (alt → neu)" in overlay_text
-    assert "Tokens     " in overlay_text
-    assert "Komp.      " in overlay_text
-    assert "C = mindestens eine Kompaktierung" in overlay_text
+    assert "Tokens (alt → neu)" in overlay_text
+    assert "C=Kompaktion" in overlay_text
+    assert "alt" in overlay_text and "neu" in overlay_text
     assert "compactions" in overlay_text
     assert groups[1]['key'] == ('open-webui', ('chat_id', 'chat-a'))
     assert groups[2]['key'] == ('open-webui', ('chat_id', 'chat-b'))
