@@ -1,12 +1,13 @@
 """
 title: llmtop Run Metrics
 author: llmtop
-version: 2.2.10
+version: 2.2.11
 required_open_webui_version: 0.12.3
 description: Meldet datensparsame Provider-Runmetriken an den lokalen llmtop-Collector.
 """
 
 import asyncio
+import hashlib
 import json
 import os
 import time
@@ -41,6 +42,15 @@ def number(value: Any) -> Optional[float]:
 def find_metrics(value: Any) -> Optional[dict]:
     """Sucht nur bekannte Nutzungsfelder; Textinhalte werden nie übernommen."""
     if isinstance(value, dict):
+        event_type = value.get("type")
+        if event_type in ("open_webui:context_compaction", "context_compaction"):
+            marker = value.get("id") or value.get("call_id")
+            result = {"_compaction_delta": 1}
+            if isinstance(marker, str) and marker:
+                result["_compaction_marker"] = marker[:120]
+            return result
+        if value.get("action") == "context_compaction" and value.get("done") is True:
+            return {"_compaction_delta": 1}
         if value.get("done") is True or FINAL_FIELDS.intersection(value):
             result = {key: value[key] for key in FINAL_FIELDS if number(value.get(key)) is not None}
             if isinstance(value.get("done_reason"), str):
@@ -135,6 +145,20 @@ class Filter:
     def _identity_event(run: dict) -> dict[str, str]:
         return {name: run[name] for name in ("session_id", "chat_id", "message_id") if name in run}
 
+    @staticmethod
+    def _context_summary_markers(body: dict) -> set[str]:
+        """Erkennt neue Open-WebUI-Summary-Checkpoints ohne deren Inhalt zu speichern."""
+        markers = set()
+        messages = body.get("messages") if isinstance(body, dict) else None
+        for message in messages if isinstance(messages, list) else ():
+            if not isinstance(message, dict):
+                continue
+            summary = message.get("contextSummary") or message.get("context_summary")
+            if isinstance(summary, str) and summary:
+                digest = hashlib.sha256(summary.encode("utf-8")).hexdigest()
+                markers.add("summary:" + digest)
+        return markers
+
     def _cleanup(self) -> None:
         cutoff = time.monotonic() - max(30.0, self.valves.stale_seconds)
         for key in list(self._runs):
@@ -184,10 +208,12 @@ class Filter:
         now_mono = time.monotonic()
         options = body.get("options") if isinstance(body.get("options"), dict) else {}
         num_ctx = options.get("num_ctx")
+        summary_markers = self._context_summary_markers(body)
         key = self._key(model, __metadata__)
         metadata = __metadata__ or {}
         identity = self._identity(metadata)
         has_identity = bool(identity)
+        compaction_changed = False
         async with self._lock:
             self._cleanup()
             queue = self._runs.get(key)
@@ -211,14 +237,31 @@ class Filter:
                     "last_request": now_mono,
                     "last_heartbeat": now_mono,
                     "provider": provider,
+                    "compactions": len(summary_markers),
+                    "_compaction_markers": set(summary_markers),
                     **identity,
                 }
                 self._runs[key].append(run)
                 is_new = True
+            if not is_new and summary_markers:
+                known = run.setdefault("_compaction_markers", set())
+                new_markers = summary_markers - known
+                if new_markers:
+                    known.update(new_markers)
+                    run["compactions"] = run.get("compactions", 0) + len(new_markers)
+                    compaction_changed = True
             if isinstance(num_ctx, (int, float)) and not isinstance(num_ctx, bool) and num_ctx > 0:
                 run["context_limit"] = num_ctx
                 run["context_limit_source"] = "request"
         if not is_new:
+            if compaction_changed:
+                await self._send({
+                    "schema": 2, "event": "updated", "run_id": run["run_id"],
+                    "source": "open-webui", "provider": provider, "model": run["model"],
+                    "started_at": run["started_at"], "updated_at": now,
+                    "compactions": run.get("compactions", 0),
+                    **self._identity_event(run),
+                })
             await self._heartbeat(model, __metadata__)
             return body
         await self._send({
@@ -230,6 +273,7 @@ class Filter:
             "model": model,
             "started_at": now,
             "updated_at": now,
+            "compactions": run.get("compactions", 0),
             **self._identity_event(run),
             **{key: run[key] for key in ("context_limit", "context_limit_source") if key in run},
         })
@@ -254,7 +298,18 @@ class Filter:
         run = await self._find_run(model, metadata)
         if not run:
             return
+        metrics = dict(metrics)
+        marker = metrics.pop("_compaction_marker", None)
+        delta = int(metrics.pop("_compaction_delta", 0) or 0)
+        if marker:
+            markers = run.setdefault("_compaction_markers", set())
+            if marker in markers:
+                delta = 0
+            else:
+                markers.add(marker)
         changed = {key: value for key, value in metrics.items() if run.get(key) != value}
+        if delta:
+            changed["compactions"] = run.get("compactions", 0) + delta
         if not changed:
             return
         run.update(changed)
@@ -310,6 +365,7 @@ class Filter:
             "started_at": run["started_at"],
             "updated_at": now,
             "finished_at": now,
+            "compactions": run.get("compactions", 0),
             **self._identity_event(run),
             **{key: run[key] for key in ("context_limit", "context_limit_source") if key in run},
         }

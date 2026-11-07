@@ -5,7 +5,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.48** · Python-Anwendung aus der Standardbibliothek für Linux.
+> **Version 2.3.49** · Python-Anwendung aus der Standardbibliothek für Linux.
 
 `llmtop` zeigt den Ollama-Status, lokale CPU-/RAM-/GPU-Sensoren sowie laufende
 und abgeschlossene Modell-Runs in einer curses-TUI oder als einmaligen
@@ -150,6 +150,7 @@ Instrumentierte Runs zeigen, soweit vom Provider geliefert:
 - Prompt-, Ausgabe- und Gesamttoken
 - Kontextverbrauch und Kontextlimit
 - Ausgabe-Rate und Dauer
+- Anzahl erfolgreicher Kontext-Compactions für Pi und Open WebUI
 - bei Open WebUI zusätzlich Energie in Wh, sofern gemessen
 
 Aktuelle Runs und History verwenden dieselben Tabellenwerte. In Aktuelle Runs
@@ -159,7 +160,7 @@ aktuellen Runs bleiben unabhängig von der History-Sortierung nach unveränderli
 Startzeit angeordnet. In der Tokenspalte werden Kontextverbrauch und Limit als
 `16.7/32.8k` zusammengefasst; der Kontextbalken zeigt daneben nur den Prozentwert.
 Die History kann nach Zeit, Quelle, Modell, Status, Tokens, Kontextverbrauch, Tok/s
-und Dauer sortiert werden. Pi-Runs werden nach `session_id`, Open-WebUI-Runs bevorzugt
+und Dauer sortiert werden; zusätzlich kann nach `Komp.` sortiert werden. Pi-Runs werden nach `session_id`, Open-WebUI-Runs bevorzugt
 nach `chat_id` gruppiert. Eingeklappte Gruppen repräsentieren den neuesten
 abgeschlossenen Run; aufgeklappt erscheinen die Einzelruns.
 

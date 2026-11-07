@@ -12,6 +12,12 @@ gebracht.
 
 ## Changelog
 
+### 2.3.49 — 07.11.2026
+
+- Pi meldet erfolgreiche automatische und manuelle Compactions pro Run.
+- Open WebUI übernimmt Compaction-Events und neue Summary-Checkpoints pro Run.
+- Aktuelle Runs und History zeigen die Anzahl in der Spalte `Komp.`.
+
 ### 2.3.48 — 07.11.2026
 
 - Die Tokenspalte zeigt Kontextwerte platzsparend als `16.7/32.8k` mit nur einem `k`.

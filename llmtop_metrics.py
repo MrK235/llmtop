@@ -222,6 +222,10 @@ def normalize_run(run, final=False):
         value = run.get(key)
         if isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0:
             out[key] = value
+    compactions = run.get("compactions")
+    if (isinstance(compactions, (int, float)) and not isinstance(compactions, bool)
+            and compactions >= 0 and float(compactions).is_integer()):
+        out["compactions"] = int(compactions)
     for source_key, target in (("prompt_eval_count", "prompt_tokens"),
                                ("eval_count", "output_tokens")):
         value = run.get(source_key)
@@ -576,10 +580,10 @@ def context_text(run, model=None):
     return f"Kontext {compact_tokens(used)}/{compact_tokens(limit)}{suffix}"
 
 
-HISTORY_COLUMNS = ("zeit", "quelle", "modell", "status", "tokens", "kontext", "rate", "dauer")
+HISTORY_COLUMNS = ("zeit", "quelle", "modell", "status", "tokens", "komp", "kontext", "rate", "dauer")
 HISTORY_COLUMN_LABELS = {
     "zeit": "Zeit", "quelle": "Quelle", "modell": "Modell", "status": "Status",
-    "tokens": "Tokens", "kontext": "Kontext", "rate": "Tok/s", "dauer": "Dauer", "wh": "Wh",
+    "tokens": "Tokens", "komp": "Komp.", "kontext": "Kontext", "rate": "Tok/s", "dauer": "Dauer", "wh": "Wh",
 }
 
 
@@ -596,6 +600,9 @@ def history_sort_value(run, column):
         return (False, str(run.get("status", "")).casefold())
     if column == "tokens":
         value = total_tokens(run)
+        return (value is None, value if value is not None else 0)
+    if column == "komp":
+        value = _token_value(run, "compactions")
         return (value is None, value if value is not None else 0)
     if column == "kontext":
         used, limit, _pct = context_values(run)

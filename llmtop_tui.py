@@ -383,9 +383,9 @@ def _draw(scr, st, host, interval):
         # Quelle/Provider bleibt auch in schmalen Ansichten sichtbar; weitere
         # Spalten folgen, sobald der verfügbare Platz dies zulässt.
         if w >= 118:
-            names = ("zeit", "quelle", "modell", "status", "tokens", "kontext", "rate", "dauer", "wh")
+            names = ("zeit", "quelle", "modell", "status", "tokens", "komp", "kontext", "rate", "dauer", "wh")
         elif w >= 80:
-            names = ("zeit", "quelle", "modell", "status", "tokens", "kontext")
+            names = ("zeit", "quelle", "modell", "status", "tokens", "komp", "kontext")
         else:
             names = ("zeit", "quelle", "modell", "status")
 
@@ -453,6 +453,9 @@ def _draw(scr, st, host, interval):
             if used_text.endswith("k"):
                 used_text = used_text[:-1]
             return f"{used_text}/{compact_tokens(limit)}"
+        if column == "komp":
+            value = _token_value(run, "compactions")
+            return str(int(value)) if value is not None else "0"
         if column == "kontext":
             return context_table_cell(run, model)
         if column == "rate":

@@ -1,4 +1,4 @@
-/* llmtop 2.2.20 – globale Pi-Erweiterung für datensparsame Run-Metriken.
+/* llmtop 2.2.21 – globale Pi-Erweiterung für datensparsame Run-Metriken.
  * Installation: nach ~/.pi/agent/extensions/ kopieren und Pi neu starten oder /reload.
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -200,6 +200,13 @@ export default function (pi: ExtensionAPI) {
       updated_at: now(), ...metrics });
   };
 
+  const recordCompaction = () => {
+    const run = active;
+    if (!run) return;
+    run.metrics.compactions = (run.metrics.compactions || 0) + 1;
+    progress(run, true);
+  };
+
   const finish = (event: "completed" | "cancelled" | "error") => {
     const run = active;
     if (!run) return;
@@ -270,6 +277,12 @@ export default function (pi: ExtensionAPI) {
     const metrics = usageMetrics(event?.message);
     if (Object.keys(metrics).length) active.metrics = { ...active.metrics, ...metrics };
     progress(active, true);
+  });
+
+  pi.on("session_compact", () => {
+    // Erfolgreiche automatische und manuelle Pi-Compactions zählen als Teil
+    // des laufenden Agenten-Runs; fehlgeschlagene Versuche werden nicht gezählt.
+    recordCompaction();
   });
 
   pi.on("agent_settled", (event: any) => {
