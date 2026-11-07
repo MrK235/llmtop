@@ -219,8 +219,8 @@ def _history_token_chart(values, compactions, models, run_labels=None, time_text
             run_row[start:start + len(label)] = label
     lines.append(("        └" + "─" * width, False))
     lines.append(("Run     " + "".join(run_row), False))
-    lines.append(("Komp.   " + marker_row(compaction_marker, "C") + "  C=Kompaktion", False))
-    lines.append(("Modell  " + marker_row(model_marker, "M") + "  M=Modellwechsel", False))
+    lines.append(("Komp.   " + marker_row(compaction_marker, "C"), False))
+    lines.append(("Modell  " + marker_row(model_marker, "M"), False))
     if time_text:
         lines.append((f"Zeit    {time_text}", False))
     return lines

@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.71 — 07.11.2026
+
+- Erläuternde Texte neben den `C`- und `M`-Markierungen entfernt.
+
 ### 2.3.70 — 07.11.2026
 
 - Run-Nummern zentriert unter das Diagramm zurückgesetzt; Zeitzeile unter `C`-/`M`-Legenden verschoben.

@@ -175,8 +175,8 @@ def test_history_groups_keep_all_runs_and_sources_separate():
     overlay_text = "\n".join(text for text, _heading in overlay)
     assert "Zusammenfassung" in overlay_text
     assert "Session-Verlauf Tokens" in overlay_text
-    assert "C=Kompaktion" in overlay_text
-    assert "M=Modellwechsel" in overlay_text
+    assert "C=Kompaktion" not in overlay_text
+    assert "M=Modellwechsel" not in overlay_text
     assert "Run     " in overlay_text
     assert "Zeit    " in overlay_text
     assert overlay_text.rindex("Zeit    ") > overlay_text.rindex("Modell  ")
