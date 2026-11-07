@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.64** · Stand 07.11.2026 · Status: Präziser Session-Tokenchart mit Modellwechseln.
+**Version 2.3.65** · Stand 07.11.2026 · Status: Bereinigte Tokenchart-Achsenbeschriftung.
 
 ## Aktueller Stand
 
@@ -49,6 +49,10 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.65
+
+- Die Alt-/Neu-Beschriftung entfällt; die Run-Nummern stehen direkt unter dem Diagramm vor den Kompaktionsmarkern.
 
 ## Neu in 2.3.64
 

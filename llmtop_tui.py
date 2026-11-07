@@ -240,10 +240,9 @@ def _history_token_chart(values, compactions, models):
         label_value = maximum * (height - 1 - row) / (height - 1)
         lines.append((f"{compact_tokens(label_value):>7} ┤" + "".join(cells), False))
     lines.append(("        └" + "─" * width, False))
+    lines.append(("Run     " + "".join(run_labels), False))
     lines.append(("Komp.   " + marker_row(compaction_marker, "C") + "  C=Kompaktion", False))
     lines.append(("Modell  " + marker_row(model_marker, "M") + "  M=Modellwechsel", False))
-    lines.append(("Run     " + "".join(run_labels), False))
-    lines.append(("        alt" + " " * max(0, width - 8) + "neu", False))
     return lines
 
 
@@ -268,7 +267,7 @@ def history_overlay_lines(overlay):
         if _webui_energy_wh(aggregate) is not None else "Verbrauch    n/a",
     ))
     if len(chronological) > 1:
-        lines.append(("Session-Verlauf Tokens (alt → neu)", True))
+        lines.append(("Session-Verlauf Tokens", True))
         token_values = [(_token_value(run, "context_tokens")
                         if _token_value(run, "context_tokens") is not None
                         else total_tokens(run)) for run in chronological]

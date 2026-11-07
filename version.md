@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.65 — 07.11.2026
+
+- Tokenchart ohne Alt-/Neu-Beschriftung; die Run-Achse steht direkt über Kompaktions- und Modellmarkern.
+
 ### 2.3.64 — 07.11.2026
 
 - Tokenchart mit präziserer lückenloser Linie, Modellwechsel-Markern `M` und Run-Nummern auf der unteren Achse erweitert.
