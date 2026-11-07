@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.57 — 07.11.2026
+
+- Das Session-Metadatenoverlay zeigt kompakte chronologische Verläufe für Dauer, Tokens und Kompaktierungen.
+
 ### 2.3.56 — 07.11.2026
 
 - History-Einträge öffnen mit `Enter` ein geordnetes, scrollbares Overlay mit Session- und Laufmetadaten.

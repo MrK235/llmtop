@@ -168,11 +168,31 @@ def aggregate_history_group(group):
     return aggregate
 
 
+def _history_sparkline(values):
+    """Verdichtet numerische Laufwerte zu einer kleinen Terminal-Grafik."""
+    levels = "▁▂▃▄▅▆▇█"
+    present = [value for value in values if isinstance(value, (int, float))]
+    if not present:
+        return "—"
+    maximum = max(present)
+    if maximum <= 0:
+        return "".join("▁" if value is not None else "·" for value in values)
+    result = []
+    for value in values:
+        if not isinstance(value, (int, float)):
+            result.append("·")
+            continue
+        index = min(len(levels) - 1, int(round(value / maximum * (len(levels) - 1))))
+        result.append(levels[index])
+    return "".join(result)
+
+
 def history_overlay_lines(overlay):
     """Erstellt geordnete, scrollbare Detailzeilen für eine History-Gruppe."""
     group = overlay.get("group", {})
     aggregate = group.get("aggregate", {})
     runs = group.get("runs", [])
+    chronological = list(reversed(runs))
     lines = [("Zusammenfassung", True)]
     source = aggregate.get("_source_label") or source_label(
         aggregate.get("source"), aggregate.get("provider"))
@@ -187,6 +207,14 @@ def history_overlay_lines(overlay):
         f"Verbrauch    {(_webui_energy_wh(aggregate) or 0):.3f} Wh"
         if _webui_energy_wh(aggregate) is not None else "Verbrauch    n/a",
     ))
+    if len(chronological) > 1:
+        lines.append(("Verlauf (alt → neu)", True))
+        lines.extend((text, False) for text in (
+            f"Dauer        {_history_sparkline([_history_duration(run) for run in chronological])}",
+            f"Tokens       {_history_sparkline([total_tokens(run) for run in chronological])}",
+            f"Komp.        {_history_sparkline([_token_value(run, 'compactions') for run in chronological])}",
+            "            jeder Punkt/Balken = ein Lauf",
+        ))
     for index, run in enumerate(runs, 1):
         lines.append((f"Lauf {index} · {run.get('run_id', 'n/a')}", True))
         for key in sorted(run):

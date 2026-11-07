@@ -174,6 +174,8 @@ def test_history_groups_keep_all_runs_and_sources_separate():
     overlay = llmtop_tui.history_overlay_lines({'group': groups[0]})
     overlay_text = "\n".join(text for text, _heading in overlay)
     assert "Zusammenfassung" in overlay_text
+    assert "Verlauf (alt → neu)" in overlay_text
+    assert "Dauer        " in overlay_text
     assert "Lauf 1 · pi-1" in overlay_text
     assert "compactions" in overlay_text
     assert groups[1]['key'] == ('open-webui', ('chat_id', 'chat-a'))
