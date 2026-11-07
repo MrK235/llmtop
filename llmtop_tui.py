@@ -200,19 +200,22 @@ def history_overlay_lines(overlay):
         lines.append(("Verlauf (alt → neu)", True))
         metrics = (
             ("Dauer", [_history_duration(run) for run in chronological], "s"),
-            ("Tokens", [total_tokens(run) for run in chronological], ""),
-            ("Kontext", [_token_value(run, "context_tokens") for run in chronological], ""),
-            ("Komp.", [_token_value(run, "compactions") for run in chronological], ""),
+            ("Tok", [total_tokens(run) for run in chronological], ""),
+            ("Ktx", [_token_value(run, "context_tokens") for run in chronological], ""),
+            ("Komp", [_token_value(run, "compactions") for run in chronological], ""),
         )
+        maxima = [max((item for item in values if isinstance(item, (int, float))), default=None)
+                  for _label, values, _unit in metrics]
+        lines.append(("Lauf   Dauer       Tok         Ktx         Komp", False))
         for index, run in enumerate(chronological, 1):
-            lines.append((f"Lauf {index:02d} · {run.get('run_id', 'n/a')}", True))
-            for label, values, unit in metrics:
+            cells = []
+            for (_label, values, unit), maximum in zip(metrics, maxima):
                 value = values[index - 1]
-                maximum = max((item for item in values
-                               if isinstance(item, (int, float))), default=None)
                 value_text = f"{value:g}{unit}" if isinstance(value, (int, float)) else "n/a"
-                lines.append((f"  {label:<8} {_history_bar(value, maximum)} {value_text}", False))
-        lines.append(("  Balkenlänge = relativer Wert innerhalb der Session", False))
+                cells.append(f"{_history_bar(value, maximum, 8)} {value_text}")
+            lines.append((f"{index:02d} {str(run.get('run_id', 'n/a'))[:8]:<8} " +
+                          "  ".join(cells), False))
+        lines.append(("Balkenlänge = relativer Wert innerhalb der Session", False))
     for index, run in enumerate(runs, 1):
         lines.append((f"Lauf {index} · {run.get('run_id', 'n/a')}", True))
         for key in sorted(run):

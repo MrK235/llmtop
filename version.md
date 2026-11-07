@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.59 — 07.11.2026
+
+- Dauer, Tokens, Kontext und Kompaktierungen werden pro Lauf wieder in einer gemeinsamen Graphzeile dargestellt.
+
 ### 2.3.58 — 07.11.2026
 
 - Session-Verläufe im Overlay auf größere relative Balken umgestellt und um Kontextwerte ergänzt.
