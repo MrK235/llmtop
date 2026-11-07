@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.70 — 07.11.2026
+
+- Run-Nummern zentriert unter das Diagramm zurückgesetzt; Zeitzeile unter `C`-/`M`-Legenden verschoben.
+
 ### 2.3.69 — 07.11.2026
 
 - Run-Nummern in die Mitte der Füllbalken verschoben; lange Sessions werden in nummerierte Zeitabschnitte verdichtet und die `C`-/`M`-Legenden folgen der Zeitzeile.

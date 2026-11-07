@@ -169,7 +169,7 @@ def aggregate_history_group(group):
 
 
 def _history_token_chart(values, compactions, models, run_labels=None, time_text=None):
-    """Erstellt ein gefülltes Token-Zeitdiagramm mit Run-Nummern in den Balken."""
+    """Erstellt ein gefülltes Token-Zeitdiagramm mit zentrierter Run-Achse."""
     present = [(index, value) for index, value in enumerate(values)
                if isinstance(value, (int, float))]
     if not present:
@@ -192,13 +192,6 @@ def _history_token_chart(values, compactions, models, run_labels=None, time_text
         for x in range(x1, x2):
             for y in range(y1, height):
                 grid[y][x] = "░"
-        label = run_labels[index] if index < len(run_labels) else str(index + 1)
-        if len(label) + 2 <= x2 - x1:
-            label_y = y1 + (height - 1 - y1) // 2
-            label_x = x1 + (x2 - x1 - len(label)) // 2
-            for offset, char in enumerate(label):
-                grid[label_y][label_x + offset] = char
-
     def marker_row(predicate, marker):
         row = [" " for _ in range(width)]
         for x1, x2, _y, index in bars:
@@ -218,11 +211,18 @@ def _history_token_chart(values, compactions, models, run_labels=None, time_text
     for row, cells in enumerate(grid):
         label_value = maximum * (height - 1 - row) / (height - 1)
         lines.append((f"{compact_tokens(label_value):>7} ┤" + "".join(cells), False))
+    run_row = [" " for _ in range(width)]
+    for x1, x2, _y, index in bars:
+        label = run_labels[index] if index < len(run_labels) else str(index + 1)
+        if len(label) <= x2 - x1:
+            start = x1 + (x2 - x1 - len(label)) // 2
+            run_row[start:start + len(label)] = label
     lines.append(("        └" + "─" * width, False))
-    if time_text:
-        lines.append((f"Zeit    {time_text}", False))
+    lines.append(("Run     " + "".join(run_row), False))
     lines.append(("Komp.   " + marker_row(compaction_marker, "C") + "  C=Kompaktion", False))
     lines.append(("Modell  " + marker_row(model_marker, "M") + "  M=Modellwechsel", False))
+    if time_text:
+        lines.append((f"Zeit    {time_text}", False))
     return lines
 
 
