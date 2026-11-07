@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.68 — 07.11.2026
+
+- Linien aus dem Tokenchart entfernt; es bleibt ausschließlich die Füllfläche.
+
 ### 2.3.67 — 07.11.2026
 
 - Datenpunkte aus dem Token-Stufendiagramm entfernt.

@@ -191,12 +191,8 @@ def _history_token_chart(values, compactions, models):
         for x in range(x1, max(x1 + 1, x2)):
             if x >= width:
                 continue
-            grid[y1][x] = "━"
-            for y in range(y1 + 1, height):
+            for y in range(y1, height):
                 grid[y][x] = "░"
-    for (_x1, y1, _index1), (x2, y2, _index2) in zip(points, points[1:]):
-        for y in range(min(y1, y2), max(y1, y2) + 1):
-            grid[y][x2] = "┃"
     def marker_row(predicate, marker):
         row = [" " for _ in range(width)]
         for x, _y, index in points:

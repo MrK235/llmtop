@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.67** · Stand 07.11.2026 · Status: Tokenchart ohne Datenpunkte.
+**Version 2.3.68** · Stand 07.11.2026 · Status: Tokenchart als reine Füllfläche.
 
 ## Aktueller Stand
 
@@ -49,6 +49,10 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.68
+
+- Die Linien wurden aus dem Tokenchart entfernt; sichtbar bleibt ausschließlich die Token-Füllfläche.
 
 ## Neu in 2.3.67
 
