@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.44** · Stand 07.11.2026 · Status: Erststart-Onboarding und Dienst-Erkennung für lokal, Docker und begrenztes LAN integriert.
+**Version 2.3.45** · Stand 07.11.2026 · Status: Aktuelle Runs mit cyanfarbenen Run-Zeilen und grauen, unterstrichenen Gruppenüberschriften.
 
 ## Aktueller Stand
 
@@ -49,6 +49,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.45
+
+- Run-Zeilen unter „Aktuelle Runs“ werden cyan dargestellt.
+- Gruppenüberschriften erscheinen grau und unterstrichen; Kontext und Tok/s behalten ihre dynamischen Farben.
 
 ## Neu in 2.3.43
 

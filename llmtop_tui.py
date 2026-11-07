@@ -864,7 +864,7 @@ def _draw(scr, st, host, interval):
             source_visible = [run for run in visible if run in running + finished]
             group_label = f"{source_label(source)} · {run_identity_label(identity)}"
             _add(scr, row, 0, f"{group_label} (aktiv {len(running)} · Ergebnis {len(finished)})",
-                 colors["structure"])
+                 colors["group"] | curses.A_UNDERLINE)
             row += 1
             for run in source_visible:
                 for index, (name, width) in enumerate(columns):
@@ -873,7 +873,8 @@ def _draw(scr, st, host, interval):
                         draw_live_context_cell(row, column_x, width, run)
                         continue
                     value = current_run_cell(run, name)[:width].ljust(width)
-                    attr = _rate_color(colors, token_rate(run)) if name == "rate" else colors["secondary"]
+                    attr = (_rate_color(colors, token_rate(run)) if name == "rate"
+                            else colors["structure"])
                     _add(scr, row, column_x, value, attr)
                 row += 1
         if len(grouped_runs) > visible_runs:

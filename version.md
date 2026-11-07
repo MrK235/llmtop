@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.45 — 07.11.2026
+
+- Run-Zeilen unter „Aktuelle Runs“ werden cyan dargestellt.
+- Gruppenüberschriften erscheinen grau und unterstrichen; Kontext und Tok/s behalten ihre dynamischen Farben.
+
 ### 2.3.44 — 07.11.2026
 
 - Interaktives Erststart-Onboarding mit automatischer lokaler, Docker- und
