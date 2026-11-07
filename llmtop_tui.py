@@ -168,12 +168,22 @@ def aggregate_history_group(group):
     return aggregate
 
 
-def _history_bar(value, maximum, width=18):
-    """Erstellt einen gut lesbaren, proportionalen Balken für einen Laufwert."""
-    if not isinstance(value, (int, float)) or maximum is None:
-        return "·" * width
-    filled = width if maximum <= 0 else int(round(max(0.0, value) / maximum * width))
-    return "█" * min(width, filled) + "·" * max(0, width - filled)
+def _history_sparkline(values, cell_width=2):
+    """Zeigt einen Metrikverlauf horizontal von links nach rechts."""
+    levels = "▁▂▃▄▅▆▇█"
+    present = [value for value in values if isinstance(value, (int, float))]
+    if not present:
+        return " " * (len(values) * cell_width)
+    maximum = max(present)
+    result = []
+    for value in values:
+        if not isinstance(value, (int, float)):
+            result.append("·".ljust(cell_width))
+            continue
+        index = 0 if maximum <= 0 else min(
+            len(levels) - 1, int(round(value / maximum * (len(levels) - 1))))
+        result.append((levels[index] * cell_width)[:cell_width])
+    return "".join(result)
 
 
 def history_overlay_lines(overlay):
@@ -199,23 +209,16 @@ def history_overlay_lines(overlay):
     if len(chronological) > 1:
         lines.append(("Verlauf (alt → neu)", True))
         metrics = (
-            ("Dauer", [_history_duration(run) for run in chronological], "s"),
-            ("Tok", [total_tokens(run) for run in chronological], ""),
-            ("Ktx", [_token_value(run, "context_tokens") for run in chronological], ""),
-            ("Komp", [_token_value(run, "compactions") for run in chronological], ""),
+            ("Dauer", [_history_duration(run) for run in chronological]),
+            ("Tokens", [total_tokens(run) for run in chronological]),
+            ("Kontext", [_token_value(run, "context_tokens") for run in chronological]),
+            ("Komp.", [_token_value(run, "compactions") for run in chronological]),
         )
-        maxima = [max((item for item in values if isinstance(item, (int, float))), default=None)
-                  for _label, values, _unit in metrics]
-        lines.append(("Lauf   Dauer       Tok         Ktx         Komp", False))
-        for index, run in enumerate(chronological, 1):
-            cells = []
-            for (_label, values, unit), maximum in zip(metrics, maxima):
-                value = values[index - 1]
-                value_text = f"{value:g}{unit}" if isinstance(value, (int, float)) else "n/a"
-                cells.append(f"{_history_bar(value, maximum, 8)} {value_text}")
-            lines.append((f"{index:02d} {str(run.get('run_id', 'n/a'))[:8]:<8} " +
-                          "  ".join(cells), False))
-        lines.append(("Balkenlänge = relativer Wert innerhalb der Session", False))
+        labels = " ".join(f"{index:02d}" for index in range(1, len(chronological) + 1))
+        lines.append((f"Lauf       {labels}", False))
+        for label, values in metrics:
+            lines.append((f"{label:<9} {_history_sparkline(values)}", False))
+        lines.append(("            links = alt · rechts = neu", False))
     for index, run in enumerate(runs, 1):
         lines.append((f"Lauf {index} · {run.get('run_id', 'n/a')}", True))
         for key in sorted(run):

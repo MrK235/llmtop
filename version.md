@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.60 — 07.11.2026
+
+- Session-Graphen zeigen Dauer, Tokens, Kontext und Kompaktierungen horizontal von links nach rechts.
+
 ### 2.3.59 — 07.11.2026
 
 - Dauer, Tokens, Kontext und Kompaktierungen werden pro Lauf wieder in einer gemeinsamen Graphzeile dargestellt.
