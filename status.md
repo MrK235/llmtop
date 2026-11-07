@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.60** · Stand 07.11.2026 · Status: Horizontale Session-Graphen ergänzt.
+**Version 2.3.61** · Stand 07.11.2026 · Status: Session-Tokenverlauf mit Kompaktionsmarkern.
 
 ## Aktueller Stand
 
@@ -49,6 +49,10 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.61
+
+- Das Overlay zeigt ausschließlich den horizontalen Tokenverlauf der Session; Kompaktierungen werden als `C` markiert.
 
 ## Neu in 2.3.60
 

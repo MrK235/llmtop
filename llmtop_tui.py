@@ -207,18 +207,24 @@ def history_overlay_lines(overlay):
         if _webui_energy_wh(aggregate) is not None else "Verbrauch    n/a",
     ))
     if len(chronological) > 1:
-        lines.append(("Verlauf (alt → neu)", True))
-        metrics = (
-            ("Dauer", [_history_duration(run) for run in chronological]),
-            ("Tokens", [total_tokens(run) for run in chronological]),
-            ("Kontext", [_token_value(run, "context_tokens") for run in chronological]),
-            ("Komp.", [_token_value(run, "compactions") for run in chronological]),
-        )
-        labels = " ".join(f"{index:02d}" for index in range(1, len(chronological) + 1))
-        lines.append((f"Lauf       {labels}", False))
-        for label, values in metrics:
-            lines.append((f"{label:<9} {_history_sparkline(values)}", False))
-        lines.append(("            links = alt · rechts = neu", False))
+        lines.append(("Session-Verlauf Tokens (alt → neu)", True))
+        token_values = [(_token_value(run, "context_tokens")
+                        if _token_value(run, "context_tokens") is not None
+                        else total_tokens(run)) for run in chronological]
+        compactions = [_token_value(run, "compactions") or 0 for run in chronological]
+        present = [value for value in token_values if isinstance(value, (int, float))]
+        maximum = max(present, default=None)
+        first_time = _parse_time(chronological[0].get("finished_at"))
+        last_time = _parse_time(chronological[-1].get("finished_at"))
+        first_label = first_time.strftime("%d.%m %H:%M") if first_time else "n/a"
+        last_label = last_time.strftime("%d.%m %H:%M") if last_time else "n/a"
+        lines.extend((text, False) for text in (
+            f"Tokens     {_history_sparkline(token_values)}",
+            "Komp.      " + "".join("C " if value else "· " for value in compactions),
+            f"Skala      0 … {compact_tokens(maximum) if maximum is not None else 'n/a'}",
+            f"Zeit       {first_label} → {last_label}",
+            "            C = mindestens eine Kompaktierung",
+        ))
     for index, run in enumerate(runs, 1):
         lines.append((f"Lauf {index} · {run.get('run_id', 'n/a')}", True))
         for key in sorted(run):

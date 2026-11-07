@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.61 — 07.11.2026
+
+- Der Session-Graph zeigt nur noch Tokens über die Zeit; Kompaktierungen sind als `C` erkennbar.
+
 ### 2.3.60 — 07.11.2026
 
 - Session-Graphen zeigen Dauer, Tokens, Kontext und Kompaktierungen horizontal von links nach rechts.
