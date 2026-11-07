@@ -1,14 +1,18 @@
 # status.md — llmtop
 
-**Version 2.3.43** · Stand 05.11.2026 · Status: Lokaler Collector und Pi-Adapter arbeiten im TUI-Betrieb autonom.
+**Version 2.3.44** · Stand 07.11.2026 · Status: Erststart-Onboarding und Dienst-Erkennung für lokal, Docker und begrenztes LAN integriert.
 
 ## Aktueller Stand
 
-Beim normalen TUI-Start wird der lokale Collector bei Bedarf automatisch mit
-zufälligem Token gestartet. Der Pi-Adapter und seine privaten Laufzeitdaten
-werden unabhängig von Ollama und Open WebUI eingerichtet; ein erreichbarer
-Ollama-Server bleibt nur für Modellstatus und -liste erforderlich. Ein explizit
-konfigurierter entfernter Collector wird nicht durch einen lokalen ersetzt.
+Beim normalen TUI-Start wird beim ersten Lauf ein Onboarding mit Discovery für
+lokale Standardports, veröffentlichte Docker-Ports und begrenzte private
+LAN-Nachbarn ausgeführt. Gefundene Ollama- und Open-WebUI-Instanzen werden
+vorausgewählt; der Open-WebUI-Admin-Key wird verdeckt abgefragt. Die private
+Konfiguration liegt unter `$XDG_STATE_HOME/llmtop/config.json`. Der lokale
+Collector wird bei Bedarf automatisch mit zufälligem Token gestartet und kann
+für ein ausgewähltes LAN-Ziel an eine lokale private Adresse gebunden werden.
+Pi- und Open-WebUI-Adapter bleiben voneinander und von Ollama unabhängig.
+Nicht-interaktive Modi starten kein Onboarding.
 
 `llmtop.py` ist der Programmeinstieg einer Python-Standardbibliotheks-Anwendung
 mit curses-TUI und `--once`-Ausgabe. Die Datenerfassung liegt in
@@ -52,6 +56,15 @@ Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und Hist
   Token ein zufälliges lokales Token erzeugen.
 - Pi-Adapter und Collector-Laufzeitdaten ohne Ollama- oder Open-WebUI-Setup
   einrichten.
+
+## Neu in 2.3.44
+
+- Interaktives Erststart-Onboarding mit `--setup`, `--discover` und
+  `--reset-setup` ergänzt.
+- Ollama und Open WebUI werden lokal, über veröffentlichte Docker-Ports und bei
+  fehlenden lokalen Treffern begrenzt im privaten LAN gesucht.
+- Open-WebUI-Adapter funktionieren auch ohne Docker-Gateway bei lokaler
+  Installation; LAN-Ziele erhalten eine passende Collector-Adresse.
 
 ## Neu in 2.3.42
 

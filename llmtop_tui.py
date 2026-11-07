@@ -961,13 +961,15 @@ def _draw(scr, st, host, interval):
 
 
 
-def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=False):
+def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=False,
+             collector=None):
     """Fuehrt curses im Hauptthread und die Erfassung im Hintergrund aus."""
     global VERSION, PIXEL_ICON
     VERSION = version
     PIXEL_ICON = pixel_icon
-    collector = CollectorService()
-    collector.start()
+    if collector is None:
+        collector = CollectorService()
+        collector.start()
     state = {"colors": None, "help": False, "prev_cpu": read_cpu_totals(),
              "ollama": {"ok": False, "version": None, "models": [], "error": "Messung"},
              "cpu": None, "cpu_power_watt": None, "cpu_power_limit": None,

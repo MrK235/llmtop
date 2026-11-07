@@ -5,7 +5,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.43** · Python-Anwendung aus der Standardbibliothek für Linux.
+> **Version 2.3.44** · Python-Anwendung aus der Standardbibliothek für Linux.
 
 `llmtop` zeigt den Ollama-Status, lokale CPU-/RAM-/GPU-Sensoren sowie laufende
 und abgeschlossene Modell-Runs in einer curses-TUI oder als einmaligen
@@ -62,6 +62,9 @@ ergänzt.
 | `--collector-port PORT` | Collector-Port; Standard `11435` |
 | `--emit DATEI` | Schema-2-Ereignis aus Datei oder `-` an den Collector senden |
 | `--install-open-webui-adapter` | Open-WebUI-Filter per Admin-API installieren und aktivieren |
+| `--setup` | interaktives Onboarding für erkannte Dienste starten |
+| `--discover` | lokale, Docker- und LAN-Dienste anzeigen |
+| `--reset-setup` | gespeicherte Onboarding-Konfiguration nach Bestätigung löschen |
 | `--debug` | technische Diagnosemeldungen aktivieren |
 | `--log-file DATEI` | Diagnosemeldungen in eine private Logdatei schreiben |
 | `--version` | Versionsnummer ausgeben und beenden |
@@ -191,6 +194,25 @@ python3 llmtop.py --collector
 
 Collector-Fehler stoppen weder Sensoren noch TUI.
 
+### Onboarding und Erkennung
+
+Beim ersten interaktiven TUI-Start sucht llmtop nach Ollama und Open WebUI auf
+lokalen Standardports, veröffentlichten Docker-Ports und – wenn lokal nichts
+gefunden wurde – begrenzt im privaten LAN. Gefundene URLs werden vorausgewählt.
+Für Open WebUI kann der Admin-API-Key verdeckt eingegeben werden; anschließend
+wird der Filter automatisch installiert und aktiviert.
+
+```bash
+python3 llmtop.py --setup
+python3 llmtop.py --discover
+```
+
+Die Konfiguration liegt privat unter
+`$XDG_STATE_HOME/llmtop/config.json` (sonst `~/.local/state/llmtop/config.json`)
+mit Dateirechten `0600`. Umgebungsvariablen und `.env` haben Vorrang. API-Keys
+werden nicht geloggt und nicht in History-Dateien gespeichert. Nicht-interaktive
+Aufrufe wie `--once` starten kein Onboarding.
+
 ### Open WebUI
 
 Der Filter `open_webui/llmtop_run_metrics.py` wird ausschließlich über die
@@ -251,6 +273,8 @@ kommen aus `.env` oder der Umgebung:
 | `LLMTOP_RUN_HISTORY_FILE` | Run-History-Datei überschreiben |
 | `LLMTOP_OPEN_WEBUI_DB` | optionaler lesender Open-WebUI-Datenbank-Fallback |
 | `XDG_STATE_HOME` | Basisverzeichnis für llmtop-Zustandsdaten |
+| `OPEN_WEBUI_URL` | Open-WebUI-Adresse; wird beim Onboarding automatisch ermittelt |
+| `OPEN_WEBUI_API_KEY` | Open-WebUI-Admin-Key; wird beim Onboarding verdeckt abgefragt |
 
 Standardpfade:
 
@@ -259,6 +283,7 @@ $XDG_STATE_HOME/llmtop/history.jsonl
 $XDG_STATE_HOME/llmtop/run.jsonl
 $XDG_STATE_HOME/llmtop/runs.jsonl
 $XDG_STATE_HOME/llmtop/pi-collector.json
+$XDG_STATE_HOME/llmtop/config.json
 $XDG_STATE_HOME/llmtop/llmtop.log       # nur bei --debug im TUI-Modus
 ```
 

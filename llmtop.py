@@ -8,7 +8,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.3.43"  # Single Source of Truth; History in version.md
+VERSION = "2.3.44"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -165,7 +165,7 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="llmtop", description="LLM Terminal Monitor für Ollama")
     ap.add_argument("--version", action="version", version=f"llmtop {VERSION}")
-    ap.add_argument("--host", default=os.environ.get("OLLAMA_HOST", DEFAULT_HOST))
+    ap.add_argument("--host", default=None)
     ap.add_argument("--interval", type=float, default=0.5, help="Refresh-Sekunden (TUI)")
     request_group = ap.add_mutually_exclusive_group()
     request_group.add_argument("--chat", metavar="JSON", help="direkter /api/chat-Request mit Run-Metriken")
@@ -182,11 +182,16 @@ def main(argv=None):
                     help="CPU-RAPL für direkte Runs über vorhandene sudo-Anmeldung lesen")
     ap.add_argument("--no-nvidia", action="store_true", help="nvidia-smi nicht verwenden")
     ap.add_argument("--rapl-helper", action="store_true", help=argparse.SUPPRESS)
+    setup_group = ap.add_mutually_exclusive_group()
+    setup_group.add_argument("--setup", action="store_true", help="Onboarding starten oder aktualisieren")
+    setup_group.add_argument("--discover", action="store_true", help="lokale, Docker- und LAN-Instanzen anzeigen")
+    setup_group.add_argument("--reset-setup", action="store_true", help="gespeicherte Onboarding-Konfiguration entfernen")
     args = ap.parse_args(argv)
     if args.energy_rapl_sudo and not (args.chat or args.generate):
         ap.error("--energy-rapl-sudo ist nur mit --chat oder --generate möglich")
     is_tui = not (args.install_open_webui_adapter or args.collector or args.emit
-                  or args.chat or args.generate or args.once or args.rapl_helper)
+                  or args.chat or args.generate or args.once or args.rapl_helper
+                  or args.setup or args.discover or args.reset_setup)
     try:
         configure_logging(args.debug, args.log_file, tui=is_tui)
     except OSError as exc:
@@ -197,11 +202,44 @@ def main(argv=None):
         from llmtop_sources import run_rapl_helper
         return run_rapl_helper()
     from llmtop_sources import normalize_host
-    host = normalize_host(args.host)
-    from llmtop_metrics import (emit_run_event, ensure_local_collector,
-                                ensure_open_webui_adapter, ensure_pi_adapter,
-                                install_open_webui_adapter, read_request_payload,
-                                run_collector, run_ollama_request)
+    from llmtop_metrics import (configured_ollama_host, emit_run_event,
+                                ensure_local_collector, ensure_open_webui_adapter,
+                                ensure_pi_adapter, install_open_webui_adapter,
+                                load_onboarding_config, onboarding_needed, print_discovery,
+                                read_request_payload, reset_onboarding_config,
+                                run_collector, run_onboarding, run_ollama_request)
+    host = normalize_host(args.host or os.environ.get("OLLAMA_HOST") or
+                         configured_ollama_host() or DEFAULT_HOST)
+    if args.discover:
+        print_discovery()
+        return 0
+    if args.reset_setup:
+        if sys.stdin.isatty() and input("Onboarding-Konfiguration wirklich löschen? [j/N] ").strip().lower() == "j":
+            print("Onboarding-Konfiguration gelöscht." if reset_onboarding_config()
+                  else "Keine Onboarding-Konfiguration vorhanden.")
+            return 0
+        print("Nicht gelöscht.")
+        return 1
+    if args.setup:
+        if not sys.stdin.isatty():
+            sys.stderr.write("--setup benötigt ein interaktives Terminal\n")
+            return 1
+        try:
+            setup = run_onboarding(force=True)
+            local_collector = ensure_local_collector()
+            pi_active = ensure_pi_adapter()
+            webui_action = ensure_open_webui_adapter()
+            if setup.get("ollama_url") and not args.host and not os.environ.get("OLLAMA_HOST"):
+                host = normalize_host(setup["ollama_url"])
+            print(f"Pi-Adapter: {'aktiv' if pi_active else 'nicht aktiv'}")
+            print(f"Open-WebUI-Adapter: {webui_action or 'nicht eingerichtet'}")
+            return 0
+        except (OSError, ValueError, urllib.error.URLError) as exc:
+            sys.stderr.write(f"Onboarding fehlgeschlagen: {type(exc).__name__}: {exc}\n")
+            return 2
+        finally:
+            if 'local_collector' in locals() and local_collector:
+                local_collector.stop()
     if args.install_open_webui_adapter:
         try:
             action, function_id = install_open_webui_adapter()
@@ -242,15 +280,18 @@ def main(argv=None):
     if not sys.stdout.isatty():
         sys.stderr.write("kein Terminal gefunden; bitte --once verwenden\n")
         return 1
-    # Im TUI-Betrieb werden Collector, Pi-Adapter und Laufzeitdaten lokal
-    # aufgebaut. Ollama und Open WebUI sind dafür nicht erforderlich.
+    # Im TUI-Betrieb werden Discovery, Onboarding, Collector und Adapter
+    # unabhängig voneinander aufgebaut.
+    setup = run_onboarding() if onboarding_needed() else load_onboarding_config()
+    if setup.get("ollama_url") and not args.host and not os.environ.get("OLLAMA_HOST"):
+        host = normalize_host(setup["ollama_url"])
     local_collector = ensure_local_collector()
     pi_adapter_active = ensure_pi_adapter()
     from threading import Thread
     Thread(target=ensure_open_webui_adapter, name="llmtop-open-webui", daemon=True).start()
     from llmtop_tui import _run_tui
     return _run_tui(host, max(0.2, args.interval), not args.no_nvidia, VERSION,
-                    PIXEL_ICON, pi_adapter_active)
+                    PIXEL_ICON, pi_adapter_active, collector=local_collector)
 
 
 if __name__ == "__main__":

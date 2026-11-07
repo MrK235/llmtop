@@ -1,11 +1,16 @@
 """Ollama- und Linux-Sensorquellen fuer llmtop."""
+import concurrent.futures
 import csv
 import glob
 import io
+import ipaddress
+import json
 import logging
 import math
 import os
 import re
+import socket
+import struct
 import shlex
 import shutil
 import subprocess
@@ -13,8 +18,8 @@ import sys
 import threading
 import time
 from datetime import datetime, timezone
+import urllib.error
 import urllib.request
-import json
 
 log = logging.getLogger(__name__)
 
@@ -47,6 +52,136 @@ def normalize_host(value):
     if not host.startswith(("http://", "https://")):
         host = "http://" + host
     return host.rstrip("/")
+
+
+def _probe_service(url, kind, timeout=0.45):
+    """Prüft eine Ollama- oder Open-WebUI-Adresse ohne Inhalte zu speichern."""
+    paths = ("/api/version",) if kind == "ollama" else (
+        "/api/config", "/api/v1/configs", "/api/v1/auths/")
+    for path in paths:
+        request = urllib.request.Request(url.rstrip("/") + path, method="GET")
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                if response.status in (200, 204):
+                    return True
+        except urllib.error.HTTPError as exc:
+            # Authentifizierte WebUI-Installationen sind trotz 401/403 erkannt.
+            if kind == "open-webui" and exc.code in (401, 403):
+                return True
+            if exc.code != 404:
+                return False
+        except (OSError, urllib.error.URLError, ValueError):
+            return False
+    return False
+
+
+def _local_ipv4_addresses():
+    """Liefert private lokale IPv4-Adressen ohne externe Netzwerkwerkzeuge."""
+    addresses = set()
+    try:
+        for _family, _kind, _proto, _name, address in socket.getaddrinfo(
+                socket.gethostname(), None, socket.AF_INET):
+            ip = address[0]
+            parsed = ipaddress.ip_address(ip)
+            if parsed.is_private and not parsed.is_loopback:
+                addresses.add(ip)
+    except OSError:
+        pass
+    try:
+        import fcntl
+        for _index, name in socket.if_nameindex():
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            try:
+                raw = struct.pack("256s", name.encode()[:15])
+                address = socket.inet_ntoa(fcntl.ioctl(sock.fileno(), 0x8915, raw)[20:24])
+                parsed = ipaddress.ip_address(address)
+                if parsed.is_private and not parsed.is_loopback:
+                    addresses.add(address)
+            except OSError:
+                pass
+            finally:
+                sock.close()
+    except (AttributeError, ImportError, OSError):
+        pass
+    return addresses
+
+
+def _lan_candidates():
+    """Ermittelt eine begrenzte Menge privater LAN-Adressen."""
+    hosts = set()
+    try:
+        with open("/proc/net/arp", encoding="ascii") as fh:
+            next(fh, None)
+            for line in fh:
+                fields = line.split()
+                if fields:
+                    parsed = ipaddress.ip_address(fields[0])
+                    if parsed.is_private and not parsed.is_loopback:
+                        hosts.add(fields[0])
+    except (OSError, ValueError):
+        pass
+    # Kein vollständiger Netzscan: maximal das lokale /24 je erkannter Adresse.
+    for address in _local_ipv4_addresses():
+        try:
+            ip = ipaddress.ip_address(address)
+            network = ipaddress.ip_network(f"{address}/24", strict=False)
+            hosts.update(str(item) for item in network.hosts() if item != ip)
+        except ValueError:
+            continue
+    return sorted(hosts)
+
+
+def discover_services(docker_candidates=(), include_lan=True):
+    """Findet erreichbare Ollama-/Open-WebUI-Instanzen lokal, in Docker und im LAN."""
+    candidates = {"ollama": [], "open-webui": []}
+    seen = {"ollama": set(), "open-webui": set()}
+
+    def add(kind, url, source):
+        try:
+            url = normalize_host(url)
+        except (AttributeError, ValueError):
+            return
+        if url in seen[kind]:
+            return
+        seen[kind].add(url)
+        candidates[kind].append({"url": url, "source": source})
+
+    add("ollama", os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434"), "lokal/env")
+    add("ollama", "http://127.0.0.1:11434", "lokal")
+    add("ollama", "http://localhost:11434", "lokal")
+    if os.environ.get("OPEN_WEBUI_URL"):
+        add("open-webui", os.environ["OPEN_WEBUI_URL"], "env")
+    for port in (3000, 8080):
+        add("open-webui", f"http://127.0.0.1:{port}", "lokal")
+        add("open-webui", f"http://localhost:{port}", "lokal")
+    for kind, urls in docker_candidates:
+        for url in urls:
+            add(kind, url, "docker")
+    def probe(item):
+        kind, candidate = item
+        return kind, candidate, _probe_service(candidate["url"], kind)
+
+    def probe_all():
+        jobs = [(kind, candidate) for kind in candidates for candidate in candidates[kind]
+                if not candidate.get("reachable")]
+        with concurrent.futures.ThreadPoolExecutor(max_workers=24) as pool:
+            for kind, candidate, reachable in pool.map(probe, jobs):
+                if reachable:
+                    candidate["reachable"] = True
+
+    probe_all()
+    if include_lan:
+        missing = {kind for kind in candidates
+                   if not any(item.get("reachable") for item in candidates[kind])}
+        for address in _lan_candidates():
+            if "ollama" in missing:
+                add("ollama", f"http://{address}:11434", "lan")
+            if "open-webui" in missing:
+                for port in (3000, 8080):
+                    add("open-webui", f"http://{address}:{port}", "lan")
+        probe_all()
+    return {kind: [item for item in items if item.get("reachable")]
+            for kind, items in candidates.items()}
 
 
 def collect_ollama(host):

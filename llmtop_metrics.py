@@ -1,9 +1,11 @@
 """Run-Metriken, JSONL-Historie, Collector und Open-WebUI-Integration."""
+import getpass
 import hmac
 import json
 import logging
 import os
 import secrets
+import socket
 import sqlite3
 import subprocess
 import sys
@@ -11,12 +13,13 @@ import tempfile
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from llmtop_sources import EnergyMonitor, normalize_host
+from llmtop_sources import EnergyMonitor, discover_services, normalize_host
 
 DEFAULT_COLLECTOR_URL = "http://127.0.0.1:11435"
 DEFAULT_HISTORY_LIMIT = 500
@@ -82,6 +85,70 @@ def load_dotenv(path=".env"):
                     os.environ[key] = value
     except FileNotFoundError:
         pass
+
+
+def onboarding_config_path():
+    return os.path.join(os.path.dirname(history_path()), "config.json")
+
+
+def load_onboarding_config():
+    try:
+        with open(onboarding_config_path(), encoding="utf-8") as fh:
+            value = json.load(fh)
+        return value if isinstance(value, dict) else {}
+    except (OSError, ValueError, TypeError):
+        return {}
+
+
+def write_onboarding_config(config):
+    """Schreibt die Onboarding-Konfiguration atomar und privat."""
+    path = onboarding_config_path()
+    directory = os.path.dirname(path)
+    os.makedirs(directory, mode=0o700, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=".config-", dir=directory, text=True)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(config, fh, ensure_ascii=False, separators=(",", ":"))
+            fh.write("\n")
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(temporary, path)
+        os.chmod(path, 0o600)
+    except Exception:
+        try:
+            os.unlink(temporary)
+        except OSError:
+            pass
+        raise
+
+
+def onboarding_needed():
+    config = load_onboarding_config()
+    if config.get("completed_at"):
+        return False
+    load_dotenv()
+    return not all(os.environ.get(key) for key in (
+        "OLLAMA_HOST", "OPEN_WEBUI_URL", "OPEN_WEBUI_API_KEY",
+        "LLMTOP_COLLECTOR_TOKEN"))
+
+
+def reset_onboarding_config():
+    path = onboarding_config_path()
+    try:
+        os.unlink(path)
+    except FileNotFoundError:
+        return False
+    return True
+
+
+def configured_ollama_host():
+    load_dotenv()
+    return os.environ.get("OLLAMA_HOST") or load_onboarding_config().get("ollama_url")
+
+
+def configured_collector_bind():
+    load_dotenv()
+    return os.environ.get("LLMTOP_COLLECTOR_BIND") or load_onboarding_config().get("collector_bind")
 
 
 def normalize_energy(value):
@@ -740,7 +807,11 @@ def process_run_event(event):
 def collector_config():
     load_dotenv()
     token = os.environ.get("LLMTOP_COLLECTOR_TOKEN", "")
-    url = os.environ.get("LLMTOP_COLLECTOR_URL", DEFAULT_COLLECTOR_URL)
+    url = os.environ.get("LLMTOP_COLLECTOR_URL", "")
+    if not token:
+        setup = load_onboarding_config()
+        token = setup.get("collector_token", "")
+        url = setup.get("collector_url", url)
     if not token:
         try:
             with open(pi_adapter_state_path(), encoding="utf-8") as fh:
@@ -749,7 +820,7 @@ def collector_config():
             url = state.get("collector_url", url)
         except (OSError, ValueError, TypeError):
             pass
-    return token, url
+    return token, url or DEFAULT_COLLECTOR_URL
 
 
 def pi_adapter_state_path():
@@ -800,23 +871,27 @@ def ensure_pi_adapter():
 def ensure_local_collector():
     """Startet den lokalen Collector für den autonomen TUI-Betrieb."""
     token, url = collector_config()
-    if token and url.rstrip("/") != DEFAULT_COLLECTOR_URL:
+    setup = load_onboarding_config()
+    local_setup = bool(setup.get("collector_bind"))
+    if token and url.rstrip("/") != DEFAULT_COLLECTOR_URL and not local_setup:
         return None
     generated = not token
     if generated:
         token = secrets.token_urlsafe(32)
-        url = DEFAULT_COLLECTOR_URL
-    service = CollectorService(token=token)
+    bind = configured_collector_bind() or "127.0.0.1"
+    service = CollectorService(bind=bind, token=token)
     if not service.start():
         return None
     if generated:
         state = pi_adapter_state_path()
         try:
             os.makedirs(os.path.dirname(state), mode=0o700, exist_ok=True)
-            url = f"http://127.0.0.1:{service.port}"
+            advertised = url.rstrip("/") if url else f"http://{bind}:{service.port}"
+            if advertised.endswith(":11435") and service.port != 11435:
+                advertised = advertised.rsplit(":", 1)[0] + f":{service.port}"
             with open(state, "w", encoding="utf-8") as fh:
-                json.dump({"collector_url": url, "collector_token": token},
-                          fh, separators=(",", ":"))
+                json.dump({"collector_url": advertised,
+                           "collector_token": token}, fh, separators=(",", ":"))
             os.chmod(state, 0o600)
         except OSError:
             service.stop()
@@ -883,6 +958,35 @@ def collector_handler(token):
             self._reply(202 if process_run_event(event) else 400)
 
     return Handler
+
+
+def docker_service_candidates():
+    """Ermittelt veröffentlichte Ports bekannter Docker-Dienste."""
+    result = []
+    for name, kind, container_port in (("ollama", "ollama", "11434/tcp"),
+                                       ("open-webui", "open-webui", "8080/tcp"),
+                                       ("open-webui", "open-webui", "3000/tcp")):
+        try:
+            process = subprocess.run(
+                ["docker", "inspect", name, "--format", "{{json .}}"],
+                capture_output=True, text=True, timeout=3, check=True)
+            data = json.loads(process.stdout)
+            ports = ((data.get("NetworkSettings") or {}).get("Ports") or {}).get(container_port) or []
+            urls = []
+            for binding in ports:
+                host_port = binding.get("HostPort") if isinstance(binding, dict) else None
+                if not host_port:
+                    continue
+                host_ip = binding.get("HostIp") if isinstance(binding, dict) else None
+                host_ip = host_ip if host_ip and host_ip not in ("0.0.0.0", "::") else "127.0.0.1"
+                if ":" in host_ip and not host_ip.startswith("["):
+                    host_ip = f"[{host_ip}]"
+                urls.append(f"http://{host_ip}:{host_port}")
+            if urls:
+                result.append((kind, urls))
+        except (OSError, subprocess.SubprocessError, json.JSONDecodeError, TypeError):
+            continue
+    return result
 
 
 def open_webui_gateway():
@@ -960,8 +1064,10 @@ def run_collector(bind=None, port=None):
 
 def open_webui_config():
     load_dotenv()
-    url = normalize_host(os.environ.get("OPEN_WEBUI_URL", "http://127.0.0.1:3000"))
-    key = os.environ.get("OPEN_WEBUI_API_KEY", "")
+    setup = load_onboarding_config()
+    url = normalize_host(os.environ.get("OPEN_WEBUI_URL") or
+                         setup.get("open_webui_url") or "http://127.0.0.1:3000")
+    key = os.environ.get("OPEN_WEBUI_API_KEY") or setup.get("open_webui_api_key", "")
     token, _ = collector_config()
     if not key:
         raise ValueError("OPEN_WEBUI_API_KEY fehlt (.env oder Umgebung)")
@@ -986,6 +1092,110 @@ def open_webui_api(url, key, method, path, payload=None):
         except (json.JSONDecodeError, AttributeError):
             detail = ""
         raise ValueError(f"Open-WebUI-API HTTP {exc.code}{': ' + str(detail) if detail else ''}")
+
+
+def _select_onboarding_candidate(label, candidates, current=None):
+    """Fragt eine gefundene URL ab; Eingaben bleiben bewusst textbasiert."""
+    if candidates:
+        print(f"{label} gefunden:")
+        for index, candidate in enumerate(candidates, 1):
+            marker = " *" if candidate.get("url") == current else ""
+            print(f"  {index}) {candidate['url']} [{candidate.get('source', '?')}]" + marker)
+        choice = input(f"{label} auswählen [1], m=manuell, s=überspringen: ").strip().lower()
+        if not choice:
+            return candidates[0]["url"]
+        if choice == "s":
+            return None
+        if choice == "m":
+            value = input(f"{label}-URL: ").strip()
+            return normalize_host(value) if value else None
+        try:
+            return candidates[int(choice) - 1]["url"]
+        except (ValueError, IndexError):
+            print("Ungültige Auswahl; automatische Vorauswahl wird verwendet.")
+            return candidates[0]["url"]
+    value = input(f"Keine {label}-Instanz gefunden. URL eingeben oder Enter zum Überspringen: ").strip()
+    return normalize_host(value) if value else None
+
+
+def _validate_open_webui_key(url, key):
+    try:
+        open_webui_api(url, key, "GET", f"/api/v1/functions/id/{OPEN_WEBUI_FUNCTION_ID}")
+        return True
+    except ValueError as exc:
+        return "HTTP 404" in str(exc)
+    except (OSError, urllib.error.URLError):
+        return False
+
+
+def _local_address_for_url(url):
+    """Ermittelt die lokale Quelladresse zur Erreichbarkeit eines LAN-Ziels."""
+    try:
+        parsed = urllib.parse.urlparse(url)
+        host = parsed.hostname
+        if not host or host in ("localhost", "127.0.0.1", "::1"):
+            return "127.0.0.1"
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+            sock.connect((host, parsed.port or 80))
+            address = sock.getsockname()[0]
+        return address if address and address != "0.0.0.0" else "127.0.0.1"
+    except (OSError, TypeError, ValueError):
+        return "127.0.0.1"
+
+
+def run_onboarding(force=False):
+    """Führt das interaktive Erststart-Onboarding aus."""
+    config = load_onboarding_config()
+    if not force and not onboarding_needed():
+        return config
+    print("\nllmtop Erstkonfiguration")
+    print("Suche lokale, Docker- und erreichbare LAN-Instanzen ...")
+    discovered = discover_services(docker_service_candidates(), include_lan=True)
+    ollama_url = _select_onboarding_candidate(
+        "Ollama", discovered["ollama"], config.get("ollama_url"))
+    if ollama_url:
+        config["ollama_url"] = ollama_url
+    webui_url = _select_onboarding_candidate(
+        "Open WebUI", discovered["open-webui"], config.get("open_webui_url"))
+    if webui_url:
+        config["open_webui_url"] = webui_url
+        load_dotenv()
+        key = os.environ.get("OPEN_WEBUI_API_KEY") or config.get("open_webui_api_key", "")
+        for _attempt in range(3):
+            if not key:
+                key = getpass.getpass("Open-WebUI-Admin-API-Key (leer = überspringen): ")
+            if not key:
+                break
+            if _validate_open_webui_key(webui_url, key):
+                config["open_webui_api_key"] = key
+                break
+            print("API-Key konnte nicht bestätigt werden.")
+            key = ""
+        if not config.get("open_webui_api_key"):
+            config.pop("open_webui_url", None)
+            print("Open WebUI wird ohne gültigen API-Key übersprungen.")
+
+    selected_webui = config.get("open_webui_url")
+    if selected_webui:
+        bind = _local_address_for_url(selected_webui)
+        config["collector_bind"] = bind
+        if bind != "127.0.0.1":
+            config["collector_url"] = f"http://{bind}:11435"
+    config["completed_at"] = _utc_now()
+    write_onboarding_config(config)
+    print("Onboarding gespeichert.")
+    return config
+
+
+def print_discovery():
+    """Gibt Discovery-Ergebnisse ohne Konfigurationsänderung aus."""
+    discovered = discover_services(docker_service_candidates(), include_lan=True)
+    for label, key in (("Ollama", "ollama"), ("Open WebUI", "open-webui")):
+        print(label + ":")
+        if not discovered[key]:
+            print("  keine Instanz gefunden")
+        for candidate in discovered[key]:
+            print(f"  {candidate['url']} [{candidate.get('source', '?')}]" )
 
 
 def filter_source_path():
@@ -1049,13 +1259,22 @@ def ensure_open_webui_adapter():
         return None
 
 
+def collector_url_for_webui(webui_url, collector_token, port, gateway=None):
+    """Wählt die aus der WebUI erreichbare Collector-Adresse."""
+    _token, configured_url = collector_config()
+    if gateway:
+        return f"http://{gateway}:{port}"
+    setup_url = load_onboarding_config().get("collector_url")
+    if setup_url:
+        return setup_url.rstrip("/")
+    return configured_url.rstrip("/") or f"http://127.0.0.1:{port}"
+
+
 def install_open_webui_adapter():
     """Installiert Filter, Valves und Aktivierung idempotent über die Admin-API."""
     url, key, collector_token = open_webui_config()
     disable_legacy_open_webui_adapters(url, key)
     gateway = open_webui_gateway()
-    if not gateway:
-        raise ValueError("private Docker-Gateway-Adresse von open-webui nicht ermittelbar")
     with open(filter_source_path(), encoding="utf-8") as fh:
         content = fh.read()
     function_id = OPEN_WEBUI_FUNCTION_ID
@@ -1076,8 +1295,9 @@ def install_open_webui_adapter():
             "meta": {"description": "Datensparsame Ollama-Runmetriken für llmtop"}})
         action = "aktualisiert"
     port = collector_listen_address()[1]
+    callback_url = collector_url_for_webui(url, collector_token, port, gateway)
     open_webui_api(url, key, "POST", f"/api/v1/functions/id/{function_id}/valves/update", {
-        "collector_url": f"http://{gateway}:{port}", "collector_token": collector_token})
+        "collector_url": callback_url, "collector_token": collector_token})
     if not function.get("is_active"):
         _status, function = open_webui_api(url, key, "POST", f"/api/v1/functions/id/{function_id}/toggle")
     if not function.get("is_global"):

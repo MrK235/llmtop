@@ -12,6 +12,14 @@ gebracht.
 
 ## Changelog
 
+### 2.3.44 — 07.11.2026
+
+- Interaktives Erststart-Onboarding mit automatischer lokaler, Docker- und
+  begrenzter LAN-Erkennung ergänzt.
+- Open-WebUI-Installation ohne zwingendes Docker-Gateway ermöglicht.
+- Konfiguration, API-Key-Abfrage und Collector-Adresse sicher im privaten
+  Zustandsverzeichnis gespeichert.
+
 ### 2.3.43 — 05.11.2026
 
 - Lokalen Collector im TUI-Betrieb automatisch starten.
