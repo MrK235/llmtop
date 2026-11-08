@@ -5,7 +5,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.85** · Python-Anwendung aus der Standardbibliothek für Linux.
+> **Version 2.3.86** · Python-Anwendung aus der Standardbibliothek für Linux.
 
 `llmtop` zeigt den Ollama-Status, lokale CPU-/RAM-/GPU-Sensoren sowie laufende
 und abgeschlossene Modell-Runs in einer curses-TUI oder als einmaligen
@@ -190,7 +190,7 @@ explizite Usage-/Kontextzähler verwendet, keine Textschätzungen. Dadurch über
 den letzten verfügbaren Live-Stand. Fehlen Providerwerte, zeigt llmtop `n/a`
 statt einer Schätzung. Die TTFT wird beim ersten inhaltlichen Stream-Delta
 gemessen; die Prefill-Dauer wird nur aus echten Providerwerten übernommen.
-Die Tabellenspalten `Prefill` und `TTFT` enthalten ausschließlich Dauerwerte,
+Die Tabellenspalten `PREF` und `TTFT` enthalten ausschließlich Dauerwerte,
 keine kombinierten P-/T-Kürzel.
 
 ## Collector und Adapter

@@ -640,7 +640,7 @@ HISTORY_COLUMNS = ("zeit", "quelle", "modell", "status", "tokens", "komp", "kont
 HISTORY_COLUMN_LABELS = {
     "zeit": "Zeit", "quelle": "Quelle", "modell": "Modell", "status": "Status",
     "tokens": "Tokens", "komp": "Komp.", "kontext": "Kontext", "rate": "Tok/s", "dauer": "Dauer",
-    "prefill": "Prefill", "ttft": "TTFT", "wh": "Verbrauch",
+    "prefill": "PREF", "ttft": "TTFT", "wh": "Verbrauch",
 }
 
 

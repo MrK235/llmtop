@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.85** · Stand 08.11.2026 · Status: Prefill und TTFT erscheinen in getrennten Zeitspalten.
+**Version 2.3.86** · Stand 08.11.2026 · Status: PREF und TTFT erscheinen als getrennte Zeitspalten.
 
 ## Aktueller Stand
 
@@ -58,6 +58,10 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.86
+
+- Die Prefill-Spaltenüberschrift lautet kompakt `PREF`.
 
 ## Neu in 2.3.85
 

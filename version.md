@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.86 — 08.11.2026
+
+- Die Prefill-Spaltenüberschrift lautet kompakt `PREF`.
+
 ### 2.3.85 — 08.11.2026
 
 - Prefill und TTFT werden in der breiten aktuellen Run-/History-Tabelle als getrennte Spalten mit reinen Zeitwerten dargestellt.
