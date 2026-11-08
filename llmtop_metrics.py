@@ -579,14 +579,19 @@ def prefill_rate(run):
 
 
 def format_seconds(seconds):
-    """Formatiert technische Laufzeiten kompakt mit Nachkommastellen."""
+    """Formatiert technische Laufzeiten als Sekunden oder Minuten."""
     if not isinstance(seconds, (int, float)) or isinstance(seconds, bool) or seconds < 0:
         return "n/a"
-    if seconds < 10:
-        return f"{seconds:.2f}s"
-    if seconds < 100:
+    if seconds < 60:
+        if seconds < 10:
+            return f"{seconds:.2f}s"
         return f"{seconds:.1f}s"
-    return f"{seconds:.0f}s"
+    total = int(round(seconds))
+    minutes, remainder = divmod(total, 60)
+    if minutes < 60:
+        return f"{minutes}m {remainder:02d}s"
+    hours, minutes = divmod(minutes, 60)
+    return f"{hours}h {minutes:02d}m"
 
 
 def run_timing_detail(run):
@@ -597,14 +602,17 @@ def run_timing_detail(run):
     prefill_text = format_seconds(prefill)
     if rate is not None:
         prefill_text += f" / {compact_tokens(rate)} Tok/s"
-    return f"Prefill {prefill_text} · 1. Token {format_seconds(ttft)}"
+    return f"Prefill {prefill_text} · TTFT {format_seconds(ttft)}"
 
 
-def run_timing_cell(run):
-    """Kompakte Tabellenzelle für breite aktuelle Runs und History."""
-    prefill = format_seconds(_token_value(run, "prompt_eval_duration_s"))
-    ttft = format_seconds(_token_value(run, "first_token_duration_s"))
-    return f"P {prefill} · T {ttft}"
+def prefill_cell(run):
+    """Dauerzelle ohne Label für die Prefill-Spalte."""
+    return format_seconds(_token_value(run, "prompt_eval_duration_s"))
+
+
+def ttft_cell(run):
+    """Dauerzelle ohne Label für die TTFT-Spalte."""
+    return format_seconds(_token_value(run, "first_token_duration_s"))
 
 
 def context_values(run, model=None):
@@ -632,7 +640,7 @@ HISTORY_COLUMNS = ("zeit", "quelle", "modell", "status", "tokens", "komp", "kont
 HISTORY_COLUMN_LABELS = {
     "zeit": "Zeit", "quelle": "Quelle", "modell": "Modell", "status": "Status",
     "tokens": "Tokens", "komp": "Komp.", "kontext": "Kontext", "rate": "Tok/s", "dauer": "Dauer",
-    "start": "Start", "wh": "Verbrauch",
+    "prefill": "Prefill", "ttft": "TTFT", "wh": "Verbrauch",
 }
 
 

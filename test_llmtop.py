@@ -73,8 +73,10 @@ def test_run_metric_detail():
     timing = llmtop.run_timing_detail({'prompt_eval_duration_s': 0.8,
                                        'prompt_tokens': 1600,
                                        'first_token_duration_s': 1.2})
-    assert timing == 'Prefill 0.80s / 2.0k Tok/s · 1. Token 1.20s'
-    assert llmtop.run_timing_cell({}) == 'P n/a · T n/a'
+    assert timing == 'Prefill 0.80s / 2.0k Tok/s · TTFT 1.20s'
+    assert llmtop.prefill_cell({}) == 'n/a'
+    assert llmtop.ttft_cell({}) == 'n/a'
+    assert llmtop.format_seconds(65) == '1m 05s'
     assert llmtop._stream_has_first_token({'message': {'content': 'x'}}, '/api/chat')
     assert not llmtop._stream_has_first_token({'message': {'content': ''}}, '/api/chat')
     assert llmtop._stream_has_first_token({'response': 'x'}, '/api/generate')

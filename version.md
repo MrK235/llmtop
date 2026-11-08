@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.85 — 08.11.2026
+
+- Prefill und TTFT werden in der breiten aktuellen Run-/History-Tabelle als getrennte Spalten mit reinen Zeitwerten dargestellt.
+- Zeitwerte wechseln bei längeren Messungen automatisch von Sekunden auf Minuten beziehungsweise Stunden.
+
 ### 2.3.84 — 08.11.2026
 
 - Prefill-Dauer/-Rate und TTFT werden quellenübergreifend aus echten Provider- beziehungsweise Adapterwerten erfasst und dargestellt.

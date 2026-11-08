@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.84** · Stand 08.11.2026 · Status: Prefill und TTFT werden quellenübergreifend erfasst, sofern echte Werte verfügbar sind.
+**Version 2.3.85** · Stand 08.11.2026 · Status: Prefill und TTFT erscheinen in getrennten Zeitspalten.
 
 ## Aktueller Stand
 
@@ -58,6 +58,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.85
+
+- Prefill und TTFT werden in der breiten aktuellen Run-/History-Tabelle als getrennte Spalten mit reinen Zeitwerten dargestellt.
+- Zeitwerte wechseln bei längeren Messungen automatisch von Sekunden auf Minuten beziehungsweise Stunden.
 
 ## Neu in 2.3.84
 
