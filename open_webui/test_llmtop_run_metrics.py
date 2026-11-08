@@ -74,6 +74,24 @@ async def exercise():
     # als derselbe Filterdurchlauf behandelt.
     assert len([event for event in sent if event["event"] == "started"]) == starts_before + 1
 
+    context_adapter = MODULE.Filter()
+    context_sent = []
+
+    async def capture_context(event):
+        context_sent.append(event)
+
+    context_adapter._send = capture_context
+    context_body = {"model": "qwen:test", "messages": [
+        {"role": "user", "content": "secret"},
+        {"role": "assistant", "usage": {"prompt_tokens": 12, "completion_tokens": 4}},
+    ]}
+    await context_adapter.request(context_body, {"message_id": "context"}, model)
+    assert context_sent[0]["event"] == "started"
+    assert "context_tokens" not in context_sent[0]
+    assert context_sent[1]["event"] == "updated"
+    assert context_sent[1]["context_tokens"] == 16
+    assert "messages" not in context_sent[1]
+
 
 if __name__ == "__main__":
     test_find_metrics()

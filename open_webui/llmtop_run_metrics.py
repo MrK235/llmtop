@@ -1,7 +1,7 @@
 """
 title: llmtop Run Metrics
 author: llmtop
-version: 2.2.11
+version: 2.2.12
 required_open_webui_version: 0.12.3
 description: Meldet datensparsame Provider-Runmetriken an den lokalen llmtop-Collector.
 """
@@ -37,6 +37,50 @@ def utc_now() -> str:
 
 def number(value: Any) -> Optional[float]:
     return value if isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0 else None
+
+
+def _context_usage(value: Any) -> Optional[float]:
+    """Liest vorhandene Kontextzähler, ohne Nachrichteninhalte auszuwerten."""
+    if not isinstance(value, dict):
+        return None
+    for key in ("context_tokens", "contextTokens", "context_token_count", "contextTokenCount"):
+        tokens = number(value.get(key))
+        if tokens is not None and tokens > 0:
+            return tokens
+    usage = value.get("usage")
+    if not isinstance(usage, dict):
+        usage = value
+    for key in ("total_tokens", "totalTokens", "context_tokens", "contextTokens"):
+        tokens = number(usage.get(key))
+        if tokens is not None and tokens > 0:
+            return tokens
+    prompt = next((number(usage.get(key)) for key in
+                   ("prompt_tokens", "promptTokens", "prompt_eval_count", "input_tokens", "inputTokens")
+                   if number(usage.get(key)) is not None), None)
+    output = next((number(usage.get(key)) for key in
+                   ("completion_tokens", "completionTokens", "eval_count", "output_tokens", "outputTokens")
+                   if number(usage.get(key)) is not None), None)
+    if prompt is not None and output is not None and prompt + output > 0:
+        return prompt + output
+    return prompt if prompt is not None and prompt > 0 else None
+
+
+def session_context_tokens(body: dict) -> Optional[float]:
+    """Liefert vorhandene Session-Kontextwerte aus dem Request vor dem Stream.
+
+    Open WebUI stellt diese Werte nicht in jedem Request bereit. Es werden
+    deshalb ausschließlich explizite Usage-/Kontextfelder verwendet; aus
+    Textlängen wird kein Schätzwert erzeugt.
+    """
+    direct = _context_usage(body)
+    if direct is not None:
+        return direct
+    messages = body.get("messages") if isinstance(body, dict) else None
+    for message in reversed(messages if isinstance(messages, list) else ()):
+        value = _context_usage(message)
+        if value is not None:
+            return value
+    return None
 
 
 def find_metrics(value: Any) -> Optional[dict]:
@@ -213,6 +257,8 @@ class Filter:
         metadata = __metadata__ or {}
         identity = self._identity(metadata)
         has_identity = bool(identity)
+        context_tokens = session_context_tokens(body)
+        context_changed = False
         compaction_changed = False
         async with self._lock:
             self._cleanup()
@@ -253,15 +299,21 @@ class Filter:
             if isinstance(num_ctx, (int, float)) and not isinstance(num_ctx, bool) and num_ctx > 0:
                 run["context_limit"] = num_ctx
                 run["context_limit_source"] = "request"
+            if context_tokens is not None and run.get("context_tokens") != context_tokens:
+                run["context_tokens"] = context_tokens
+                context_changed = True
         if not is_new:
-            if compaction_changed:
-                await self._send({
+            if compaction_changed or context_changed:
+                update = {
                     "schema": 2, "event": "updated", "run_id": run["run_id"],
                     "source": "open-webui", "provider": provider, "model": run["model"],
                     "started_at": run["started_at"], "updated_at": now,
                     "compactions": run.get("compactions", 0),
                     **self._identity_event(run),
-                })
+                }
+                if context_changed:
+                    update["context_tokens"] = run["context_tokens"]
+                await self._send(update)
             await self._heartbeat(model, __metadata__)
             return body
         await self._send({
@@ -277,6 +329,17 @@ class Filter:
             **self._identity_event(run),
             **{key: run[key] for key in ("context_limit", "context_limit_source") if key in run},
         })
+        # Der Start bleibt bewusst ohne Kontextwert und zeigt zunächst n/a.
+        # Ein bereits im Request vorhandener Sessionstand wird danach separat
+        # gemeldet, noch bevor der Provider-Stream beginnt.
+        if context_tokens is not None:
+            await self._send({
+                "schema": 2, "event": "updated", "run_id": run["run_id"],
+                "source": "open-webui", "provider": provider, "model": run["model"],
+                "started_at": run["started_at"], "updated_at": now,
+                "context_tokens": context_tokens,
+                **self._identity_event(run),
+            })
         return body
 
     async def _find_run(self, model: str, metadata: Optional[dict]) -> Optional[dict]:
@@ -367,7 +430,7 @@ class Filter:
             "finished_at": now,
             "compactions": run.get("compactions", 0),
             **self._identity_event(run),
-            **{key: run[key] for key in ("context_limit", "context_limit_source") if key in run},
+            **{key: run[key] for key in ("context_tokens", "context_limit", "context_limit_source") if key in run},
         }
         if metrics:
             event.update(metrics)

@@ -1,8 +1,13 @@
 # status.md — llmtop
 
-**Version 2.3.80** · Stand 08.11.2026 · Status: WebUI-Gruppen summieren vorhandene Verbrauchswerte.
+**Version 2.3.81** · Stand 08.11.2026 · Status: WebUI-Runs übernehmen vorhandene Session-Kontextwerte vor dem Stream.
 
 ## Aktueller Stand
+
+Open-WebUI-Runs melden beim Start zunächst keinen Kontextwert (`n/a`). Liegt
+im Request bereits ein expliziter Session-/Usage-Kontextzähler vor, wird er
+unmittelbar danach als datensparsames Live-Update übernommen; Textlängen werden
+nicht geschätzt.
 
 Beim normalen TUI-Start wird beim ersten Lauf ein Onboarding mit Discovery für
 lokale Standardports, veröffentlichte Docker-Ports und begrenzte private
@@ -49,6 +54,10 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.81
+
+- Aktuelle Open-WebUI-Runs übernehmen vorhandene Session-Kontextzähler bereits vor dem Provider-Stream; der Start bleibt zunächst `n/a`.
 
 ## Neu in 2.3.78
 

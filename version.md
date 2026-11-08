@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.81 — 08.11.2026
+
+- Aktuelle Open-WebUI-Runs übernehmen vorhandene Session-Kontextzähler bereits vor dem Provider-Stream; der Start bleibt zunächst `n/a`.
+
 ### 2.3.80 — 08.11.2026
 
 - WebUI-History-Gruppen summieren vorhandene Verbrauchswerte auch dann, wenn einzelne ältere Läufe noch keine Messung enthalten.
