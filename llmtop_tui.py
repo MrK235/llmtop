@@ -155,8 +155,9 @@ def aggregate_history_group(group):
         _token_value(run, "compactions") or 0 for run in group["runs"])
 
     energies = [_webui_energy_wh(run) for run in group["runs"]]
-    if energies and all(value is not None for value in energies):
-        aggregate["energy"] = {"energy_j": sum(energies) * 3600.0,
+    measured_energies = [value for value in energies if value is not None]
+    if measured_energies:
+        aggregate["energy"] = {"energy_j": sum(measured_energies) * 3600.0,
                                  "energy_scope": "group-sum"}
     else:
         aggregate.pop("energy", None)

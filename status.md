@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.79** · Stand 08.11.2026 · Status: Setup-Taste in der Fußzeile cyan hervorgehoben.
+**Version 2.3.80** · Stand 08.11.2026 · Status: WebUI-Gruppen summieren vorhandene Verbrauchswerte.
 
 ## Aktueller Stand
 
@@ -142,6 +142,10 @@ Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und Hist
 
 - `Enter` öffnet ein geordnetes, scrollbares Overlay mit den Session- und Laufmetadaten des History-Eintrags.
 - `Leertaste` sowie `←`/`→` behalten das Auf- und Zuklappen der Gruppen.
+
+## Neu in 2.3.80
+
+- WebUI-History-Gruppen summieren vorhandene Wh-Werte auch dann, wenn einzelne ältere Läufe noch keine Verbrauchsmessung enthalten.
 
 ## Neu in 2.3.55
 
