@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.84 — 08.11.2026
+
+- Prefill-Dauer/-Rate und TTFT werden quellenübergreifend aus echten Provider- beziehungsweise Adapterwerten erfasst und dargestellt.
+- Breite TUI, `--once` und History-Overlay zeigen die neuen Timingwerte.
+
 ### 2.3.83 — 08.11.2026
 
 - Aktive WebUI-Dauern werden lokal und per sekündlichem Adapter-Update fortgeschrieben.

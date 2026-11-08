@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.83** · Stand 08.11.2026 · Status: Aktuelle WebUI-Runs zeigen verfügbare Kontext- und Laufzeitwerte ohne Doppelzeilen.
+**Version 2.3.84** · Stand 08.11.2026 · Status: Prefill und TTFT werden quellenübergreifend erfasst, sofern echte Werte verfügbar sind.
 
 ## Aktueller Stand
 
@@ -58,6 +58,12 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.84
+
+- Prefill-Dauer und Prefill-Rate werden aus echten Prompt-Usage-Werten dargestellt.
+- Die Zeit bis zum ersten inhaltlichen Token wird für Ollama-CLI, Open WebUI und Pi adapterseitig gemessen.
+- Breite Tabellen, `--once` und das History-Overlay zeigen die neuen Timingwerte; fehlende Werte bleiben `n/a`.
 
 ## Neu in 2.3.83
 

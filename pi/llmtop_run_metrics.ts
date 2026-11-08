@@ -1,4 +1,4 @@
-/* llmtop 2.2.21 – globale Pi-Erweiterung für datensparsame Run-Metriken.
+/* llmtop 2.2.22 – globale Pi-Erweiterung für datensparsame Run-Metriken.
  * Installation: nach ~/.pi/agent/extensions/ kopieren und Pi neu starten oder /reload.
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -18,6 +18,8 @@ type Run = {
   context_reader?: () => number | undefined;
   last_progress_at?: number;
   turn_started_at?: number;
+  provider_started_at?: number;
+  first_token_seen?: boolean;
   heartbeat?: ReturnType<typeof setInterval>;
 };
 
@@ -71,9 +73,10 @@ function number(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : undefined;
 }
 
-function eventRun(run: Run): Omit<Run, "heartbeat" | "metrics" | "context_reader" | "turn_started_at"> {
+function eventRun(run: Run): Omit<Run, "heartbeat" | "metrics" | "context_reader" | "turn_started_at" | "provider_started_at" | "first_token_seen"> {
   const { heartbeat: _heartbeat, metrics: _metrics, context_reader: _context_reader,
-    turn_started_at: _turn_started_at, ...event } = run;
+    turn_started_at: _turn_started_at, provider_started_at: _provider_started_at,
+    first_token_seen: _first_token_seen, ...event } = run;
   return event;
 }
 
@@ -128,6 +131,28 @@ function sessionContextTokens(sessionManager: any): number | undefined {
   } catch {
     return undefined;
   }
+}
+
+function providerTimingMetrics(event: any): Record<string, number> {
+  const data = event?.data;
+  if (!data || typeof data !== "object" || Array.isArray(data)) return {};
+  const result: Record<string, number> = {};
+  const duration = (name: string): number | undefined => {
+    const value = number(data[name]);
+    return value !== undefined ? value / 1_000_000_000 : undefined;
+  };
+  const prompt = number(data.prompt_eval_count);
+  const output = number(data.eval_count);
+  if (prompt !== undefined) result.prompt_tokens = prompt;
+  if (output !== undefined) result.output_tokens = output;
+  if (prompt !== undefined && output !== undefined) result.context_tokens = prompt + output;
+  for (const [source, target] of [["load_duration", "load_duration_s"],
+    ["prompt_eval_duration", "prompt_eval_duration_s"],
+    ["eval_duration", "eval_duration_s"], ["total_duration", "total_duration_s"]] as const) {
+    const value = duration(source);
+    if (value !== undefined) result[target] = value;
+  }
+  return result;
 }
 
 function usageMetrics(message: any): Record<string, number> {
@@ -251,6 +276,21 @@ export default function (pi: ExtensionAPI) {
     run.heartbeat = setInterval(() => progress(run, true), 1000);
   });
 
+  pi.on("before_provider_request", () => {
+    if (!active) return;
+    active.provider_started_at = Date.now();
+    active.first_token_seen = false;
+  });
+
+  pi.on("provider_stream_event", (event: any) => {
+    if (!active) return;
+    const metrics = providerTimingMetrics(event);
+    if (Object.keys(metrics).length) {
+      active.metrics = { ...active.metrics, ...metrics };
+      progress(active, true);
+    }
+  });
+
   pi.on("turn_start", () => {
     if (!active) return;
     active.turn_started_at = Date.now();
@@ -265,6 +305,15 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("message_update", (event: any) => {
     if (!active) return;
+    const stream = event?.assistantMessageEvent;
+    const delta = stream?.delta;
+    if (!active.first_token_seen && active.provider_started_at !== undefined &&
+        ["text_delta", "thinking_delta", "toolcall_delta"].includes(stream?.type) &&
+        typeof delta === "string" && delta.length > 0) {
+      active.first_token_seen = true;
+      active.metrics.first_token_duration_s = Math.max(0, (Date.now() - active.provider_started_at) / 1000);
+      progress(active, true);
+    }
     const metrics = usageMetrics(event?.message);
     if (Object.keys(metrics).length) active.metrics = { ...active.metrics, ...metrics };
     progress(active);

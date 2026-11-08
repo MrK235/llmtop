@@ -18,8 +18,8 @@ from llmtop_metrics import (
     DEFAULT_RUN_HISTORY_LIMIT, HISTORY_COLUMNS, CollectorService, _parse_time, _token_value,
     backfill_context_limits, clear_run_history, compact_tokens, context_values,
     format_duration, history_header_label, load_run_events, load_run_history, model_for_run,
-    run_group_key, run_identity_label, snapshot_record, sort_run_history,
-    source_label, token_rate, total_tokens,
+    run_group_key, run_identity_label, run_timing_cell, run_timing_detail, snapshot_record,
+    sort_run_history, source_label, token_rate, total_tokens,
     write_history,
 )
 log = logging.getLogger(__name__)
@@ -278,6 +278,7 @@ def history_overlay_lines(overlay, chart_width=None):
         f"Läufe        {len(runs)}",
         f"Status       {aggregate.get('status', 'n/a')}",
         f"Dauer        {format_duration(_token_value(aggregate, 'total_duration_s'))}",
+        f"Start        {run_timing_detail(aggregate)}",
         f"Tokens       {compact_tokens(total_tokens(aggregate)) if total_tokens(aggregate) is not None else 'n/a'}",
         f"Komp.        {_token_value(aggregate, 'compactions') or 0}",
         f"Verbrauch    {(_webui_energy_wh(aggregate) or 0):.3f} Wh"
@@ -589,7 +590,9 @@ def _draw(scr, st, host, interval):
         """Ermittelt Breiten aus allen Zeilen der jeweiligen Tabelle."""
         # Quelle/Provider bleibt auch in schmalen Ansichten sichtbar; weitere
         # Spalten folgen, sobald der verfügbare Platz dies zulässt.
-        if w >= 118:
+        if w >= 132:
+            names = ("zeit", "quelle", "modell", "status", "tokens", "komp", "kontext", "rate", "dauer", "start", "wh")
+        elif w >= 118:
             names = ("zeit", "quelle", "modell", "status", "tokens", "komp", "kontext", "rate", "dauer", "wh")
         elif w >= 80:
             names = ("zeit", "quelle", "modell", "status", "tokens", "komp", "kontext")
@@ -670,6 +673,8 @@ def _draw(scr, st, host, interval):
             return f"{rate:.1f}" if rate is not None else "n/a"
         if column == "dauer":
             return format_duration(live_duration(run))
+        if column == "start":
+            return run_timing_cell(run)
         if column == "wh":
             value = _webui_energy_wh(run)
             supported = (run.get("source") == "open-webui" or

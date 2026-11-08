@@ -1,7 +1,7 @@
 """
 title: llmtop Run Metrics
 author: llmtop
-version: 2.2.14
+version: 2.2.15
 required_open_webui_version: 0.12.3
 description: Meldet datensparsame Provider-Runmetriken an den lokalen llmtop-Collector.
 """
@@ -83,6 +83,25 @@ def session_context_tokens(body: dict) -> Optional[float]:
     return None
 
 
+def has_generated_delta(value: Any) -> bool:
+    """Erkennt nur inhaltliche Modell-Deltas für die TTFT-Messung."""
+    if isinstance(value, dict):
+        for key in ("content", "response", "text", "thinking", "reasoning", "delta"):
+            item = value.get(key)
+            if isinstance(item, str) and item:
+                return True
+        for key in ("tool_calls", "toolCalls"):
+            items = value.get(key)
+            if isinstance(items, list) and items:
+                return True
+        for key in ("choices", "message", "output", "delta"):
+            if has_generated_delta(value.get(key)):
+                return True
+    elif isinstance(value, list):
+        return any(has_generated_delta(item) for item in value)
+    return False
+
+
 def find_metrics(value: Any) -> Optional[dict]:
     """Sucht nur bekannte Nutzungsfelder; Textinhalte werden nie übernommen."""
     if isinstance(value, dict):
@@ -122,7 +141,10 @@ def find_metrics(value: Any) -> Optional[dict]:
                 result["prompt_tokens"] = prompt
             if output is not None:
                 result["output_tokens"] = output
-            for source, target in (("total_duration", "total_duration"),
+            for source, target in (("load_duration", "load_duration"),
+                                   ("prompt_eval_duration", "prompt_eval_duration"),
+                                   ("prompt_duration", "prompt_eval_duration"),
+                                   ("total_duration", "total_duration"),
                                    ("total_time", "total_duration"),
                                    ("duration", "total_duration"),
                                    ("eval_duration", "eval_duration"),
@@ -297,6 +319,8 @@ class Filter:
                     "created": now_mono,
                     "last_request": now_mono,
                     "last_heartbeat": now_mono,
+                    "provider_started_mono": now_mono,
+                    "provider_first_token_seen": False,
                     "provider": provider,
                     "compactions": len(summary_markers),
                     "_compaction_markers": set(summary_markers),
@@ -304,6 +328,9 @@ class Filter:
                 }
                 self._runs[key].append(run)
                 is_new = True
+            if is_new or not duplicate:
+                run["provider_started_mono"] = now_mono
+                run["provider_first_token_seen"] = False
             if not is_new and summary_markers:
                 known = run.setdefault("_compaction_markers", set())
                 new_markers = summary_markers - known
@@ -376,6 +403,25 @@ class Filter:
                 candidates = [candidate for candidate in self._runs if candidate.endswith(":" + model)]
                 queue = self._runs[candidates[0]] if len(candidates) == 1 else None
             return queue[0] if queue else None
+
+    async def _mark_first_token(self, model: str, metadata: Optional[dict]) -> None:
+        run = await self._find_run(model, metadata)
+        if not run or run.get("provider_first_token_seen"):
+            return
+        started = run.get("provider_started_mono")
+        if not isinstance(started, (int, float)):
+            return
+        duration = max(0.0, time.monotonic() - started)
+        run["provider_first_token_seen"] = True
+        run["first_token_duration_s"] = duration
+        now = utc_now()
+        await self._send({
+            "schema": 2, "event": "updated", "run_id": run["run_id"],
+            "source": "open-webui", "provider": run.get("provider", "unknown"),
+            "model": run["model"], "started_at": run["started_at"], "updated_at": now,
+            "first_token_duration_s": duration,
+            **self._identity_event(run),
+        })
 
     async def _update(self, model: str, metadata: Optional[dict], metrics: dict) -> None:
         run = await self._find_run(model, metadata)
@@ -475,7 +521,7 @@ class Filter:
             "finished_at": now,
             "compactions": run.get("compactions", 0),
             **self._identity_event(run),
-            **{key: run[key] for key in ("context_tokens", "context_limit", "context_limit_source") if key in run},
+            **{key: run[key] for key in ("context_tokens", "first_token_duration_s", "context_limit", "context_limit_source") if key in run},
         }
         if metrics:
             event.update(metrics)
@@ -494,6 +540,9 @@ class Filter:
         __request__: Any = None,
     ) -> dict:
         model = str(event.get("model") or (__model__ or {}).get("id") or "unknown")
+        if (not event.get("done") and not event.get("done_reason")
+                and has_generated_delta(event)):
+            await self._mark_first_token(model, __metadata__)
         metrics = find_metrics(event)
         if event.get("error") or event.get("cancelled"):
             await self._complete(model, __metadata__, {

@@ -8,7 +8,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.3.83"  # Single Source of Truth; History in version.md
+VERSION = "2.3.84"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -60,7 +60,7 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
     """Erstellt einen einmaligen, vollstaendigen Snapshot ohne curses."""
     from llmtop_metrics import (backfill_context_limits, collector_config, context_text,
                               format_run_line, load_run_events, load_run_history,
-                              model_for_run, run_metric_detail, snapshot_record,
+                              model_for_run, run_metric_detail, run_timing_detail, snapshot_record,
                               source_label, write_history, _parse_time)
     from llmtop_sources import (CPU_POWER_DISPLAY_SCALE_W, GPU_POWER_DISPLAY_SCALE_W,
                               bar, collect_gpus,
@@ -149,7 +149,7 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
         for item in active_runs:
             detail = run_metric_detail(item)
             lines.append(f"Aktueller Run {source_label(item.get('source'), item.get('provider'))}  {item.get('model', '?')}  "
-                         f"{item.get('status', 'unknown')}  {detail} · "
+                         f"{item.get('status', 'unknown')}  {detail} · {run_timing_detail(item)} · "
                          f"{context_text(item, model_for_run(item, st.get('models', [])))}")
     else:
         lines.append("Aktuelle Runs: keine instrumentierten Requests")

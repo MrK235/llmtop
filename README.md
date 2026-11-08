@@ -5,7 +5,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.83** · Python-Anwendung aus der Standardbibliothek für Linux.
+> **Version 2.3.84** · Python-Anwendung aus der Standardbibliothek für Linux.
 
 `llmtop` zeigt den Ollama-Status, lokale CPU-/RAM-/GPU-Sensoren sowie laufende
 und abgeschlossene Modell-Runs in einer curses-TUI oder als einmaligen
@@ -152,6 +152,7 @@ Instrumentierte Runs zeigen, soweit vom Provider geliefert:
 - Prompt-, Ausgabe- und Gesamttoken
 - Kontextverbrauch und Kontextlimit
 - Ausgabe-Rate und Dauer
+- Prefill-Dauer/-Rate und Zeit bis zum ersten Token, sofern echte Provider- oder Adapterwerte vorliegen
 - Anzahl erfolgreicher Kontext-Compactions für Pi und Open WebUI
 - Dauer kompakt in Minuten und Stunden, sofern verfügbar
 - bei Open WebUI und lokalen Pi-Ollama-Runs zusätzlich Verbrauch in Wh, sofern gemessen; laufende
@@ -185,7 +186,8 @@ angezeigt, sodass ein frisches Ergebnis nicht parallel als Doppelzeile stehen
 bleibt. Fehlt ein vorheriger Kontextwert, steht zu Beginn `n/a`. Es werden nur
 explizite Usage-/Kontextzähler verwendet, keine Textschätzungen. Dadurch übernimmt die History
 den letzten verfügbaren Live-Stand. Fehlen Providerwerte, zeigt llmtop `n/a`
-statt einer Schätzung.
+statt einer Schätzung. Die TTFT wird beim ersten inhaltlichen Stream-Delta
+gemessen; die Prefill-Dauer wird nur aus echten Providerwerten übernommen.
 
 ## Collector und Adapter
 

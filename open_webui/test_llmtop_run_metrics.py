@@ -22,12 +22,17 @@ def test_find_metrics():
         "output_tokens": 3, "total_duration": 4}
     assert MODULE.find_metrics({"usage": {"output_tokens": 3, "response_token/s": 4}}) == {
         "output_tokens": 3, "output_rate": 4}
+    assert MODULE.find_metrics({"usage": {"prompt_eval_duration": 5,
+                                             "load_duration": 2}}) == {
+        "prompt_eval_duration": 5, "load_duration": 2}
     # Open WebUI summiert input/output über Tool-Use-Modellaufrufe. Für den
     # Kontext ist der aktuelle Einzelaufruf aus prompt/completion maßgeblich.
     assert MODULE.find_metrics({"usage": {
         "input_tokens": 126382, "output_tokens": 1526,
         "prompt_tokens": 21208, "completion_tokens": 766,
     }}) == {"prompt_tokens": 21208, "output_tokens": 766}
+    assert MODULE.has_generated_delta({"choices": [{"delta": {"content": "x"}}]})
+    assert not MODULE.has_generated_delta({"usage": {"prompt_tokens": 2}})
 
 
 async def exercise():
@@ -54,6 +59,22 @@ async def exercise():
         "prompt_tokens": 2, "completion_tokens": 3, "eval_duration": 1_000_000_000}}, metadata, model)
     assert sent[1]["event"] == "updated"
     assert sent[1]["output_tokens"] == 3
+
+    timing_adapter = MODULE.Filter()
+    timing_sent = []
+
+    async def capture_timing(event):
+        timing_sent.append(event)
+
+    timing_adapter._send = capture_timing
+    timing_metadata = {"chat_id": "timing-chat", "message_id": "timing-1"}
+    await timing_adapter.request(body, timing_metadata, model)
+    await timing_adapter.stream({"model": "qwen:test", "choices": [{"delta": {"content": "x"}}]},
+                                timing_metadata, model)
+    first_token_updates = [event for event in timing_sent
+                           if "first_token_duration_s" in event]
+    assert len(first_token_updates) == 1
+    assert first_token_updates[0]["first_token_duration_s"] >= 0
     await adapter.request(body, metadata, model)
     assert len([event for event in sent if event["event"] == "started"]) == 1
     await adapter.stream({"model": "qwen:test", "done": True, "eval_count": 5}, metadata, model)

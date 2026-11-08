@@ -218,7 +218,7 @@ def normalize_run(run, final=False):
             out[key] = run[key]
     for key in ("prompt_tokens", "output_tokens", "context_tokens", "context_limit",
                 "load_duration_s", "prompt_eval_duration_s", "eval_duration_s",
-                "total_duration_s"):
+                "total_duration_s", "first_token_duration_s"):
         value = run.get(key)
         if isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0:
             out[key] = value
@@ -571,6 +571,42 @@ def run_metric_detail(run):
     return f"{token_text} · {rate:.1f} Tok/s" if rate is not None else f"{token_text} · Tok/s: n/a"
 
 
+def prefill_rate(run):
+    """Berechnet die echte Prompt-/Prefill-Rate ohne Schätzung."""
+    tokens = _token_value(run, "prompt_tokens")
+    duration = _token_value(run, "prompt_eval_duration_s")
+    return tokens / duration if tokens is not None and duration and duration > 0 else None
+
+
+def format_seconds(seconds):
+    """Formatiert technische Laufzeiten kompakt mit Nachkommastellen."""
+    if not isinstance(seconds, (int, float)) or isinstance(seconds, bool) or seconds < 0:
+        return "n/a"
+    if seconds < 10:
+        return f"{seconds:.2f}s"
+    if seconds < 100:
+        return f"{seconds:.1f}s"
+    return f"{seconds:.0f}s"
+
+
+def run_timing_detail(run):
+    """Lesbare Prefill-/TTFT-Zusammenfassung für Snapshot und History."""
+    prefill = _token_value(run, "prompt_eval_duration_s")
+    rate = prefill_rate(run)
+    ttft = _token_value(run, "first_token_duration_s")
+    prefill_text = format_seconds(prefill)
+    if rate is not None:
+        prefill_text += f" / {compact_tokens(rate)} Tok/s"
+    return f"Prefill {prefill_text} · 1. Token {format_seconds(ttft)}"
+
+
+def run_timing_cell(run):
+    """Kompakte Tabellenzelle für breite aktuelle Runs und History."""
+    prefill = format_seconds(_token_value(run, "prompt_eval_duration_s"))
+    ttft = format_seconds(_token_value(run, "first_token_duration_s"))
+    return f"P {prefill} · T {ttft}"
+
+
 def context_values(run, model=None):
     used = _token_value(run, "context_tokens")
     limit = _token_value(run, "context_limit")
@@ -595,7 +631,8 @@ def context_text(run, model=None):
 HISTORY_COLUMNS = ("zeit", "quelle", "modell", "status", "tokens", "komp", "kontext", "rate", "dauer")
 HISTORY_COLUMN_LABELS = {
     "zeit": "Zeit", "quelle": "Quelle", "modell": "Modell", "status": "Status",
-    "tokens": "Tokens", "komp": "Komp.", "kontext": "Kontext", "rate": "Tok/s", "dauer": "Dauer", "wh": "Verbrauch",
+    "tokens": "Tokens", "komp": "Komp.", "kontext": "Kontext", "rate": "Tok/s", "dauer": "Dauer",
+    "start": "Start", "wh": "Verbrauch",
 }
 
 
@@ -685,7 +722,7 @@ def backfill_context_limits(runs, models):
 
 def format_run_line(run, prefix="", model=None):
     """Einheitliche Darstellung für aktuelle Runs, History und --once."""
-    return f"{prefix}{run_metric_detail(run)} · {context_text(run, model)}"
+    return f"{prefix}{run_metric_detail(run)} · {run_timing_detail(run)} · {context_text(run, model)}"
 
 
 def _usage_metrics(value):
@@ -1390,6 +1427,22 @@ def emit_run_event(path):
         return response.status == 202
 
 
+def _stream_has_first_token(item, endpoint):
+    """Erkennt das erste nichtleere Modell-Delta im Ollama-Stream."""
+    if not isinstance(item, dict):
+        return False
+    if endpoint == "/api/generate":
+        return isinstance(item.get("response"), str) and bool(item["response"])
+    message = item.get("message")
+    if not isinstance(message, dict):
+        return False
+    for key in ("content", "thinking"):
+        if isinstance(message.get(key), str) and message[key]:
+            return True
+    tool_calls = message.get("tool_calls")
+    return isinstance(tool_calls, list) and bool(tool_calls)
+
+
 def final_run(run, response=None, error=None, energy=None):
     """Erzeugt aus der finalen Ollama-Antwort ein persistierbares Run-Ereignis."""
     result = dict(run)
@@ -1440,8 +1493,10 @@ def run_ollama_request(host, endpoint, payload, use_nvidia=True, rapl_reader=Non
         host.rstrip("/") + endpoint, data=json.dumps(payload).encode("utf-8"),
         headers={"Content-Type": "application/json"}, method="POST")
     final = None
+    first_token_seen = False
     energy_monitor = EnergyMonitor(use_nvidia=use_nvidia, rapl_reader=rapl_reader).start()
     try:
+        request_started = time.monotonic()
         with urllib.request.urlopen(request, timeout=600) as response:
             for raw in response:
                 sys.stdout.buffer.write(raw)
@@ -1450,6 +1505,11 @@ def run_ollama_request(host, endpoint, payload, use_nvidia=True, rapl_reader=Non
                     item = json.loads(raw)
                 except json.JSONDecodeError:
                     continue
+                if not first_token_seen and _stream_has_first_token(item, endpoint):
+                    first_token_seen = True
+                    run["first_token_duration_s"] = max(0.0, time.monotonic() - request_started)
+                    run["updated_at"] = _utc_now()
+                    write_live_run(run)
                 if item.get("done"):
                     final = item
                     break

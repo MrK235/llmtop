@@ -34,6 +34,16 @@ def test_history_group_is_gray_and_cursor_is_not_bold():
         curses.color_pair = original_color_pair
 
 
+def test_prefill_and_ttft_normalization():
+    run = {'schema': 2, 'run_id': 'timing', 'source': 'ollama-cli', 'model': 'm',
+           'status': 'completed', 'prompt_tokens': 10, 'output_tokens': 2,
+           'prompt_eval_duration_s': 0.5, 'first_token_duration_s': 0.8,
+           'finished_at': '2026-11-08T12:00:00Z'}
+    normalized = llmtop.normalize_run(run, final=True)
+    assert normalized['first_token_duration_s'] == 0.8
+    assert llmtop.format_run_line(normalized).startswith('Tokens: 12')
+
+
 def test_energy_metrics_and_normalization():
     run = {
         'schema': 2, 'run_id': 'energy', 'source': 'ollama-cli', 'model': 'model',
@@ -58,6 +68,16 @@ def test_energy_metrics_and_normalization():
 
 def test_run_metric_detail():
     assert llmtop.run_metric_detail({}) == 'Tokens: warten auf Provider · Tok/s: n/a'
+    assert llmtop.prefill_rate({'prompt_tokens': 100, 'prompt_eval_duration_s': 2}) == 50
+    assert llmtop.prefill_rate({'prompt_tokens': 100, 'prompt_eval_duration_s': 0}) is None
+    timing = llmtop.run_timing_detail({'prompt_eval_duration_s': 0.8,
+                                       'prompt_tokens': 1600,
+                                       'first_token_duration_s': 1.2})
+    assert timing == 'Prefill 0.80s / 2.0k Tok/s · 1. Token 1.20s'
+    assert llmtop.run_timing_cell({}) == 'P n/a · T n/a'
+    assert llmtop._stream_has_first_token({'message': {'content': 'x'}}, '/api/chat')
+    assert not llmtop._stream_has_first_token({'message': {'content': ''}}, '/api/chat')
+    assert llmtop._stream_has_first_token({'response': 'x'}, '/api/generate')
     text = llmtop.run_metric_detail({'prompt_tokens': 1000, 'output_tokens': 250,
                                    'eval_duration_s': 5})
     assert text == 'Tokens: 1.2k (Prompt 1.0k, Ausgabe 250) · 50.0 Tok/s'
