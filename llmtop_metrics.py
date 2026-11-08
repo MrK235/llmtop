@@ -1061,6 +1061,11 @@ def install_hermes_adapter():
                 os.fsync(fh.fileno())
             os.replace(temporary, os.path.join(target_dir, name))
             os.chmod(os.path.join(target_dir, name), 0o600)
+        enabled = subprocess.run(["hermes", "plugins", "enable", "llmtop-hermes-metrics"],
+                                 capture_output=True, text=True, timeout=30)
+        if enabled.returncode != 0:
+            detail = (enabled.stderr or enabled.stdout or "Aktivierung fehlgeschlagen").strip()
+            raise ValueError(detail[:400])
         return target_dir
     finally:
         for name in files:

@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.89 — 08.11.2026
+
+- Hermes-Adapter wird nach erfolgreicher Validierung automatisch aktiviert; dadurch erscheinen Hermes-Runs nach dem Gateway-Neustart im Collector.
+
 ### 2.3.88 — 08.11.2026
 
 - Hermes Agent über ein natives, dependency-freies Observer-Plugin integriert.

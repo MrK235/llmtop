@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.88** · Stand 08.11.2026 · Status: Hermes-Agent-Observer-Integration für datensparsame Haupt-, Subagent- und Hilfsläufe.
+**Version 2.3.89** · Stand 08.11.2026 · Status: Hermes-Agent-Observer-Integration für datensparsame Haupt-, Subagent- und Hilfsläufe.
 
 ## Aktueller Stand
 
@@ -70,6 +70,10 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.89
+
+- `--install-hermes-adapter` aktiviert das validierte Plugin jetzt auch im Hermes-Plugin-Registry.
 
 ## Neu in 2.3.88
 

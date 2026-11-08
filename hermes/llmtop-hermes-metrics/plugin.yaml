@@ -1,5 +1,5 @@
 name: llmtop-hermes-metrics
-version: 2.3.88
+version: 2.3.89
 description: "Datensparsame Hermes-Agent-Laufmetriken für llmtop; nur Observer-Hooks, keine Inhalte."
 author: "llmtop"
 kind: standalone
