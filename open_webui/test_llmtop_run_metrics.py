@@ -22,6 +22,18 @@ def test_find_metrics():
         "output_tokens": 3, "total_duration": 4}
     assert MODULE.find_metrics({"usage": {"output_tokens": 3, "response_token/s": 4}}) == {
         "output_tokens": 3, "output_rate": 4}
+    assert MODULE.find_metrics({"output": [{
+        "type": "open_webui:context_compaction", "id": "cc-1", "summary": "private"
+    }]}) == {
+        "_compaction_delta": 1, "_compaction_markers": ["cc-1"],
+        "_compaction_marker": "cc-1",
+    }
+    assert MODULE.find_metrics({"type": "context_compaction", "data": {
+        "action": "context_compaction", "done": False,
+    }}) is None
+    assert MODULE.find_metrics({"type": "context_compaction", "data": {
+        "action": "context_compaction", "done": True, "context_summary": "private",
+    }})["_compaction_delta"] == 1
     assert MODULE.find_metrics({"usage": {"prompt_eval_duration": 5,
                                              "load_duration": 2}}) == {
         "prompt_eval_duration": 5, "load_duration": 2}
@@ -142,6 +154,28 @@ async def exercise():
                                    {"chat_id": "same-chat", "message_id": "two"}, model)
     assert duplicate_sent[-1]["event"] == "updated"
     assert duplicate_sent[-1]["total_duration_s"] >= 0
+
+    compaction_adapter = MODULE.Filter()
+    compaction_sent = []
+
+    async def capture_compaction(event):
+        compaction_sent.append(event)
+
+    compaction_adapter._send = capture_compaction
+    compaction_metadata = {"chat_id": "compact-chat", "message_id": "compact-1"}
+    await compaction_adapter.request(body, compaction_metadata, model)
+    await compaction_adapter.stream({"model": "qwen:test", "done": True, "eval_count": 5},
+                                    compaction_metadata, model)
+    await compaction_adapter.outlet({"model": "qwen:test", "output": [{
+        "type": "open_webui:context_compaction", "id": "cc-1", "summary": "private"
+    }]}, compaction_metadata, model)
+    completed = [event for event in compaction_sent if event["event"] == "completed"]
+    assert len(completed) == 2
+    assert completed[-1]["compactions"] == 1
+    await compaction_adapter.outlet({"model": "qwen:test", "output": [{
+        "type": "open_webui:context_compaction", "id": "cc-1", "summary": "private"
+    }]}, compaction_metadata, model)
+    assert len([event for event in compaction_sent if event["event"] == "completed"]) == 2
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.86** · Stand 08.11.2026 · Status: PREF und TTFT erscheinen als getrennte Zeitspalten.
+**Version 2.3.87** · Stand 08.11.2026 · Status: Open-WebUI-Compactions werden aus den tatsächlichen Abschlussmarkern gezählt.
 
 ## Aktueller Stand
 
@@ -58,6 +58,11 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.87
+
+- Open-WebUI-Compactions aus `open_webui:context_compaction`-Abschlussmarkern und gespeicherten Summary-Checkpoints werden erkannt und genau einmal pro Run gezählt.
+- Unvollständige oder fehlgeschlagene Compaction-Statusmeldungen werden nicht mehr als erfolgreiche Compaction gezählt.
 
 ## Neu in 2.3.86
 

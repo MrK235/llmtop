@@ -12,6 +12,11 @@ gebracht.
 
 ## Changelog
 
+### 2.3.87 — 08.11.2026
+
+- Open-WebUI-Compactions aus tatsächlichen Abschlussmarkern und gespeicherten Summary-Checkpoints werden erkannt und im Run genau einmal gezählt.
+- Unvollständige oder fehlgeschlagene Compaction-Statusmeldungen werden ignoriert.
+
 ### 2.3.86 — 08.11.2026
 
 - Die Prefill-Spaltenüberschrift lautet kompakt `PREF`.

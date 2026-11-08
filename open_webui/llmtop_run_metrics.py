@@ -1,7 +1,7 @@
 """
 title: llmtop Run Metrics
 author: llmtop
-version: 2.2.15
+version: 2.2.16
 required_open_webui_version: 0.12.3
 description: Meldet datensparsame Provider-Runmetriken an den lokalen llmtop-Collector.
 """
@@ -102,18 +102,59 @@ def has_generated_delta(value: Any) -> bool:
     return False
 
 
-def find_metrics(value: Any) -> Optional[dict]:
-    """Sucht nur bekannte Nutzungsfelder; Textinhalte werden nie übernommen."""
+def _compaction_marker(value: Any) -> Optional[str]:
+    """Erkennt einen abgeschlossenen Open-WebUI-Compaction-Marker."""
+    if not isinstance(value, dict):
+        return None
+    event_type = value.get("type")
+    payload = value
+    if event_type == "context_compaction":
+        payload = value.get("data") if isinstance(value.get("data"), dict) else value
+        if payload.get("done") is not True or payload.get("error"):
+            return None
+    elif event_type == "open_webui:context_compaction":
+        if value.get("done") is False or value.get("error"):
+            return None
+    elif value.get("action") == "context_compaction":
+        if value.get("done") is not True or value.get("error"):
+            return None
+    else:
+        return None
+    marker = (payload.get("id") or payload.get("call_id") or
+              payload.get("checkpoint_message_id"))
+    if isinstance(marker, str) and marker:
+        return marker[:120]
+    summary = payload.get("summary") or payload.get("context_summary")
+    if isinstance(summary, str) and summary:
+        return "summary:" + hashlib.sha256(summary.encode("utf-8")).hexdigest()
+    return None
+
+
+def _compaction_metrics(value: Any) -> Optional[dict]:
+    """Sammelt alle abgeschlossenen Compactions aus einem WebUI-Payload."""
+    markers = []
+
+    def visit(item: Any) -> None:
+        marker = _compaction_marker(item)
+        if marker and marker not in markers:
+            markers.append(marker)
+        if isinstance(item, dict):
+            for child in item.values():
+                visit(child)
+        elif isinstance(item, list):
+            for child in item:
+                visit(child)
+
+    visit(value)
+    if not markers:
+        return None
+    return {"_compaction_delta": len(markers), "_compaction_markers": markers,
+            "_compaction_marker": markers[0]}
+
+
+def _find_metrics(value: Any) -> Optional[dict]:
+    """Sucht Nutzungsfelder ohne Compaction-Marker."""
     if isinstance(value, dict):
-        event_type = value.get("type")
-        if event_type in ("open_webui:context_compaction", "context_compaction"):
-            marker = value.get("id") or value.get("call_id")
-            result = {"_compaction_delta": 1}
-            if isinstance(marker, str) and marker:
-                result["_compaction_marker"] = marker[:120]
-            return result
-        if value.get("action") == "context_compaction" and value.get("done") is True:
-            return {"_compaction_delta": 1}
         if value.get("done") is True or FINAL_FIELDS.intersection(value):
             result = {key: value[key] for key in FINAL_FIELDS if number(value.get(key)) is not None}
             if isinstance(value.get("done_reason"), str):
@@ -157,15 +198,41 @@ def find_metrics(value: Any) -> Optional[dict]:
             if result:
                 return result
         for child in value.values():
-            result = find_metrics(child)
+            result = _find_metrics(child)
             if result is not None:
                 return result
     elif isinstance(value, list):
         for child in reversed(value):
-            result = find_metrics(child)
+            result = _find_metrics(child)
             if result is not None:
                 return result
     return None
+
+
+def find_metrics(value: Any) -> Optional[dict]:
+    """Sucht bekannte Usage und abgeschlossene Compactions; Inhalte bleiben außen vor."""
+    result = _find_metrics(value) or {}
+    compactions = _compaction_metrics(value)
+    if compactions:
+        result.update(compactions)
+    return result or None
+
+
+def _consume_compaction_metrics(run: dict, metrics: dict) -> int:
+    """Übernimmt Compaction-Marker genau einmal in den laufenden Run."""
+    raw_markers = metrics.pop("_compaction_markers", [])
+    marker = metrics.pop("_compaction_marker", None)
+    markers = list(raw_markers) if isinstance(raw_markers, list) else []
+    if isinstance(marker, str) and marker and marker not in markers:
+        markers.append(marker)
+    delta = int(metrics.pop("_compaction_delta", 0) or 0)
+    if markers:
+        known = run.setdefault("_compaction_markers", set())
+        delta = sum(1 for item in markers if item not in known)
+        known.update(markers)
+    if delta:
+        run["compactions"] = run.get("compactions", 0) + delta
+    return delta
 
 
 class Filter:
@@ -181,6 +248,7 @@ class Filter:
     def __init__(self):
         self.valves = self.Valves()
         self._runs: dict[str, deque[dict]] = defaultdict(deque)
+        self._completed_runs: dict[str, tuple[dict, float]] = {}
         self._session_context: dict[str, float] = {}
         self._lock = asyncio.Lock()
 
@@ -226,7 +294,7 @@ class Filter:
 
     @staticmethod
     def _context_summary_markers(body: dict) -> set[str]:
-        """Erkennt neue Open-WebUI-Summary-Checkpoints ohne deren Inhalt zu speichern."""
+        """Erkennt Open-WebUI-Summary-Checkpoints ohne deren Inhalt zu speichern."""
         markers = set()
         messages = body.get("messages") if isinstance(body, dict) else None
         for message in messages if isinstance(messages, list) else ():
@@ -236,6 +304,12 @@ class Filter:
             if isinstance(summary, str) and summary:
                 digest = hashlib.sha256(summary.encode("utf-8")).hexdigest()
                 markers.add("summary:" + digest)
+            output = message.get("output")
+            if isinstance(output, list):
+                for item in output:
+                    marker = _compaction_marker(item)
+                    if marker:
+                        markers.add(marker)
         return markers
 
     def _cleanup(self) -> None:
@@ -244,6 +318,9 @@ class Filter:
             self._runs[key] = deque(run for run in self._runs[key] if run["created"] >= cutoff)
             if not self._runs[key]:
                 del self._runs[key]
+        self._completed_runs = {
+            key: item for key, item in self._completed_runs.items() if item[1] >= cutoff
+        }
 
     def _send_sync(self, event: dict) -> None:
         if not self.valves.collector_token or not self.valves.collector_url:
@@ -428,18 +505,11 @@ class Filter:
         if not run:
             return
         metrics = dict(metrics)
-        marker = metrics.pop("_compaction_marker", None)
-        delta = int(metrics.pop("_compaction_delta", 0) or 0)
+        delta = _consume_compaction_metrics(run, metrics)
         prompt = metrics.get("prompt_tokens")
         output = metrics.get("output_tokens")
         if prompt is not None and output is not None and prompt + output > 0:
             metrics["context_tokens"] = prompt + output
-        if marker:
-            markers = run.setdefault("_compaction_markers", set())
-            if marker in markers:
-                delta = 0
-            else:
-                markers.add(marker)
         metrics.setdefault("total_duration_s", max(
             0.0, time.monotonic() - run.get("started_mono", time.monotonic())))
         changed = {key: value for key, value in metrics.items() if run.get(key) != value}
@@ -481,6 +551,11 @@ class Filter:
     async def _complete(self, model: str, metadata: Optional[dict], metrics: Optional[dict]) -> None:
         key = self._key(model, metadata)
         context_key = self._context_key(metadata)
+        metrics = dict(metrics or {})
+        has_compaction = bool(metrics.get("_compaction_delta") or
+                              metrics.get("_compaction_marker") or
+                              metrics.get("_compaction_markers"))
+        cached_completion = False
         async with self._lock:
             self._cleanup()
             queue = self._runs.get(key)
@@ -488,14 +563,22 @@ class Filter:
                 candidates = [candidate for candidate in self._runs if candidate.endswith(":" + model)]
                 queue = self._runs[candidates[0]] if len(candidates) == 1 else None
             if not queue:
-                return
-            run = queue.popleft()
-            if not queue:
-                for candidate_key, candidate_queue in list(self._runs.items()):
-                    if candidate_queue is queue:
-                        self._runs.pop(candidate_key, None)
-                        break
-        metrics = dict(metrics or {})
+                cached = self._completed_runs.get(key)
+                if not cached or not has_compaction:
+                    return
+                run = cached[0]
+                cached_completion = True
+            else:
+                run = queue.popleft()
+                if not queue:
+                    for candidate_key, candidate_queue in list(self._runs.items()):
+                        if candidate_queue is queue:
+                            self._runs.pop(candidate_key, None)
+                            break
+                self._completed_runs[key] = (run, time.monotonic())
+        delta = _consume_compaction_metrics(run, metrics)
+        if cached_completion and not delta:
+            return
         prompt = metrics.get("prompt_tokens")
         output = metrics.get("output_tokens")
         if prompt is None:
