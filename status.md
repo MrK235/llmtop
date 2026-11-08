@@ -1,12 +1,13 @@
 # status.md — llmtop
 
-**Version 2.3.81** · Stand 08.11.2026 · Status: WebUI-Runs übernehmen vorhandene Session-Kontextwerte vor dem Stream.
+**Version 2.3.82** · Stand 08.11.2026 · Status: WebUI-Runs übernehmen den letzten Session-Kontext vor dem Stream.
 
 ## Aktueller Stand
 
-Open-WebUI-Runs melden beim Start zunächst keinen Kontextwert (`n/a`). Liegt
-im Request bereits ein expliziter Session-/Usage-Kontextzähler vor, wird er
-unmittelbar danach als datensparsames Live-Update übernommen; Textlängen werden
+Open-WebUI-Runs übernehmen beim Start den letzten bekannten Kontext derselben
+Chat-/Session-ID. Liegt im Request bereits ein neuer expliziter
+Session-/Usage-Kontextzähler vor, ersetzt er den alten Wert unmittelbar vor dem
+Provider-Stream. Ohne vorherigen Wert bleibt der Start `n/a`; Textlängen werden
 nicht geschätzt.
 
 Beim normalen TUI-Start wird beim ersten Lauf ein Onboarding mit Discovery für
@@ -54,6 +55,10 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.82
+
+- Aktuelle Open-WebUI-Runs zeigen beim Start den letzten Kontextwert derselben Chat-/Session-ID und überschreiben ihn vor dem Stream mit neuen Werten.
 
 ## Neu in 2.3.81
 

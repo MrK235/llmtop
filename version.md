@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.82 — 08.11.2026
+
+- Aktuelle Open-WebUI-Runs zeigen beim Start den letzten Kontextwert derselben Chat-/Session-ID und überschreiben ihn vor dem Stream mit neuen Werten.
+
 ### 2.3.81 — 08.11.2026
 
 - Aktuelle Open-WebUI-Runs übernehmen vorhandene Session-Kontextzähler bereits vor dem Provider-Stream; der Start bleibt zunächst `n/a`.

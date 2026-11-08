@@ -1,7 +1,7 @@
 """
 title: llmtop Run Metrics
 author: llmtop
-version: 2.2.12
+version: 2.2.13
 required_open_webui_version: 0.12.3
 description: Meldet datensparsame Provider-Runmetriken an den lokalen llmtop-Collector.
 """
@@ -159,6 +159,7 @@ class Filter:
     def __init__(self):
         self.valves = self.Valves()
         self._runs: dict[str, deque[dict]] = defaultdict(deque)
+        self._session_context: dict[str, float] = {}
         self._lock = asyncio.Lock()
 
     def _provider(self, model: Optional[dict]) -> Optional[str]:
@@ -184,6 +185,16 @@ class Filter:
         metadata = metadata or {}
         return {name: value.strip()[:120] for name in ("session_id", "chat_id", "message_id")
                 if isinstance(value := metadata.get(name), str) and value.strip()}
+
+    @staticmethod
+    def _context_key(metadata: Optional[dict]) -> Optional[str]:
+        """Schlüssel für den letzten Kontext einer WebUI-Konversation."""
+        metadata = metadata or {}
+        for name in ("chat_id", "session_id"):
+            value = metadata.get(name)
+            if isinstance(value, str) and value.strip():
+                return name + ":" + value.strip()[:120]
+        return None
 
     @staticmethod
     def _identity_event(run: dict) -> dict[str, str]:
@@ -258,6 +269,7 @@ class Filter:
         identity = self._identity(metadata)
         has_identity = bool(identity)
         context_tokens = session_context_tokens(body)
+        context_key = self._context_key(metadata)
         context_changed = False
         compaction_changed = False
         async with self._lock:
@@ -299,7 +311,10 @@ class Filter:
             if isinstance(num_ctx, (int, float)) and not isinstance(num_ctx, bool) and num_ctx > 0:
                 run["context_limit"] = num_ctx
                 run["context_limit_source"] = "request"
-            if context_tokens is not None and run.get("context_tokens") != context_tokens:
+            previous_context = self._session_context.get(context_key) if context_key else None
+            if is_new and previous_context is not None:
+                run["context_tokens"] = previous_context
+            if not is_new and context_tokens is not None and run.get("context_tokens") != context_tokens:
                 run["context_tokens"] = context_tokens
                 context_changed = True
         if not is_new:
@@ -327,12 +342,13 @@ class Filter:
             "updated_at": now,
             "compactions": run.get("compactions", 0),
             **self._identity_event(run),
-            **{key: run[key] for key in ("context_limit", "context_limit_source") if key in run},
+            **{key: run[key] for key in ("context_tokens", "context_limit", "context_limit_source") if key in run},
         })
-        # Der Start bleibt bewusst ohne Kontextwert und zeigt zunächst n/a.
-        # Ein bereits im Request vorhandener Sessionstand wird danach separat
-        # gemeldet, noch bevor der Provider-Stream beginnt.
-        if context_tokens is not None:
+        # Ein bekannter Kontext des vorherigen Runs steht sofort zur Verfügung.
+        # Der aktuelle Request-Kontext ersetzt ihn noch vor dem Provider-Stream,
+        # sofern Open WebUI ihn bereits explizit mitliefert.
+        if context_tokens is not None and run.get("context_tokens") != context_tokens:
+            run["context_tokens"] = context_tokens
             await self._send({
                 "schema": 2, "event": "updated", "run_id": run["run_id"],
                 "source": "open-webui", "provider": provider, "model": run["model"],
@@ -364,6 +380,10 @@ class Filter:
         metrics = dict(metrics)
         marker = metrics.pop("_compaction_marker", None)
         delta = int(metrics.pop("_compaction_delta", 0) or 0)
+        prompt = metrics.get("prompt_tokens")
+        output = metrics.get("output_tokens")
+        if prompt is not None and output is not None and prompt + output > 0:
+            metrics["context_tokens"] = prompt + output
         if marker:
             markers = run.setdefault("_compaction_markers", set())
             if marker in markers:
@@ -376,6 +396,10 @@ class Filter:
         if not changed:
             return
         run.update(changed)
+        if "context_tokens" in changed:
+            context_key = self._context_key(run)
+            if context_key:
+                self._session_context[context_key] = run["context_tokens"]
         now = utc_now()
         await self._send({
             "schema": 2, "event": "updated", "run_id": run["run_id"],
@@ -403,6 +427,7 @@ class Filter:
 
     async def _complete(self, model: str, metadata: Optional[dict], metrics: Optional[dict]) -> None:
         key = self._key(model, metadata)
+        context_key = self._context_key(metadata)
         async with self._lock:
             self._cleanup()
             queue = self._runs.get(key)
@@ -417,6 +442,17 @@ class Filter:
                     if candidate_queue is queue:
                         self._runs.pop(candidate_key, None)
                         break
+        metrics = dict(metrics or {})
+        prompt = metrics.get("prompt_tokens")
+        output = metrics.get("output_tokens")
+        if prompt is None:
+            prompt = metrics.get("prompt_eval_count")
+        if output is None:
+            output = metrics.get("eval_count")
+        if prompt is not None and output is not None and prompt + output > 0:
+            run["context_tokens"] = prompt + output
+        if context_key and run.get("context_tokens") is not None:
+            self._session_context[context_key] = run["context_tokens"]
         now = utc_now()
         event = {
             "schema": 2,

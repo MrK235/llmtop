@@ -85,12 +85,23 @@ async def exercise():
         {"role": "user", "content": "secret"},
         {"role": "assistant", "usage": {"prompt_tokens": 12, "completion_tokens": 4}},
     ]}
-    await context_adapter.request(context_body, {"message_id": "context"}, model)
+    first_metadata = {"chat_id": "chat-context", "message_id": "context-1"}
+    await context_adapter.request(context_body, first_metadata, model)
     assert context_sent[0]["event"] == "started"
     assert "context_tokens" not in context_sent[0]
     assert context_sent[1]["event"] == "updated"
     assert context_sent[1]["context_tokens"] == 16
     assert "messages" not in context_sent[1]
+    await context_adapter.stream({"model": "qwen:test", "done": True,
+                                  "prompt_eval_count": 20, "eval_count": 5},
+                                 first_metadata, model)
+
+    context_sent.clear()
+    await context_adapter.request({"model": "qwen:test", "messages": []},
+                                  {"chat_id": "chat-context", "message_id": "context-2"}, model)
+    assert context_sent[0]["event"] == "started"
+    assert context_sent[0]["context_tokens"] == 25
+    assert len(context_sent) == 1
 
 
 if __name__ == "__main__":

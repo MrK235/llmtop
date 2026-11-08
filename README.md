@@ -5,7 +5,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.81** · Python-Anwendung aus der Standardbibliothek für Linux.
+> **Version 2.3.82** · Python-Anwendung aus der Standardbibliothek für Linux.
 
 `llmtop` zeigt den Ollama-Status, lokale CPU-/RAM-/GPU-Sensoren sowie laufende
 und abgeschlossene Modell-Runs in einer curses-TUI oder als einmaligen
@@ -175,10 +175,11 @@ nutzt das Overlay die verfügbare Breite für weitere Runs. Aufgeklappt erschein
 
 Der Pi-Adapter aktualisiert den Session-Kontext während des laufenden Agenten-
 Laufs und unmittelbar vor dem Abschluss erneut. Open-WebUI-Runs übernehmen einen
-bereits im Request vorhandenen Session-Kontext vor dem ersten Provider-Chunk;
-die Startmeldung zeigt zunächst `n/a`, danach wird der Wert aktualisiert. Es
-werden nur explizite Usage-/Kontextzähler verwendet, keine Textschätzungen.
-Dadurch übernimmt die History
+bereits im Request vorhandenen Session-Kontext vor dem ersten Provider-Chunk.
+Der letzte Kontextwert derselben Chat-/Session-ID wird beim nächsten Run sofort
+angezeigt und anschließend durch neue Werte ersetzt. Fehlt ein vorheriger Wert,
+steht zu Beginn `n/a`. Es werden nur explizite Usage-/Kontextzähler verwendet,
+keine Textschätzungen. Dadurch übernimmt die History
 den letzten verfügbaren Live-Stand. Fehlen Providerwerte, zeigt llmtop `n/a`
 statt einer Schätzung.
 
