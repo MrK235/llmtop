@@ -805,6 +805,30 @@ def _snapshot_webui_energy_monitor(run):
         return None
 
 
+def _backfill_webui_context(run):
+    """Übernimmt den letzten bekannten Kontext desselben WebUI-Chats."""
+    if run.get("source") != "open-webui" or _token_value(run, "context_tokens") is not None:
+        return run
+    group = run_group_key(run)
+    candidates = [item for item in load_run_events(limit=DEFAULT_RUN_HISTORY_LIMIT)
+                  if item.get("source") == "open-webui"
+                  and item.get("run_id") != run.get("run_id")
+                  and run_group_key(item) == group]
+    candidates.extend(item for item in load_run_history(limit=DEFAULT_RUN_HISTORY_LIMIT)
+                      if item.get("source") == "open-webui"
+                      and item.get("run_id") != run.get("run_id")
+                      and run_group_key(item) == group)
+    if not candidates:
+        return run
+    prior = max(candidates, key=lambda item: _parse_time(
+        item.get("finished_at") or item.get("updated_at") or item.get("started_at"))
+        or datetime.min.replace(tzinfo=timezone.utc))
+    for key in ("context_tokens", "context_limit", "context_limit_source"):
+        if key in prior and key not in run:
+            run[key] = prior[key]
+    return run
+
+
 def process_run_event(event):
     """Validiert ein Collector-Ereignis und aktualisiert Live- und History-Datei."""
     _prune_webui_energy_monitors()
@@ -816,6 +840,8 @@ def process_run_event(event):
     now = _utc_now()
     if event["event"] == "started" and not _parse_time(run.get("started_at")):
         return False
+    if event["event"] == "started":
+        run = _backfill_webui_context(run)
     if _energy_monitor_enabled(run):
         if event["event"] == "started":
             _start_webui_energy_monitor(run)

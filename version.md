@@ -12,6 +12,13 @@ gebracht.
 
 ## Changelog
 
+### 2.3.83 — 08.11.2026
+
+- Aktive WebUI-Dauern werden lokal und per sekündlichem Adapter-Update fortgeschrieben.
+- Aktuelle Runs zeigt pro WebUI-Chat nur den neuesten relevanten Eintrag.
+- Vorherige Kontextwerte werden collectorseitig auch nach Adapter-Neustarts aus der History ergänzt.
+- Wechselnde Message-IDs innerhalb desselben WebUI-Chats erzeugen keine zusätzlichen Runs mehr.
+
 ### 2.3.82 — 08.11.2026
 
 - Aktuelle Open-WebUI-Runs zeigen beim Start den letzten Kontextwert derselben Chat-/Session-ID und überschreiben ihn vor dem Stream mit neuen Werten.

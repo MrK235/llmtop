@@ -8,7 +8,7 @@ import subprocess
 import sys
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 VERSION = "?"
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")
@@ -98,6 +98,39 @@ def history_group_key(run):
 
 def _history_time(value):
     return _parse_time(value) or datetime.min.replace(tzinfo=datetime.now().astimezone().tzinfo)
+
+
+def live_duration(run, now=None):
+    """Liefert für aktive Runs sofort die verstrichene Zeit seit dem Start."""
+    measured = _token_value(run, "total_duration_s")
+    if run.get("status") in ("completed", "error", "cancelled"):
+        return measured
+    started = _parse_time(run.get("started_at"))
+    if not started:
+        return measured
+    current = now or datetime.now(timezone.utc)
+    elapsed = max(0.0, (current.astimezone(timezone.utc) - started).total_seconds())
+    return max(measured or 0.0, elapsed)
+
+
+def current_display_runs(runs):
+    """Zeigt pro WebUI-Chat nur den neuesten, relevantesten Live-Run."""
+    regular = []
+    webui_groups = {}
+    for run in runs or []:
+        if run.get("source") != "open-webui":
+            regular.append(run)
+            continue
+        webui_groups.setdefault(run_group_key(run), []).append(run)
+    for group in webui_groups.values():
+        active = [run for run in group if run.get("status") not in
+                  ("completed", "error", "cancelled")]
+        candidates = active or group
+        regular.append(max(candidates, key=lambda run: (
+            _parse_time(run.get("started_at") or run.get("finished_at") or
+                        run.get("updated_at")) or datetime.min.replace(tzinfo=timezone.utc),
+            str(run.get("run_id", "")))))
+    return regular
 
 
 def _latest_history_run(runs):
@@ -446,6 +479,7 @@ def _draw(scr, st, host, interval):
         return
     colors = st["colors"]
     history_runs, history_items = normalize_history_state(st)
+    displayed_runs = current_display_runs(st.get("runs", []))
     cursor_attr = colors["cursor"]
     label_w = 9
     bar_w = max(8, min(24, w - 50))
@@ -635,8 +669,7 @@ def _draw(scr, st, host, interval):
             rate = token_rate(run)
             return f"{rate:.1f}" if rate is not None else "n/a"
         if column == "dauer":
-            duration = _token_value(run, "total_duration_s")
-            return format_duration(duration)
+            return format_duration(live_duration(run))
         if column == "wh":
             value = _webui_energy_wh(run)
             supported = (run.get("source") == "open-webui" or
@@ -790,7 +823,7 @@ def _draw(scr, st, host, interval):
         model_count = len(oll.get("models", []))
         _add(scr, row, 0, f"Geladene Modelle: {model_count}", colors["secondary"])
         row += 1
-        active_runs = st.get("runs", [])
+        active_runs = displayed_runs
         source_order = ("pi", "open-webui")
         compact_groups = [(source, [item for item in active_runs if item.get("source") == source])
                           for source in source_order]
@@ -874,7 +907,7 @@ def _draw(scr, st, host, interval):
         return row + 1
 
     oll = st["ollama"]
-    active_runs = st.get("runs", [])
+    active_runs = displayed_runs
     runs = st.get("run_history", [])
     draw_header(oll)
 

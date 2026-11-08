@@ -8,7 +8,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.3.82"  # Single Source of Truth; History in version.md
+VERSION = "2.3.83"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -67,9 +67,10 @@ def snapshot_lines(host, use_nvidia, cpu_measure=1.0):
                               collect_ollama, cpu_count, cpu_name, cpu_percent,
                               cpu_temperature, collect_cpu_power, get_ram_pct,
                               model_lines, read_cpu_totals)
+    from llmtop_tui import current_display_runs
     lines = []
     st = collect_ollama(host)
-    active_runs = load_run_events()
+    active_runs = current_display_runs(load_run_events())
     run = active_runs[0] if active_runs else None
     runs = load_run_history(limit=10)
     backfill_context_limits(runs, st.get("models", []))

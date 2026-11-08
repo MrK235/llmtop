@@ -407,6 +407,58 @@ def test_history_group_tie_breaks_on_updated_started_and_run_id():
     assert llmtop_tui._latest_history_run(runs)['run_id'] == 'b'
 
 
+def test_live_duration_and_webui_display_deduplication():
+    now = datetime(2026, 11, 8, 12, 0, 5, tzinfo=timezone.utc)
+    active = {'run_id': 'new', 'source': 'open-webui', 'chat_id': 'chat',
+              'model': 'm', 'status': 'running',
+              'started_at': '2026-11-08T12:00:00Z', 'total_duration_s': 1}
+    final = {'run_id': 'old', 'source': 'open-webui', 'chat_id': 'chat',
+             'model': 'm', 'status': 'completed',
+             'started_at': '2026-11-08T11:59:00Z',
+             'finished_at': '2026-11-08T11:59:05Z', 'total_duration_s': 5}
+    duplicate = {'run_id': 'duplicate', 'source': 'open-webui', 'chat_id': 'chat',
+                 'model': 'm', 'status': 'running',
+                 'started_at': '2026-11-08T11:59:30Z',
+                 'updated_at': '2026-11-08T12:00:10Z'}
+    other = {'run_id': 'other', 'source': 'open-webui', 'chat_id': 'other',
+             'model': 'm', 'status': 'running', 'started_at': '2026-11-08T12:00:01Z'}
+    assert llmtop_tui.live_duration(active, now) == 5
+    assert llmtop_tui.live_duration(final, now) == 5
+    assert {run['run_id'] for run in llmtop_tui.current_display_runs(
+        [final, duplicate, active, other])} == {'new', 'other'}
+
+
+def test_collector_backfills_previous_webui_context():
+    old_live = os.environ.get('LLMTOP_RUN_FILE')
+    old_history = os.environ.get('LLMTOP_RUN_HISTORY_FILE')
+    try:
+        with tempfile.TemporaryDirectory() as directory:
+            os.environ['LLMTOP_RUN_FILE'] = str(Path(directory) / 'run.jsonl')
+            os.environ['LLMTOP_RUN_HISTORY_FILE'] = str(Path(directory) / 'runs.jsonl')
+            previous = {'schema': 2, 'event': 'completed', 'run_id': 'old',
+                        'source': 'open-webui', 'chat_id': 'chat', 'model': 'm',
+                        'started_at': '2026-11-08T11:00:00Z',
+                        'finished_at': '2026-11-08T11:00:05Z',
+                        'context_tokens': 321, 'context_limit': 4096}
+            assert llmtop.append_run_history(previous)
+            started = {'schema': 2, 'event': 'started', 'run_id': 'new',
+                       'source': 'open-webui', 'chat_id': 'chat', 'model': 'm',
+                       'started_at': '2026-11-08T12:00:00Z'}
+            assert llmtop.process_run_event(started)
+            run = llmtop.load_run_events(max_age=10 ** 9)[0]
+            assert run['context_tokens'] == 321
+            assert run['context_limit'] == 4096
+    finally:
+        if old_live is None:
+            os.environ.pop('LLMTOP_RUN_FILE', None)
+        else:
+            os.environ['LLMTOP_RUN_FILE'] = old_live
+        if old_history is None:
+            os.environ.pop('LLMTOP_RUN_HISTORY_FILE', None)
+        else:
+            os.environ['LLMTOP_RUN_HISTORY_FILE'] = old_history
+
+
 def test_live_run_keeps_active_run_until_final():
     with tempfile.TemporaryDirectory() as directory:
         live = Path(directory) / 'run.jsonl'
@@ -617,7 +669,7 @@ def test_tui_draws_loaded_model():
     assert not any(text == "LLM Terminal Monitor" for text in screen.text)
     interval_text = "-/+ intervall 2.0s"
     assert (interval_text, 120 - len(interval_text) - 1) in screen.positions
-    assert any(text.startswith("q quit   r reload   x sudo   c clear   ▴▾ return   ↑↓ cursor   h help")
+    assert any(text.startswith("q quit   r reload   o setup   x sudo   c clear   ▴▾ return   ↑↓ cursor   h help")
                for text in screen.text)
     assert ("▴", colors["structure"]) in screen.calls
     assert ("▾", colors["structure"]) in screen.calls
@@ -646,10 +698,10 @@ def test_tui_draws_loaded_model():
     assert ("[", 22) in screen.calls
     assert ("##          ", 18) in screen.calls
     assert ("]", 22) in screen.calls
-    assert ("  20%", 18) in screen.calls
-    assert (" 100", 17) in screen.calls
-    assert ("[            ]  n/a n/a", 20) in screen.calls
-    assert ("n/a                    ", 21) in screen.calls
+    assert (" 20%", 18) in screen.calls
+    assert ("20/100", colors["structure"]) in screen.calls
+    assert ("[            ] n/a", 20) in screen.calls
+    assert ("n/a               ", 21) in screen.calls
     assert any(text.startswith("01.01 00:00") and attr == 21
                for text, attr in screen.calls)
 
@@ -661,6 +713,8 @@ if __name__ == '__main__':
     test_clear_run_history()
     test_history_sorting_and_context_cells()
     test_history_groups_keep_all_runs_and_sources_separate()
+    test_live_duration_and_webui_display_deduplication()
+    test_collector_backfills_previous_webui_context()
     test_live_run_keeps_active_run_until_final()
     test_final_live_runs_expire_but_history_remains()
     test_stale_live_runs_are_pruned()

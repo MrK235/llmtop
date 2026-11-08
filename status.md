@@ -1,14 +1,17 @@
 # status.md — llmtop
 
-**Version 2.3.82** · Stand 08.11.2026 · Status: WebUI-Runs übernehmen den letzten Session-Kontext vor dem Stream.
+**Version 2.3.83** · Stand 08.11.2026 · Status: Aktuelle WebUI-Runs zeigen verfügbare Kontext- und Laufzeitwerte ohne Doppelzeilen.
 
 ## Aktueller Stand
 
 Open-WebUI-Runs übernehmen beim Start den letzten bekannten Kontext derselben
 Chat-/Session-ID. Liegt im Request bereits ein neuer expliziter
 Session-/Usage-Kontextzähler vor, ersetzt er den alten Wert unmittelbar vor dem
-Provider-Stream. Ohne vorherigen Wert bleibt der Start `n/a`; Textlängen werden
-nicht geschätzt.
+Provider-Stream. Der Collector ergänzt den letzten Kontext auch nach einem
+Adapter-Neustart aus der History. Aktive Dauern werden in der TUI aus der
+Startzeit fortgeschrieben und vom Adapter sekündlich aktualisiert. Pro WebUI-
+Chat erscheint nur der neueste aktive beziehungsweise finale Run. Ohne
+vorherigen Wert bleibt der Start `n/a`; Textlängen werden nicht geschätzt.
 
 Beim normalen TUI-Start wird beim ersten Lauf ein Onboarding mit Discovery für
 lokale Standardports, veröffentlichte Docker-Ports und begrenzte private
@@ -55,6 +58,13 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.83
+
+- Die Dauer aktiver WebUI-Runs läuft sekündlich statt in großen Sprüngen weiter.
+- Pro WebUI-Chat zeigt Aktuelle Runs nur den neuesten relevanten Eintrag.
+- Der Collector übernimmt vorherige Kontextwerte auch nach einem Adapter-Neustart aus der History.
+- Tool- und Fortsetzungsrunden desselben Chats werden trotz wechselnder Message-ID demselben Run zugeordnet.
 
 ## Neu in 2.3.82
 

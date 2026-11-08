@@ -1,7 +1,7 @@
 """
 title: llmtop Run Metrics
 author: llmtop
-version: 2.2.13
+version: 2.2.14
 required_open_webui_version: 0.12.3
 description: Meldet datensparsame Provider-Runmetriken an den lokalen llmtop-Collector.
 """
@@ -177,7 +177,9 @@ class Filter:
     @staticmethod
     def _key(model: str, metadata: Optional[dict]) -> str:
         metadata = metadata or {}
-        stable = metadata.get("message_id") or metadata.get("chat_id") or metadata.get("session_id") or "api"
+        # Tool- und Fortsetzungsrunden können neue message_id-Werte erhalten,
+        # gehören innerhalb desselben Chats aber weiterhin zum selben Run.
+        stable = metadata.get("chat_id") or metadata.get("session_id") or metadata.get("message_id") or "api"
         return f"{stable}:{model}"
 
     @staticmethod
@@ -291,6 +293,7 @@ class Filter:
                     "run_id": str(uuid.uuid4()),
                     "model": model,
                     "started_at": now,
+                    "started_mono": now_mono,
                     "created": now_mono,
                     "last_request": now_mono,
                     "last_heartbeat": now_mono,
@@ -340,6 +343,7 @@ class Filter:
             "model": model,
             "started_at": now,
             "updated_at": now,
+            "total_duration_s": 0.0,
             "compactions": run.get("compactions", 0),
             **self._identity_event(run),
             **{key: run[key] for key in ("context_tokens", "context_limit", "context_limit_source") if key in run},
@@ -390,6 +394,8 @@ class Filter:
                 delta = 0
             else:
                 markers.add(marker)
+        metrics.setdefault("total_duration_s", max(
+            0.0, time.monotonic() - run.get("started_mono", time.monotonic())))
         changed = {key: value for key, value in metrics.items() if run.get(key) != value}
         if delta:
             changed["compactions"] = run.get("compactions", 0) + delta
@@ -414,7 +420,7 @@ class Filter:
         if not run:
             return
         now_mono = time.monotonic()
-        if now_mono - run.get("last_heartbeat", 0.0) < 10.0:
+        if now_mono - run.get("last_heartbeat", 0.0) < 1.0:
             return
         run["last_heartbeat"] = now_mono
         now = utc_now()
@@ -422,6 +428,7 @@ class Filter:
             "schema": 2, "event": "updated", "run_id": run["run_id"],
             "source": "open-webui", "provider": run.get("provider", "unknown"),
             "model": run["model"], "started_at": run["started_at"], "updated_at": now,
+            "total_duration_s": max(0.0, now_mono - run.get("started_mono", now_mono)),
             **self._identity_event(run),
         })
 
@@ -451,6 +458,8 @@ class Filter:
             output = metrics.get("eval_count")
         if prompt is not None and output is not None and prompt + output > 0:
             run["context_tokens"] = prompt + output
+        metrics.setdefault("total_duration_s", max(
+            0.0, time.monotonic() - run.get("started_mono", time.monotonic())))
         if context_key and run.get("context_tokens") is not None:
             self._session_context[context_key] = run["context_tokens"]
         now = utc_now()

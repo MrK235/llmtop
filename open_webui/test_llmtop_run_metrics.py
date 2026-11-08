@@ -46,6 +46,7 @@ async def exercise():
     await adapter.request(body, metadata, model)
     await adapter.request(body, metadata, model)
     assert sent[0]["event"] == "started"
+    assert sent[0]["total_duration_s"] == 0.0
     assert len([event for event in sent if event["event"] == "started"]) == 1
     assert len(adapter._runs[adapter._key("qwen:test", metadata)]) == 1
     assert "messages" not in sent[0]
@@ -58,6 +59,7 @@ async def exercise():
     await adapter.stream({"model": "qwen:test", "done": True, "eval_count": 5}, metadata, model)
     assert sent[2]["event"] == "completed"
     assert sent[2]["eval_count"] == 5
+    assert sent[2]["total_duration_s"] >= 0
     await adapter.outlet({"model": "qwen:test", "messages": []}, metadata, model)
     assert len(sent) == 3
 
@@ -102,6 +104,23 @@ async def exercise():
     assert context_sent[0]["event"] == "started"
     assert context_sent[0]["context_tokens"] == 25
     assert len(context_sent) == 1
+
+    duplicate_adapter = MODULE.Filter()
+    duplicate_sent = []
+
+    async def capture_duplicate(event):
+        duplicate_sent.append(event)
+
+    duplicate_adapter._send = capture_duplicate
+    await duplicate_adapter.request(body, {"chat_id": "same-chat", "message_id": "one"}, model)
+    await duplicate_adapter.request(body, {"chat_id": "same-chat", "message_id": "two"}, model)
+    assert len([event for event in duplicate_sent if event["event"] == "started"]) == 1
+    run = await duplicate_adapter._find_run("qwen:test", {"chat_id": "same-chat"})
+    run["last_heartbeat"] = 0.0
+    await duplicate_adapter.stream({"model": "qwen:test", "content": "delta"},
+                                   {"chat_id": "same-chat", "message_id": "two"}, model)
+    assert duplicate_sent[-1]["event"] == "updated"
+    assert duplicate_sent[-1]["total_duration_s"] >= 0
 
 
 if __name__ == "__main__":
