@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.90 — 08.11.2026
+
+- Hermes/custom-Runs zeigen den bekannten Modellnamen in Quelle und History an.
+
 ### 2.3.89 — 08.11.2026
 
 - Hermes-Adapter wird nach erfolgreicher Validierung automatisch aktiviert; dadurch erscheinen Hermes-Runs nach dem Gateway-Neustart im Collector.

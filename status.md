@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.89** · Stand 08.11.2026 · Status: Hermes-Agent-Observer-Integration für datensparsame Haupt-, Subagent- und Hilfsläufe.
+**Version 2.3.90** · Stand 08.11.2026 · Status: Hermes-Agent-Observer-Integration für datensparsame Haupt-, Subagent- und Hilfsläufe.
 
 ## Aktueller Stand
 
@@ -13,7 +13,7 @@ Startzeit fortgeschrieben und vom Adapter sekündlich aktualisiert. Pro WebUI-
 Chat erscheint nur der neueste aktive beziehungsweise finale Run. Ohne
 vorherigen Wert bleibt der Start `n/a`; Textlängen werden nicht geschätzt.
 
-Hermes Agent wird ausschließlich über das explizit installierte native Plugin
+Hermes/custom-Runs verwenden in Quelle und History den bekannten Modellnamen aus den Hermes-Metadaten statt nur `custom`. Hermes Agent wird ausschließlich über das explizit installierte native Plugin
 `hermes/llmtop-hermes-metrics/` instrumentiert. Der Collector akzeptiert dafür
 `POST /v1/runs/hermes` und aktualisiert die private Laufzeitdatei
 `hermes-collector.json`; ein laufender Gateway-Prozess benötigt nach einer

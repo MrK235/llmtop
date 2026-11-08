@@ -550,6 +550,19 @@ def source_label(source, provider=None):
     return f"{label}/{provider}" if provider else label
 
 
+def run_source_label(run):
+    """Zeigt bei Hermes/custom den bekannten Modellnamen im Quellenfeld."""
+    if not isinstance(run, dict):
+        return source_label(None)
+    provider = run.get("provider")
+    if (run.get("source") == "hermes" and
+            str(provider or "").casefold() == "custom"):
+        model = run.get("provider_model") or run.get("model")
+        if isinstance(model, str) and model.strip() and model.casefold() not in {"custom", "unknown"}:
+            provider = model.strip()
+    return source_label(run.get("source"), provider)
+
+
 RUN_IDENTITY_FIELDS = ("session_id", "chat_id", "message_id")
 RUN_IDENTITY_LABELS = {"session_id": "Session", "chat_id": "Chat", "message_id": "Nachricht"}
 
@@ -693,7 +706,7 @@ def history_sort_value(run, column):
         value = _parse_time(run.get("finished_at"))
         return (value is None, value or datetime.min.replace(tzinfo=timezone.utc))
     if column == "quelle":
-        return (False, source_label(run.get("source"), run.get("provider")).casefold())
+        return (False, run_source_label(run).casefold())
     if column == "modell":
         return (False, str(run.get("model", "")).casefold())
     if column == "status":

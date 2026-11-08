@@ -5,7 +5,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.89** · Python-Anwendung aus der Standardbibliothek für Linux.
+> **Version 2.3.90** · Python-Anwendung aus der Standardbibliothek für Linux.
 
 `llmtop` zeigt den Ollama-Status, lokale CPU-/RAM-/GPU-Sensoren sowie laufende
 und abgeschlossene Modell-Runs in einer curses-TUI oder als einmaligen
@@ -20,6 +20,7 @@ werden nicht gespeichert.
 - `--once` für Skripte, SSH-Sitzungen und Diagnose ohne curses
 - GPU-Erfassung über `nvidia-smi` und sysfs-Fallbacks
 - token-geschützter lokaler Collector für Pi, Open WebUI und Hermes Agent
+- Hermes/custom-Runs zeigen den bekannten Modellnamen direkt in Quelle und History
 - JSONL-Speicherung mit begrenzter Größe und atomarem Schreiben
 - optionale Run-Energiequellen: CPU-RAPL, AMD-sysfs und NVIDIA-`nvidia-smi`
 

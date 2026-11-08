@@ -20,7 +20,7 @@ from llmtop_metrics import (
     backfill_context_limits, clear_run_history, compact_tokens, context_values,
     format_duration, history_header_label, load_run_events, load_run_history, model_for_run,
     prefill_cell, run_group_key, run_identity_label, run_timing_detail, snapshot_record,
-    sort_run_history, source_label, token_rate, total_tokens, ttft_cell,
+    sort_run_history, run_source_label, source_label, token_rate, total_tokens, ttft_cell,
     write_history,
 )
 log = logging.getLogger(__name__)
@@ -196,7 +196,7 @@ def aggregate_history_group(group):
                                  "energy_scope": "group-sum"}
     else:
         aggregate.pop("energy", None)
-    source = source_label(aggregate.get("source"), aggregate.get("provider"))
+    source = run_source_label(aggregate)
     if aggregate.get("source") == "open-webui":
         source = source.replace("Open WebUI", "WebUI", 1)
     identity = run_identity_label(aggregate)
@@ -272,8 +272,7 @@ def history_overlay_lines(overlay, chart_width=None):
     runs = group.get("runs", [])
     chronological = list(reversed(runs))
     lines = [("Zusammenfassung", True)]
-    source = aggregate.get("_source_label") or source_label(
-        aggregate.get("source"), aggregate.get("provider"))
+    source = aggregate.get("_source_label") or run_source_label(aggregate)
     lines.extend((text, False) for text in (
         f"Gruppe       {source}",
         f"Modell       {aggregate.get('model', '?')}",
@@ -375,7 +374,7 @@ def indented_history_run(run):
     child = dict(run)
     # Die Gruppenzeile beginnt bereits mit dem zweistelligen Aufklappmarker.
     # Vier Leerzeichen setzen den eigentlichen Quelltext zwei Spalten dahinter.
-    child["_source_label"] = "    " + source_label(run.get("source"), run.get("provider"))
+    child["_source_label"] = "    " + run_source_label(run)
     # Das Zeitfeld wird innerhalb seiner eigenen Spalte um zwei Zeichen
     # eingerückt; die Spaltenberechnung berücksichtigt diese Breite.
     child["_history_child"] = True
@@ -655,7 +654,7 @@ def _draw(scr, st, host, interval):
                 value = finished.strftime("%d.%m %H:%M") if w >= 118 else finished.strftime("%H:%M")
             return "  " + value if run.get("_history_child") else value
         if column == "quelle":
-            return run.get("_source_label") or source_label(run.get("source"), run.get("provider"))
+            return run.get("_source_label") or run_source_label(run)
         if column == "modell":
             return str(run.get("model", "?"))
         if column == "status":
