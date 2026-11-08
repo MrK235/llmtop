@@ -811,7 +811,7 @@ def _draw(scr, st, host, interval):
                 row += 1
         if row < h - 2:
             draw_history_table(row, h - row - 2)
-        draw_footer("q quit   r reload   x sudo   c clear   ▴▾ return   ↑↓ cursor   h help")
+        draw_footer("q quit   r reload   o setup   x sudo   c clear   ▴▾ return   ↑↓ cursor   h help")
         scr.refresh()
         return
 
@@ -1074,7 +1074,7 @@ def _draw(scr, st, host, interval):
     row += 1
     draw_history_table(row, h - row - 2, columns)
 
-    draw_footer("q quit   r reload   x sudo   c clear   ▴▾ return   ↑↓ cursor   h help")
+    draw_footer("q quit   r reload   o setup   x sudo   c clear   ▴▾ return   ↑↓ cursor   h help")
     if st.get("history_overlay"):
         draw_history_overlay(scr, st["history_overlay"], colors,
                              st.get("history_overlay_offset", 0))
@@ -1103,6 +1103,7 @@ def _draw(scr, st, host, interval):
             ("q/Q", "Beenden"),
             ("h/H", "Hilfe ein/aus"),
             ("r/R", "Neu laden"),
+            ("o/O", "Onboarding neu starten"),
             ("x/X", "CPU-Power mit sudo"),
             ("c/C", "History löschen"),
             ("+/-", "Intervall ändern"),
@@ -1271,8 +1272,11 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
 
     def confirm_clear_history(scr):
         """Verlangt eine explizite Bestätigung vor dem Löschen der History."""
+        return confirm_action(scr, "Run-History wirklich löschen? [j/N]")
+
+    def confirm_action(scr, prompt):
+        """Zeigt eine Bestätigungsfrage am unteren Bildschirmrand."""
         h, w = scr.getmaxyx()
-        prompt = "Run-History wirklich löschen? [j/N]"
         row = max(0, h - 2)
         try:
             scr.move(row, 0)
@@ -1314,6 +1318,10 @@ def _run_tui(host, interval, use_nvidia, version, pixel_icon, pi_adapter_active=
                 return 0
             if key in (ord("r"), ord("R")):
                 return "reload"
+            if key in (ord("o"), ord("O")):
+                if confirm_action(scr, "Onboarding wirklich neu starten? [j/N]"):
+                    return "onboarding"
+                continue
             if key in (ord("x"), ord("X")):
                 activate_rapl(scr)
                 refresh.set()

@@ -8,7 +8,7 @@ import os
 import sys
 import urllib.error
 
-VERSION = "2.3.77"  # Single Source of Truth; History in version.md
+VERSION = "2.3.78"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -281,17 +281,26 @@ def main(argv=None):
         sys.stderr.write("kein Terminal gefunden; bitte --once verwenden\n")
         return 1
     # Im TUI-Betrieb werden Discovery, Onboarding, Collector und Adapter
-    # unabhängig voneinander aufgebaut.
+    # unabhängig voneinander aufgebaut. Nach einem per Taste o gestarteten
+    # Onboarding wird die TUI mit der neuen Konfiguration erneut aufgebaut.
     setup = run_onboarding() if onboarding_needed() else load_onboarding_config()
-    if setup.get("ollama_url") and not args.host and not os.environ.get("OLLAMA_HOST"):
-        host = normalize_host(setup["ollama_url"])
-    local_collector = ensure_local_collector()
-    pi_adapter_active = ensure_pi_adapter()
     from threading import Thread
-    Thread(target=ensure_open_webui_adapter, name="llmtop-open-webui", daemon=True).start()
     from llmtop_tui import _run_tui
-    return _run_tui(host, max(0.2, args.interval), not args.no_nvidia, VERSION,
-                    PIXEL_ICON, pi_adapter_active, collector=local_collector)
+    while True:
+        if setup.get("ollama_url") and not args.host and not os.environ.get("OLLAMA_HOST"):
+            host = normalize_host(setup["ollama_url"])
+        local_collector = ensure_local_collector()
+        pi_adapter_active = ensure_pi_adapter()
+        Thread(target=ensure_open_webui_adapter, name="llmtop-open-webui", daemon=True).start()
+        result = _run_tui(host, max(0.2, args.interval), not args.no_nvidia, VERSION,
+                          PIXEL_ICON, pi_adapter_active, collector=local_collector)
+        if result != "onboarding":
+            return result
+        try:
+            setup = run_onboarding(force=True)
+        except (OSError, ValueError, urllib.error.URLError) as exc:
+            sys.stderr.write(f"Onboarding fehlgeschlagen: {type(exc).__name__}: {exc}\n")
+            return 2
 
 
 if __name__ == "__main__":

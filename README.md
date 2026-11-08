@@ -5,7 +5,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.77** · Python-Anwendung aus der Standardbibliothek für Linux.
+> **Version 2.3.78** · Python-Anwendung aus der Standardbibliothek für Linux.
 
 `llmtop` zeigt den Ollama-Status, lokale CPU-/RAM-/GPU-Sensoren sowie laufende
 und abgeschlossene Modell-Runs in einer curses-TUI oder als einmaligen
@@ -89,6 +89,7 @@ verwende dann `--once`.
 |---|---|
 | `q` / `Q` | beenden |
 | `r` / `R` | Programm mit denselben Optionen neu laden |
+| `o` / `O` | Onboarding nach Bestätigung neu starten und die Konfiguration neu laden |
 | `x` / `X` | sichtbare sudo-Abfrage für CPU-RAPL öffnen |
 | `h` / `H` | Hilfe und Sensorquellen ein-/ausblenden |
 | `-` | Aktualisierungsintervall halbieren, mindestens `0.2 s` |

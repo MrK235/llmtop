@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.78 — 08.11.2026
+
+- Taste `o` startet nach Bestätigung das Onboarding erneut; danach wird die TUI mit der neuen Konfiguration gestartet.
+
 ### 2.3.77 — 07.11.2026
 
 - Breite des Session-Overlays und Diagramms auf eine moderate Größe begrenzt.

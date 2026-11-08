@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.77** · Stand 07.11.2026 · Status: Begrenzte Breite des Session-Overlays.
+**Version 2.3.78** · Stand 08.11.2026 · Status: Begrenzte Breite des Session-Overlays.
 
 ## Aktueller Stand
 
@@ -49,6 +49,10 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.78
+
+- `o` startet nach Bestätigung das Onboarding erneut und baut die TUI mit der neu eingelesenen Konfiguration wieder auf.
 
 ## Neu in 2.3.77
 
