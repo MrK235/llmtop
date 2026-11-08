@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.87** · Stand 08.11.2026 · Status: Open-WebUI-Compactions werden aus den tatsächlichen Abschlussmarkern gezählt.
+**Version 2.3.88** · Stand 08.11.2026 · Status: Hermes-Agent-Observer-Integration für datensparsame Haupt-, Subagent- und Hilfsläufe.
 
 ## Aktueller Stand
 
@@ -12,6 +12,18 @@ Adapter-Neustart aus der History. Aktive Dauern werden in der TUI aus der
 Startzeit fortgeschrieben und vom Adapter sekündlich aktualisiert. Pro WebUI-
 Chat erscheint nur der neueste aktive beziehungsweise finale Run. Ohne
 vorherigen Wert bleibt der Start `n/a`; Textlängen werden nicht geschätzt.
+
+Hermes Agent wird ausschließlich über das explizit installierte native Plugin
+`hermes/llmtop-hermes-metrics/` instrumentiert. Der Collector akzeptiert dafür
+`POST /v1/runs/hermes` und aktualisiert die private Laufzeitdatei
+`hermes-collector.json`; ein laufender Gateway-Prozess benötigt nach einer
+Plugin-Aktualisierung einen kontrollierten Neustart. Das Plugin sendet nur
+normalisierte IDs, Provider-/Modellmetadaten, echte Usage, Timing- und
+Zählerwerte. Inhalte, Tooldaten, URLs, Zugangsdaten und Providerfehlertexte
+werden weder übertragen noch gespeichert. Hermes-Lineage gruppiert nach
+`lineage_id`; lokale Ausführung kann Energie messen, Remote-Ausführung nicht.
+Der Legacy-Befehl `hermes-agent` bietet keine native Plugin-Schnittstelle und
+bleibt daher außerhalb der Integration.
 
 Beim normalen TUI-Start wird beim ersten Lauf ein Onboarding mit Discovery für
 lokale Standardports, veröffentlichte Docker-Ports und begrenzte private
@@ -58,6 +70,13 @@ Ollama-Tokenmetriken verfügbar; sie werden erst aus dem finalen `done`-Objekt
 gespeichert. Für dieses Layout gilt eine Mindestgröße von
 40×18. Bei dieser Größe verwendet die TUI eine kompakte, überlappungsfreie
 Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und History-Status.
+
+## Neu in 2.3.88
+
+- Hermes Agent über natives Observer-Plugin und dedizierten Collector-Endpunkt integriert.
+- Haupt-, Subagent-, Auxiliary- und Wartungsläufe werden mit echter Usage, Providerzeit, TTFT, API-/Toolzählern und Lineage erfasst.
+- Lokale Hermes-Routen nutzen die vorhandene Energie-Messung; Remote-Routen bleiben ohne erfundene Wh-Werte.
+- `--install-hermes-adapter` validiert das Plugin vor der atomaren Installation.
 
 ## Neu in 2.3.87
 

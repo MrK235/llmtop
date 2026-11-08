@@ -12,6 +12,12 @@ gebracht.
 
 ## Changelog
 
+### 2.3.88 — 08.11.2026
+
+- Hermes Agent über ein natives, dependency-freies Observer-Plugin integriert.
+- Dedizierter Collector-Endpunkt, Lineage-Gruppierung, Subagent-/Auxiliary-/Wartungsläufe und datensparsame Zähler ergänzt.
+- Lokale Hermes-Ausführung erhält die vorhandene Energie-Messung; Installation validiert den Adapter vor Aktivierung.
+
 ### 2.3.87 — 08.11.2026
 
 - Open-WebUI-Compactions aus tatsächlichen Abschlussmarkern und gespeicherten Summary-Checkpoints werden erkannt und im Run genau einmal gezählt.

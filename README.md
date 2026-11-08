@@ -5,7 +5,7 @@
 
 ![llmtop-Beispielansicht](assets/llmtop-screenshot.png)
 
-> **Version 2.3.87** · Python-Anwendung aus der Standardbibliothek für Linux.
+> **Version 2.3.88** · Python-Anwendung aus der Standardbibliothek für Linux.
 
 `llmtop` zeigt den Ollama-Status, lokale CPU-/RAM-/GPU-Sensoren sowie laufende
 und abgeschlossene Modell-Runs in einer curses-TUI oder als einmaligen
@@ -19,7 +19,7 @@ werden nicht gespeichert.
 - TUI mit Live-Sensoren, Modellstatus, aktuellen Runs und Run-History
 - `--once` für Skripte, SSH-Sitzungen und Diagnose ohne curses
 - GPU-Erfassung über `nvidia-smi` und sysfs-Fallbacks
-- token-geschützter lokaler Collector für Pi und Open WebUI
+- token-geschützter lokaler Collector für Pi, Open WebUI und Hermes Agent
 - JSONL-Speicherung mit begrenzter Größe und atomarem Schreiben
 - optionale Run-Energiequellen: CPU-RAPL, AMD-sysfs und NVIDIA-`nvidia-smi`
 
@@ -62,6 +62,7 @@ ergänzt.
 | `--collector-port PORT` | Collector-Port; Standard `11435` |
 | `--emit DATEI` | Schema-2-Ereignis aus Datei oder `-` an den Collector senden |
 | `--install-open-webui-adapter` | Open-WebUI-Filter per Admin-API installieren und aktivieren |
+| `--install-hermes-adapter` | natives Hermes-Plugin validieren und installieren |
 | `--setup` | interaktives Onboarding für erkannte Dienste starten |
 | `--discover` | lokale, Docker- und LAN-Dienste anzeigen |
 | `--reset-setup` | gespeicherte Onboarding-Konfiguration nach Bestätigung löschen |
@@ -153,7 +154,9 @@ Instrumentierte Runs zeigen, soweit vom Provider geliefert:
 - Kontextverbrauch und Kontextlimit
 - Ausgabe-Rate und Dauer
 - Prefill-Dauer/-Rate und Zeit bis zum ersten Token, sofern echte Provider- oder Adapterwerte vorliegen
-- Anzahl erfolgreicher Kontext-Compactions für Pi und Open WebUI
+- Anzahl erfolgreicher Kontext-Compactions für Pi, Open WebUI und Hermes Agent
+- bei Hermes zusätzlich Plattform, Laufart, Aktivität, API-/Toolzähler und Elternlauf
+- Hermes-Tokens als Agenten-Summe und Kontext als letzter bestätigter Providerkontext
 - Dauer kompakt in Minuten und Stunden, sofern verfügbar
 - bei Open WebUI und lokalen Pi-Ollama-Runs zusätzlich Verbrauch in Wh, sofern gemessen; laufende
 instrumentierte Runs aktualisieren den Wert bereits während des Laufs
@@ -202,6 +205,7 @@ Der Collector empfängt Schema-2-Ereignisse über:
 - `POST /v1/runs`
 - `POST /v1/runs/pi`
 - `POST /v1/runs/open-webui`
+- `POST /v1/runs/hermes`
 
 Standardmäßig lauscht er auf `127.0.0.1:11435` und – wenn erkannt – zusätzlich
 auf dem privaten Docker-Gateway von Open WebUI. Ein Bearer-Token ist
@@ -224,7 +228,26 @@ python3 llmtop.py --collector
 
 Collector-Fehler stoppen weder Sensoren noch TUI.
 
-### Onboarding und Erkennung
+#### Hermes Agent
+
+Hermes Agent wird über das native, dependency-freie Plugin unter
+`hermes/llmtop-hermes-metrics/` instrumentiert. Die Installation erfolgt
+bewusst explizit:
+
+```bash
+python3 llmtop.py --install-hermes-adapter
+```
+
+Danach den laufenden Hermes-Gateway-Prozess einmal kontrolliert neu starten.
+Erfasst werden Haupt-, Subagent-, Hilfs- und Wartungsläufe aus CLI, TUI,
+Gateway, Cron, ACP und Webhook, soweit Hermes die Observer-Hooks ausliefert.
+Gesendet werden ausschließlich normalisierte Laufmetadaten, echte Usage,
+Timing- und Zählerwerte. Prompts, Antworten, Tooldaten, Chat-/Sender-IDs,
+URLs, Zugangsdaten und Providerfehlertexte verlassen Hermes nicht. Lokale
+Hermes-Routen können Energie in Wh liefern; Cloud-Routen zeigen `n/a`.
+Der veraltete separate Befehl `hermes-agent` ist nicht instrumentierbar.
+
+## Onboarding und Erkennung
 
 Beim ersten interaktiven TUI-Start sucht llmtop nach Ollama und Open WebUI auf
 lokalen Standardports, veröffentlichten Docker-Ports und – wenn lokal nichts

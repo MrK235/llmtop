@@ -16,6 +16,7 @@ HISTORY_WRITE_INTERVAL = 5.0
 
 from llmtop_metrics import (
     DEFAULT_RUN_HISTORY_LIMIT, HISTORY_COLUMNS, CollectorService, _parse_time, _token_value,
+    hermes_adapter_status,
     backfill_context_limits, clear_run_history, compact_tokens, context_values,
     format_duration, history_header_label, load_run_events, load_run_history, model_for_run,
     prefill_cell, run_group_key, run_identity_label, run_timing_detail, snapshot_record,
@@ -146,6 +147,7 @@ def _webui_energy_wh(run):
     if not isinstance(run, dict):
         return None
     supported = (run.get("source") == "open-webui" or
+                 (run.get("source") == "hermes" and run.get("execution_scope") == "local") or
                  (run.get("source") == "pi" and
                   str(run.get("provider", "")).casefold() == "ollama"))
     if not supported:
@@ -277,10 +279,15 @@ def history_overlay_lines(overlay, chart_width=None):
         f"Modell       {aggregate.get('model', '?')}",
         f"Läufe        {len(runs)}",
         f"Status       {aggregate.get('status', 'n/a')}",
+        f"Art          {aggregate.get('run_kind', 'n/a')}",
+        f"Plattform    {aggregate.get('platform', 'n/a')}",
+        f"Aktivität    {aggregate.get('activity', 'n/a')}" if aggregate.get('activity') else "Aktivität    n/a",
+        f"Elternlauf   {str(aggregate.get('parent_session_id', 'n/a'))[:12]}",
         f"Dauer        {format_duration(_token_value(aggregate, 'total_duration_s'))}",
         f"Prefill      {prefill_cell(aggregate)}",
         f"TTFT         {ttft_cell(aggregate)}",
-        f"Tokens       {compact_tokens(total_tokens(aggregate)) if total_tokens(aggregate) is not None else 'n/a'}",
+        f"Tokens       {compact_tokens(total_tokens(aggregate)) if total_tokens(aggregate) is not None else 'n/a'}"
+        + (" · Agenten-Summe" if aggregate.get("source") == "hermes" else ""),
         f"Komp.        {_token_value(aggregate, 'compactions') or 0}",
         f"Verbrauch    {(_webui_energy_wh(aggregate) or 0):.3f} Wh"
         if _webui_energy_wh(aggregate) is not None else "Verbrauch    n/a",
@@ -327,6 +334,9 @@ def history_overlay_lines(overlay, chart_width=None):
             if key.startswith("_") or key == "age_seconds":
                 continue
             value = run[key]
+            if (run.get("source") == "hermes" and key in
+                    {"session_id", "lineage_id", "parent_session_id", "source_run_id", "run_id"}):
+                value = str(value)[:12]
             if isinstance(value, (dict, list)):
                 value = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
             lines.append((f"{key:<18} {value}", False))
@@ -679,6 +689,7 @@ def _draw(scr, st, host, interval):
         if column == "wh":
             value = _webui_energy_wh(run)
             supported = (run.get("source") == "open-webui" or
+                         (run.get("source") == "hermes" and run.get("execution_scope") == "local") or
                          (run.get("source") == "pi" and
                           str(run.get("provider", "")).casefold() == "ollama"))
             return f"{value:.3f} Wh" if value is not None else "n/a" if supported else ""
@@ -830,12 +841,12 @@ def _draw(scr, st, host, interval):
         _add(scr, row, 0, f"Geladene Modelle: {model_count}", colors["secondary"])
         row += 1
         active_runs = displayed_runs
-        source_order = ("pi", "open-webui")
+        source_order = ("pi", "open-webui", "hermes")
         compact_groups = [(source, [item for item in active_runs if item.get("source") == source])
                           for source in source_order]
         compact_groups = [(source, items) for source, items in compact_groups if items]
         if not compact_groups:
-            _add(scr, row, 0, f"Modelle {model_count}  ·  Keine Pi-/WebUI-Runs", colors["secondary"])
+            _add(scr, row, 0, f"Modelle {model_count}  ·  Keine instrumentierten Runs", colors["secondary"])
             row += 1
         else:
             # In der Kompaktansicht erhält jede vorhandene Quelle exakt eine
@@ -1038,7 +1049,7 @@ def _draw(scr, st, host, interval):
         return (stamp or datetime.min.replace(tzinfo=datetime.now().astimezone().tzinfo),
                 str(run.get("source", "")), str(run.get("run_id", "")))
 
-    sources = ["pi", "open-webui"]
+    sources = ["pi", "open-webui", "hermes"]
     sources.extend(sorted({run.get("source", "legacy") for run in active_runs
                            if run.get("source") not in sources}))
     groups = []
@@ -1166,6 +1177,7 @@ def _draw(scr, st, host, interval):
             ("Ollama", host_source),
             ("WebUI", collector_source),
             ("Pi Adapter", pi_source),
+            ("Hermes Adapter", "installiert" if hermes_adapter_status() else "nicht installiert"),
         )
         box = [("Bedienung", colors["structure"])]
         box.extend((f"  {key:<{key_width}} {action}", colors["secondary"])

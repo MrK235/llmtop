@@ -5,10 +5,11 @@ import json
 import logging
 from logging.handlers import RotatingFileHandler
 import os
+import subprocess
 import sys
 import urllib.error
 
-VERSION = "2.3.87"  # Single Source of Truth; History in version.md
+VERSION = "2.3.88"  # Single Source of Truth; History in version.md
 PIXEL_ICON = ("╔══════╗", "║ >▞_  ║", "║  LLM ║", "╚══════╝")  # Terminal-Prompt und LLM als quadratisches Logo.
 DEFAULT_HOST = "http://localhost:11434"
 
@@ -174,6 +175,7 @@ def main(argv=None):
     request_group.add_argument("--collector", action="store_true", help="lokalen Run-Metrik-Collector starten")
     request_group.add_argument("--emit", metavar="DATEI", help="Schema-2-Testevent an Collector senden ('-' für stdin)")
     request_group.add_argument("--install-open-webui-adapter", action="store_true", help="Open-WebUI-Adapter per API installieren und aktivieren")
+    request_group.add_argument("--install-hermes-adapter", action="store_true", help="native Hermes-Observer validieren und installieren")
     ap.add_argument("--collector-bind", help="Collector-Bind-Adresse (Default 127.0.0.1)")
     ap.add_argument("--collector-port", type=int, help="Collector-Port (Default 11435)")
     ap.add_argument("--once", action="store_true", help="ein Einzel-Snapshot, kein Vollbild")
@@ -190,7 +192,7 @@ def main(argv=None):
     args = ap.parse_args(argv)
     if args.energy_rapl_sudo and not (args.chat or args.generate):
         ap.error("--energy-rapl-sudo ist nur mit --chat oder --generate möglich")
-    is_tui = not (args.install_open_webui_adapter or args.collector or args.emit
+    is_tui = not (args.install_open_webui_adapter or args.install_hermes_adapter or args.collector or args.emit
                   or args.chat or args.generate or args.once or args.rapl_helper
                   or args.setup or args.discover or args.reset_setup)
     try:
@@ -205,7 +207,7 @@ def main(argv=None):
     from llmtop_sources import normalize_host
     from llmtop_metrics import (configured_ollama_host, emit_run_event,
                                 ensure_local_collector, ensure_open_webui_adapter,
-                                ensure_pi_adapter, install_open_webui_adapter,
+                                ensure_pi_adapter, install_hermes_adapter, install_open_webui_adapter,
                                 load_onboarding_config, onboarding_needed, print_discovery,
                                 read_request_payload, reset_onboarding_config,
                                 run_collector, run_onboarding, run_ollama_request)
@@ -248,6 +250,15 @@ def main(argv=None):
             return 0
         except (OSError, ValueError, urllib.error.URLError) as exc:
             sys.stderr.write(f"Open-WebUI-Adapter fehlgeschlagen: {type(exc).__name__}: {exc}\n")
+            return 2
+    if args.install_hermes_adapter:
+        try:
+            target = install_hermes_adapter()
+            print(f"Hermes-Adapter validiert und installiert: {target}")
+            print("Hinweis: einen laufenden Hermes-Gateway-Prozess anschließend einmal neu starten.")
+            return 0
+        except (OSError, ValueError, subprocess.SubprocessError) as exc:
+            sys.stderr.write(f"Hermes-Adapter fehlgeschlagen: {type(exc).__name__}: {exc}\n")
             return 2
     if args.collector:
         try:

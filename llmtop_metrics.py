@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import secrets
+import shutil
 import socket
 import sqlite3
 import subprocess
@@ -27,7 +28,11 @@ DEFAULT_RUN_HISTORY_LIMIT = 500
 DEFAULT_RUN_MAX_AGE = 90.0
 DEFAULT_FINAL_RUN_AGE = 10.0
 MAX_COLLECTOR_BODY = 32 * 1024
-ALLOWED_RUN_SOURCES = {"pi", "open-webui", "ollama-cli", "legacy"}
+ALLOWED_RUN_SOURCES = {"pi", "open-webui", "ollama-cli", "hermes", "legacy"}
+HERMES_RUN_KINDS = {"main", "subagent", "auxiliary", "maintenance"}
+HERMES_EXECUTION_SCOPES = {"local", "remote", "unknown"}
+HERMES_PLATFORMS = {"cli", "tui", "gateway", "telegram", "cron", "acp", "webhook", "other"}
+HERMES_ACTIVITIES = {"context_compaction", "title_generation", "moa", "vision", "approval", "plugin_side_question", "other"}
 FINAL_RUN_EVENTS = {"completed", "error", "cancelled"}
 RUN_FILE_LOCK = threading.RLock()
 OPEN_WEBUI_FUNCTION_ID = "llmtop_run_metrics"
@@ -206,10 +211,13 @@ def normalize_run(run, final=False):
     if source not in ALLOWED_RUN_SOURCES:
         return None
     out = {"schema": 2, "run_id": run["run_id"], "source": source,
-           "model": run["model"], "status": status}
+           "model": run["model"][:120], "status": status}
     if isinstance(run.get("source_run_id"), str) and run["source_run_id"]:
-        out["source_run_id"] = run["source_run_id"]
-    for key in ("session_id", "chat_id", "message_id"):
+        out["source_run_id"] = run["source_run_id"].strip()[:120]
+    identity_fields = (("session_id", "lineage_id", "parent_session_id")
+                       if source == "hermes" else
+                       ("session_id", "chat_id", "message_id"))
+    for key in identity_fields:
         value = run.get(key)
         if isinstance(value, str) and value.strip():
             out[key] = value.strip()[:120]
@@ -218,7 +226,7 @@ def normalize_run(run, final=False):
             out[key] = run[key]
     for key in ("prompt_tokens", "output_tokens", "context_tokens", "context_limit",
                 "load_duration_s", "prompt_eval_duration_s", "eval_duration_s",
-                "total_duration_s", "first_token_duration_s"):
+                "total_duration_s", "first_token_duration_s", "tool_duration_s"):
         value = run.get(key)
         if isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0:
             out[key] = value
@@ -226,6 +234,25 @@ def normalize_run(run, final=False):
     if (isinstance(compactions, (int, float)) and not isinstance(compactions, bool)
             and compactions >= 0 and float(compactions).is_integer()):
         out["compactions"] = int(compactions)
+    for key in ("api_attempts", "api_errors", "tool_calls", "tool_errors"):
+        value = run.get(key)
+        if (isinstance(value, (int, float)) and not isinstance(value, bool)
+                and value >= 0 and float(value).is_integer()):
+            out[key] = int(value)
+    if source == "hermes":
+        for key in ("run_kind", "platform", "activity", "execution_scope"):
+            value = run.get(key)
+            if not isinstance(value, str):
+                continue
+            value = value.strip().lower()[:120]
+            if key == "run_kind" and value in HERMES_RUN_KINDS:
+                out[key] = value
+            elif key == "execution_scope" and value in HERMES_EXECUTION_SCOPES:
+                out[key] = value
+            elif key == "platform":
+                out[key] = value if value in HERMES_PLATFORMS else "other"
+            elif key == "activity":
+                out[key] = value if value in HERMES_ACTIVITIES else "other"
     for source_key, target in (("prompt_eval_count", "prompt_tokens"),
                                ("eval_count", "output_tokens")):
         value = run.get(source_key)
@@ -238,7 +265,10 @@ def normalize_run(run, final=False):
         value = duration_seconds(run.get(source_key))
         if value is not None:
             out[target] = value
-    for key in ("status_detail", "error", "context_limit_source", "provider", "provider_model"):
+    metadata_keys = ("status_detail", "context_limit_source", "provider", "provider_model")
+    if source != "hermes":
+        metadata_keys += ("error",)
+    for key in metadata_keys:
         value = run.get(key)
         if isinstance(value, str) and value:
             # Provider-Metadaten bleiben klein und enthalten keine Inhalte.
@@ -516,7 +546,7 @@ def format_duration(seconds):
 def source_label(source, provider=None):
     """Kurzlabel aus Clientquelle und optionalem Modellprovider."""
     label = {"pi": "Pi", "open-webui": "Open WebUI", "ollama-cli": "Ollama CLI",
-             "legacy": "Legacy"}.get(source, source or "?")
+             "hermes": "Hermes", "legacy": "Legacy"}.get(source, source or "?")
     return f"{label}/{provider}" if provider else label
 
 
@@ -527,6 +557,16 @@ RUN_IDENTITY_LABELS = {"session_id": "Session", "chat_id": "Chat", "message_id":
 def run_identity(run):
     """Liefert die stärkste gruppierbare Identität eines Runs."""
     if not isinstance(run, dict):
+        return None, None
+    if run.get("source") == "hermes":
+        kind = run.get("run_kind")
+        fields = (("session_id", "lineage_id") if kind == "subagent" else
+                  ("source_run_id", "session_id") if kind in ("auxiliary", "maintenance") else
+                  ("lineage_id", "session_id"))
+        for field in fields:
+            value = run.get(field)
+            if isinstance(value, str) and value.strip():
+                return field, value.strip()
         return None, None
     # Open WebUI kann dieselbe Browser-Session für mehrere Chats melden. Der
     # Chat ist deshalb die fachliche Gruppe; die Session dient nur als Fallback.
@@ -553,9 +593,9 @@ def run_identity_label(run):
     if field and value:
         # Bei den fachlichen Gruppenkennungen reicht der erste UUID-Block;
         # die redundanten Begriffe Session und Chat stehen nicht in der Zeile.
-        if field in ("session_id", "chat_id"):
-            return value.split("-", 1)[0]
-        return f"{RUN_IDENTITY_LABELS[field]} {value[:8]}"
+        if field in ("session_id", "lineage_id", "chat_id"):
+            return value.split("-", 1)[0][:12]
+        return f"{RUN_IDENTITY_LABELS.get(field, field)} {value[:8]}"
     run_id = str(run.get("run_id", "?")) if isinstance(run, dict) else "?"
     return f"Run {run_id[:8]}"
 
@@ -568,6 +608,8 @@ def run_metric_detail(run):
     token_text = (f"Tokens: {compact_tokens(total)} "
                   f"(Prompt {compact_tokens(_token_value(run, 'prompt_tokens'))}, "
                   f"Ausgabe {compact_tokens(_token_value(run, 'output_tokens'))})")
+    if run.get("source") == "hermes":
+        token_text += " · Agenten-Summe"
     return f"{token_text} · {rate:.1f} Tok/s" if rate is not None else f"{token_text} · Tok/s: n/a"
 
 
@@ -633,7 +675,8 @@ def context_text(run, model=None):
     if limit is None:
         return f"Kontext {compact_tokens(used)}/n/a"
     suffix = " · über Limit" if used > limit else f" ({pct:.0f} %)"
-    return f"Kontext {compact_tokens(used)}/{compact_tokens(limit)}{suffix}"
+    label = "letzter Kontext" if run.get("source") == "hermes" else "Kontext"
+    return f"{label} {compact_tokens(used)}/{compact_tokens(limit)}{suffix}"
 
 
 HISTORY_COLUMNS = ("zeit", "quelle", "modell", "status", "tokens", "komp", "kontext", "rate", "dauer")
@@ -728,9 +771,25 @@ def backfill_context_limits(runs, models):
     return runs
 
 
+def run_metadata_detail(run):
+    """Kompakte Hermes-Metadaten für --once und History-Zeilen."""
+    if not isinstance(run, dict) or run.get("source") != "hermes":
+        return ""
+    parts = [str(run.get("run_kind", "main")), str(run.get("platform", "other"))]
+    if run.get("activity"):
+        parts.append(str(run["activity"]))
+    parts.append(f"API {int(_token_value(run, 'api_attempts') or 0)}/{int(_token_value(run, 'api_errors') or 0)}")
+    parts.append(f"Tools {int(_token_value(run, 'tool_calls') or 0)}/{int(_token_value(run, 'tool_errors') or 0)}")
+    if run.get("parent_session_id"):
+        parts.append(f"Eltern {str(run['parent_session_id'])[:12]}")
+    return "Hermes " + " · ".join(parts)
+
+
 def format_run_line(run, prefix="", model=None):
     """Einheitliche Darstellung für aktuelle Runs, History und --once."""
-    return f"{prefix}{run_metric_detail(run)} · {run_timing_detail(run)} · {context_text(run, model)}"
+    metadata = run_metadata_detail(run)
+    suffix = f" · {metadata}" if metadata else ""
+    return f"{prefix}{run_metric_detail(run)} · {run_timing_detail(run)} · {context_text(run, model)}{suffix}"
 
 
 def _usage_metrics(value):
@@ -778,11 +837,13 @@ class OpenWebUIFinalMetricsReader:
 
 
 def _energy_monitor_enabled(run):
-    """Erlaubt Energie-Messungen für WebUI und lokale Pi-Ollama-Runs."""
+    """Erlaubt Energie-Messungen für bekannte lokale Inferenzpfade."""
     if not isinstance(run, dict):
         return False
     if run.get("source") == "open-webui":
         return True
+    if run.get("source") == "hermes":
+        return run.get("execution_scope") == "local"
     return (run.get("source") == "pi" and
             str(run.get("provider", "")).casefold() == "ollama")
 
@@ -891,6 +952,8 @@ def process_run_event(event):
         if event["event"] == "started":
             _start_webui_energy_monitor(run)
         else:
+            # Hermes kann die Route erst beim ersten API-Versuch kennen.
+            _start_webui_energy_monitor(run)
             _touch_webui_energy_monitor(run)
             energy = _snapshot_webui_energy_monitor(run)
             if energy:
@@ -911,7 +974,9 @@ def process_run_event(event):
             run.update({key: value for key, value in OpenWebUIFinalMetricsReader().read(
                 run.get("model"), run.get("started_at"), run.get("source_run_id")).items()
                        if key in missing})
-        if _energy_monitor_enabled(run):
+        # Ein lokaler Hermes-Run behält seine Messung auch nach einem
+        # späteren Wechsel auf eine entfernte Route bis zum Abschluss.
+        if _energy_monitor_enabled(run) or run.get("source") == "hermes":
             energy = _finish_webui_energy_monitor(run)
             if energy:
                 run["energy"] = energy
@@ -942,6 +1007,71 @@ def collector_config():
 def pi_adapter_state_path():
     """Privater Laufzeitpfad für die globale Pi-Erweiterung."""
     return os.path.join(os.path.dirname(history_path()), "pi-collector.json")
+
+
+def hermes_adapter_state_path():
+    """Privater Laufzeitpfad für das native Hermes-Plugin."""
+    state_home = os.environ.get("XDG_STATE_HOME", os.path.expanduser("~/.local/state"))
+    return os.path.join(state_home, "llmtop", "hermes-collector.json")
+
+
+def hermes_adapter_source_dir():
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "hermes", "llmtop-hermes-metrics")
+
+
+def hermes_adapter_status():
+    """Liest den lokalen Installationsstatus ohne Hermes- oder Providerdaten."""
+    target = os.path.expanduser("~/.hermes/plugins/llmtop-hermes-metrics")
+    return (os.path.isfile(os.path.join(target, "plugin.yaml")) and
+            os.path.isfile(os.path.join(target, "__init__.py")))
+
+
+def install_hermes_adapter():
+    """Validiert und installiert das native Hermes-Plugin atomar."""
+    source = hermes_adapter_source_dir()
+    files = ("plugin.yaml", "__init__.py")
+    if not all(os.path.isfile(os.path.join(source, name)) for name in files):
+        raise OSError("Hermes-Adapterdateien fehlen")
+    if not shutil.which("hermes"):
+        raise OSError("hermes nicht gefunden")
+    parent = os.path.expanduser("~/.hermes/plugins")
+    os.makedirs(parent, mode=0o700, exist_ok=True)
+    staging = tempfile.mkdtemp(prefix=".llmtop-hermes-", dir=parent)
+    try:
+        for name in files:
+            with open(os.path.join(source, name), encoding="utf-8") as fh:
+                content = fh.read()
+            target = os.path.join(staging, name)
+            with open(target, "w", encoding="utf-8") as fh:
+                fh.write(content)
+            os.chmod(target, 0o600)
+        check = subprocess.run(["hermes", "plugins", "doctor", staging, "--ci"],
+                               capture_output=True, text=True, timeout=30)
+        if check.returncode != 0:
+            detail = (check.stderr or check.stdout or "Doctor fehlgeschlagen").strip()
+            raise ValueError(detail[:400])
+        target_dir = os.path.join(parent, "llmtop-hermes-metrics")
+        os.makedirs(target_dir, mode=0o700, exist_ok=True)
+        for name in files:
+            temporary = os.path.join(target_dir, "." + name + ".new")
+            with open(temporary, "w", encoding="utf-8") as fh:
+                with open(os.path.join(staging, name), encoding="utf-8") as source_fh:
+                    fh.write(source_fh.read())
+                fh.flush()
+                os.fsync(fh.fileno())
+            os.replace(temporary, os.path.join(target_dir, name))
+            os.chmod(os.path.join(target_dir, name), 0o600)
+        return target_dir
+    finally:
+        for name in files:
+            try:
+                os.unlink(os.path.join(staging, name))
+            except OSError:
+                pass
+        try:
+            os.rmdir(staging)
+        except OSError:
+            pass
 
 
 def pi_adapter_source_path():
@@ -984,6 +1114,28 @@ def ensure_pi_adapter():
     return True
 
 
+def _write_runtime_collector_state(path, url, token):
+    """Schreibt Adapter-Laufzeitdaten atomar und privat."""
+    directory = os.path.dirname(path)
+    os.makedirs(directory, mode=0o700, exist_ok=True)
+    fd, temporary = tempfile.mkstemp(prefix=".collector-", dir=directory, text=True)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump({"collector_url": url, "collector_token": token}, fh,
+                      separators=(",", ":"))
+            fh.write("\n")
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(temporary, path)
+        os.chmod(path, 0o600)
+    except Exception:
+        try:
+            os.unlink(temporary)
+        except OSError:
+            pass
+        raise
+
+
 def ensure_local_collector():
     """Startet den lokalen Collector für den autonomen TUI-Betrieb."""
     token, url = collector_config()
@@ -991,27 +1143,21 @@ def ensure_local_collector():
     local_setup = bool(setup.get("collector_bind"))
     if token and url.rstrip("/") != DEFAULT_COLLECTOR_URL and not local_setup:
         return None
-    generated = not token
-    if generated:
+    if not token:
         token = secrets.token_urlsafe(32)
     bind = configured_collector_bind() or "127.0.0.1"
     service = CollectorService(bind=bind, token=token)
     if not service.start():
         return None
-    if generated:
-        state = pi_adapter_state_path()
-        try:
-            os.makedirs(os.path.dirname(state), mode=0o700, exist_ok=True)
-            advertised = url.rstrip("/") if url else f"http://{bind}:{service.port}"
-            if advertised.endswith(":11435") and service.port != 11435:
-                advertised = advertised.rsplit(":", 1)[0] + f":{service.port}"
-            with open(state, "w", encoding="utf-8") as fh:
-                json.dump({"collector_url": advertised,
-                           "collector_token": token}, fh, separators=(",", ":"))
-            os.chmod(state, 0o600)
-        except OSError:
-            service.stop()
-            return None
+    advertised = url.rstrip("/") if url else f"http://{bind}:{service.port}"
+    if advertised.endswith(":11435") and service.port != 11435:
+        advertised = advertised.rsplit(":", 1)[0] + f":{service.port}"
+    try:
+        for state in (pi_adapter_state_path(), hermes_adapter_state_path()):
+            _write_runtime_collector_state(state, advertised, token)
+    except OSError:
+        service.stop()
+        return None
     return service
 
 
@@ -1047,8 +1193,9 @@ def collector_handler(token):
             # generische Pfad bleibt für den kompatiblen Ollama-CLI-Modus.
             expected_source = {"/v1/runs/pi": "pi",
                                "/v1/runs/open-webui": "open-webui",
+                               "/v1/runs/hermes": "hermes",
                                "/v1/runs": None}.get(self.path)
-            if self.path not in ("/v1/runs", "/v1/runs/pi", "/v1/runs/open-webui"):
+            if self.path not in ("/v1/runs", "/v1/runs/pi", "/v1/runs/open-webui", "/v1/runs/hermes"):
                 self._reply(400)
                 return
             supplied = self.headers.get("Authorization", "")
@@ -1427,8 +1574,10 @@ def emit_run_event(path):
         raise ValueError("LLMTOP_COLLECTOR_TOKEN fehlt (.env oder Umgebung)")
     with (sys.stdin if path == "-" else open(path, encoding="utf-8")) as fh:
         event = json.load(fh)
+    endpoint = {"pi": "/v1/runs/pi", "open-webui": "/v1/runs/open-webui",
+                "hermes": "/v1/runs/hermes"}.get(event.get("source"), "/v1/runs")
     request = urllib.request.Request(
-        url.rstrip("/") + "/v1/runs", data=json.dumps(event).encode("utf-8"),
+        url.rstrip("/") + endpoint, data=json.dumps(event).encode("utf-8"),
         headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"},
         method="POST")
     with urllib.request.urlopen(request, timeout=2.0) as response:
