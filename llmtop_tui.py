@@ -541,7 +541,7 @@ def _draw(scr, st, host, interval):
         def footer_part(value, x):
             _add(scr, h - 1, x, value, colors["secondary"], indent=False)
             for offset, char in enumerate(value):
-                is_key = (char in "qrxch" and
+                is_key = (char in "qrxoch" and
                           (offset == 0 or value[offset - 1].isspace()) and
                           (offset + 1 == len(value) or value[offset + 1].isspace()))
                 if char in "▴▾↑↓-/+" or is_key:

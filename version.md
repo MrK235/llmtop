@@ -12,6 +12,10 @@ gebracht.
 
 ## Changelog
 
+### 2.3.79 — 08.11.2026
+
+- Das `o` für `setup` wird in der Fußzeile cyan hervorgehoben.
+
 ### 2.3.78 — 08.11.2026
 
 - Taste `o` startet nach Bestätigung das Onboarding erneut; danach wird die TUI mit der neuen Konfiguration gestartet.

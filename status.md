@@ -1,6 +1,6 @@
 # status.md — llmtop
 
-**Version 2.3.78** · Stand 08.11.2026 · Status: Begrenzte Breite des Session-Overlays.
+**Version 2.3.79** · Stand 08.11.2026 · Status: Setup-Taste in der Fußzeile cyan hervorgehoben.
 
 ## Aktueller Stand
 
@@ -398,7 +398,7 @@ Darstellung mit System- und GPU-Kernwerten, Modellanzahl, Ollama-Status und Hist
 
 ## Neu in 2.3.06
 
-- Die Tastenbuchstaben der Fußzeile werden wie die Steuersymbole cyan dargestellt.
+- Die Tastenbuchstaben der Fußzeile werden wie die Steuersymbole cyan dargestellt; einschließlich `o` für Setup.
 
 ## Neu in 2.3.05
 
